@@ -1,0 +1,47 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.db
+*.db-wal
+*.db-shm
+backend/storage/
+backend/.env
+.env
+.env.local
+# `.env` alone does NOT cover the `.env.<something>` variants — a
+# `.env.local` holding live Supabase keys was sitting untracked and
+# committable in this working tree.  `.env.example` stays tracked below.
+.env.*
+!.env.example
+# Supabase CLI machine state: a linked project ref, pooler URL and local
+# certificate. Migrations and config.toml are deliberately NOT ignored — those
+# are source, and whether to track them is the repo owner's call.
+supabase/.temp/
+.pytest_cache/
+node_modules/
+frontend/dist/
+
+# Customer documents and a stray second git database, both of which were
+# TRACKED and pushed. `.git1/` is a complete earlier repository of this same
+# project — 378 files, its own object store and reflog — committed inside this
+# one, where no `git log`, review or secret scanner would ever look at it.
+# `ALL7_split/` is seven real commercial invoices.
+#
+# Both have since been purged from every commit on every branch (git
+# filter-repo, force-pushed 2026-08-09), so these two lines are no longer a
+# fig leaf over tracked files — they are what stops either from coming back.
+# Keep them.
+#
+# What the rewrite could NOT reach: GitHub's `refs/pull/*` refs still point at
+# the pre-rewrite commits, so `refs/pull/20/head` still resolves to a tree
+# holding all 385 files. Those refs are read-only to clients; clearing them
+# needs a GitHub Support request for object GC, or recreating the repository.
+.git1/
+ALL7_split/
+
+# Local design tooling — the ui-ux-pro-max skill and its upstream clone.
+# Everyone installs their own copy; .claude/launch.json stays tracked.
+.claude/skills/
+.claude/ui-ux-pro-max-repo/
+.claude/worktrees/

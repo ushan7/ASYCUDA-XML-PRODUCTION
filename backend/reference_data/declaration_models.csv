@@ -1,0 +1,18 @@
+Type,Code,Description
+EX,1,Permanent Export
+EX,2,Temporary Export
+EX,3,Re-Export
+EX,8,Export for Transit
+IM,4,Permanent Import
+IM,5,Temporary Import
+IM,6,Re-import
+IM,7,Entry for Customs Warehousing
+IM,8,Import For Transit
+IM,9,Other Imports
+MIS,5,Miscellaneous (Deposit)
+MIS,9,Miscellaneous Import
+PEI,4,Import Under Personal Baggage rule
+PEM,4,Personal Effect Mobile
+PEX,1,Personal Effect Export
+PEX,2,Temporary Export of Personal Goods
+TIV,9,Temporary Vehicle Importation

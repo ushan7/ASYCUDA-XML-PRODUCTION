@@ -1,0 +1,1382 @@
+[
+ {
+  "id": "americas_mideast_ae_reexport_marks_and_numbers",
+  "title": "UAE · re-export packing list (marks & numbers, carton ranges, CBM)",
+  "note": "United Arab Emirates / JAFZA free-zone re-export of electronics accessories",
+  "page": "| Marks & Nos. | Carton Nos. | No. of Ctns | Description of Goods | Qty | Unit | Net Weight (KGS) | Gross Weight (KGS) | Measurement (CBM) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| JAFZA/RE-EX/2411 | 1-100 | 100 | MOBILE PHONE ACCESSORIES ASSTD | 5,000 | PCS | 850.000 | 980.000 | 3.600 |\n| JAFZA/RE-EX/2411 | 101-160 | 60 | POWER BANK 10000 MAH | 1,200 | PCS | 540.000 | 612.000 | 2.160 |\n| JAFZA/RE-EX/2411 | 161-190 | 30 | USB DATA CABLE TYPE-C 1M | 3,000 | PCS | 210.000 | 255.000 | 1.080 |\n| TOTAL |  | 190 |  | 9,200 |  | 1,600.000 | 1,847.000 | 6.840 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "MOBILE PHONE ACCESSORIES ASSTD",
+   "quantity": "5,000",
+   "uom": "PCS",
+   "carton_count": "100",
+   "carton_no": "1-100",
+   "gross_weight": "980.000",
+   "net_weight": "850.000"
+  },
+  "expected_totals": {
+   "cartons": "190",
+   "gross_weight": "1,847.000",
+   "net_weight": "1,600.000"
+  },
+  "what_is_different": "A leading Marks & Numbers column repeating the SAME shipping mark on every row — text that looks like a code but is not a part number, and must not be taken as the description. Weights carry three decimals (\"850.000\"), which a thousands-separator heuristic can read as 850000. Carton ranges and a carton count are both printed, plus a CBM measurement column that is summed in the totals row."
+ },
+ {
+  "id": "americas_mideast_br_romaneio_volumes_cubagem",
+  "title": "Brazil · Romaneio de Embarque (volumes, peso bruto/líquido, cubagem, comma decimals)",
+  "note": "Brazil / agricultural commodities, pt-BR numeric convention",
+  "page": "| Item | Descrição das Mercadorias | NCM | Qtde. | Unid. | Volumes | Peso Bruto (kg) | Peso Líquido (kg) | Cubagem (m³) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | CAFÉ TORRADO EM GRÃOS - SACA DE 60 KG | 0901.21.00 | 60 | SC | 60 | 3.660,00 | 3.600,00 | 4,320 |\n| 2 | AÇÚCAR REFINADO - SACA DE 50 KG | 1701.99.00 | 40 | SC | 40 | 2.040,00 | 2.000,00 | 2,880 |\n| 3 | ÓLEO DE SOJA REFINADO 12 x 900 ML | 1507.90.11 | 480 | CX | 480 | 5.808,00 | 5.760,00 | 1,728 |\n| TOTAIS |  |  |  |  | 580 | 11.508,00 | 11.360,00 | 8,928 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "CAFÉ TORRADO EM GRÃOS - SACA DE 60 KG",
+   "quantity": "60",
+   "uom": "SC",
+   "carton_count": "60",
+   "carton_no": "",
+   "gross_weight": "3.660,00",
+   "net_weight": "3.600,00"
+  },
+  "expected_totals": {
+   "cartons": "580",
+   "gross_weight": "11.508,00",
+   "net_weight": "11.360,00"
+  },
+  "what_is_different": "Full pt-BR numeric locale: period as THOUSANDS separator and comma as decimal, so \"3.660,00\" is three thousand six hundred and sixty, not 3.66. The cubagem column uses a bare comma decimal (\"4,320\" = 4.32 m³) which an anglo reader turns into 4,320 m³. Mixed units (SC sacks vs CX boxes) mean the quantity column is deliberately NOT totalled, while volumes and both weights are."
+ },
+ {
+  "id": "americas_mideast_ca_bilingual_metric_and_imperial",
+  "title": "Canada · bilingual packing list with metric AND imperial weight columns side by side",
+  "note": "Canada / food and beverage export, EN-FR bilingual headers",
+  "page": "| Carton No. / No de carton | Description of Goods / Description des marchandises | Qty / Qté | Unit / Unité | Net Wt (kg) / Poids net (kg) | Net Wt (lb) / Poids net (lb) | Gross Wt (kg) / Poids brut (kg) | Gross Wt (lb) / Poids brut (lb) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1-12 | MAPLE SYRUP 500 ML GLASS BOTTLE | 240 | PCS | 120.00 | 264.55 | 138.00 | 304.24 |\n| 13-20 | WILD BLUEBERRY JAM 250 G JAR | 160 | PCS | 85.50 | 188.50 | 99.00 | 218.26 |\n| 21-40 | CANOLA OIL 1 L PET BOTTLE | 400 | PCS | 200.00 | 440.92 | 224.00 | 493.84 |\n| 41-45 | ICEWINE 375 ML VIDAL | 100 | PCS | 45.00 | 99.21 | 52.50 | 115.74 |\n| TOTAL (45 CTNS) / TOTAL (45 cartons) |  | 900 |  | 450.50 | 993.18 | 513.50 | 1,132.08 |",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "MAPLE SYRUP 500 ML GLASS BOTTLE",
+   "quantity": "240",
+   "uom": "PCS",
+   "carton_count": "",
+   "carton_no": "1-12",
+   "gross_weight": "138.00",
+   "net_weight": "120.00"
+  },
+  "expected_totals": {
+   "cartons": "45",
+   "gross_weight": "513.50",
+   "net_weight": "450.50"
+  },
+  "what_is_different": "FOUR weight columns: net and gross each printed twice, once in kg and once in lb, so a parser that grabs the first 'net'-looking and first 'gross'-looking column is right only by luck, and one that grabs the last is wrong by a factor of 2.2. Bilingual EN/FR headers with a slash inside every cell. The carton count is printed nowhere except inside the totals-row label."
+ },
+ {
+  "id": "americas_mideast_eg_bales_bilingual_no_quantity",
+  "title": "Egypt · bilingual packing list in BALES with no quantity column at all",
+  "note": "Egypt / raw cotton and cotton yarn export, Arabic/English",
+  "page": "| بند / Item | وصف البضاعة / Description of Goods | عدد البالات / No. of Bales | أرقام البالات / Bale Nos. | الوزن الصافي (كجم) / Net Weight (Kg) | الوزن القائم (كجم) / Gross Weight (Kg) |\n| --- | --- | --- | --- | --- | --- |\n| 1 | قطن خام جيزة 94 / RAW COTTON GIZA 94 | 40 | 1-40 | 8,800.00 | 9,000.00 |\n| 2 | غزل قطن 30/1 / COTTON YARN 30/1 | 25 | 41-65 | 5,000.00 | 5,150.00 |\n| 3 | لينتر القطن / COTTON LINTERS | 15 | 66-80 | 3,000.00 | 3,090.00 |\n| الإجمالي / TOTAL |  | 80 |  | 16,800.00 | 17,240.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "قطن خام جيزة 94 / RAW COTTON GIZA 94",
+   "quantity": "",
+   "uom": "",
+   "carton_count": "40",
+   "carton_no": "1-40",
+   "gross_weight": "9,000.00",
+   "net_weight": "8,800.00"
+  },
+  "expected_totals": {
+   "cartons": "80",
+   "gross_weight": "17,240.00",
+   "net_weight": "16,800.00"
+  },
+  "what_is_different": "NO quantity and NO unit column exists — the commodity is sold by weight, and the bale count is the only count on the page. A parser that insists on a quantity will borrow the bale count (40) or, worse, the bale-number range (\"1-40\"). The package word is \"بالات / Bales\", never carton. Note \"30/1\" inside a description, which looks like a range or a fraction but is a yarn count."
+ },
+ {
+  "id": "americas_mideast_il_hebrew_english_cartons",
+  "title": "Israel · packing list with Hebrew/English headers (cartons, net/gross kg)",
+  "note": "Israel / drip-irrigation equipment export, RTL Hebrew paired with English",
+  "page": "| פריט / Item | תיאור הטובין / Description of Goods | כמות / Quantity | יחידה / Unit | מס' קרטונים / No. of Cartons | משקל נטו (ק\"ג) / Net Weight (kg) | משקל ברוטו (ק\"ג) / Gross Weight (kg) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | צינור טפטוף 16 מ\"מ / DRIP IRRIGATION PIPE 16 MM | 4,000 | MTR | 20 | 480.00 | 512.00 |\n| 2 | שסתום השקיה 2\" / IRRIGATION VALVE 2 IN | 150 | PCS | 10 | 225.00 | 245.00 |\n| 3 | מסנן דיסקיות 3\" / DISC FILTER 3 IN | 60 | PCS | 6 | 168.00 | 183.00 |\n| סה\"כ / TOTAL |  |  |  | 36 | 873.00 | 940.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "צינור טפטוף 16 מ\"מ / DRIP IRRIGATION PIPE 16 MM",
+   "quantity": "4,000",
+   "uom": "MTR",
+   "carton_count": "20",
+   "carton_no": "",
+   "gross_weight": "512.00",
+   "net_weight": "480.00"
+  },
+  "expected_totals": {
+   "cartons": "36",
+   "gross_weight": "940.00",
+   "net_weight": "873.00"
+  },
+  "what_is_different": "RTL Hebrew headers with the gershayim double-quote inside them (משקל נטו (ק\"ג), מס' קרטונים, סה\"כ) — a naive quote-aware cell splitter breaks on those. Units are mixed (METRES for pipe, PCS for fittings), so the quantity column is deliberately left un-totalled while cartons and both weights are totalled; a parser must not synthesise 4,210 as a quantity total."
+ },
+ {
+  "id": "americas_mideast_ke_bags_per_bag_weight",
+  "title": "Kenya · packing list in bags with a PER-BAG net weight beside the row total",
+  "note": "Kenya / pulses and nuts export, Swahili commodity names in the description",
+  "page": "| Item | Description of Goods | Packing | No. of Bags | Net Wt per Bag (Kgs) | Total Net Wt (Kgs) | Gross Wt (Kgs) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | DRIED PIGEON PEAS (MBAAZI) | PP BAGS 50 KG | 200 | 50.00 | 10,000.00 | 10,120.00 |\n| 2 | GREEN GRAMS (NDENGU) | PP BAGS 50 KG | 150 | 50.00 | 7,500.00 | 7,590.00 |\n| 3 | MACADAMIA NUTS IN SHELL | JUTE BAGS 25 KG | 80 | 25.00 | 2,000.00 | 2,048.00 |\n| TOTAL |  |  | 430 |  | 19,500.00 | 19,758.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "DRIED PIGEON PEAS (MBAAZI)",
+   "quantity": "",
+   "uom": "",
+   "carton_count": "200",
+   "carton_no": "",
+   "gross_weight": "10,120.00",
+   "net_weight": "10,000.00"
+  },
+  "expected_totals": {
+   "cartons": "430",
+   "gross_weight": "19,758.00",
+   "net_weight": "19,500.00"
+  },
+  "what_is_different": "The killer case: TWO net-weight columns, one PER BAG (50.00) and one PER ROW (10,000.00), and both are headed \"Net Wt\". Read the per-bag column as the row net and the declaration says 125 kg instead of 19.5 tonnes — plausible, silent, and 156x wrong. The per-bag column is correctly NOT summed in the totals row, which is the only signal distinguishing it; per-bag x bags must equal the row total on every line. There is no quantity or UOM column — bags are the count — and the packing column repeats the bag weight as free text."
+ },
+ {
+  "id": "americas_mideast_mx_lista_de_empaque_bultos",
+  "title": "Mexico · Lista de Empaque (bultos, peso bruto before peso neto)",
+  "note": "Mexico / copper plumbing fittings, Spanish with fracción arancelaria",
+  "page": "| No. | Descripción de la mercancía | Fracción arancelaria | Cantidad | U. de M. | Bultos | Peso Bruto (kg) | Peso Neto (kg) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | TUBO DE COBRE TIPO M 1/2\" | 7411.10.01 | 500 | PZA | 25 | 640.00 | 585.00 |\n| 2 | VÁLVULA DE BRONCE 3/4\" | 8481.80.99 | 300 | PZA | 12 | 318.00 | 288.00 |\n| 3 | CONECTOR DE LATÓN ROSCADO 1/2\" | 7412.20.00 | 1,200 | PZA | 18 | 246.00 | 216.00 |\n| TOTALES |  |  | 2,000 |  | 55 | 1,204.00 | 1,089.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "TUBO DE COBRE TIPO M 1/2\"",
+   "quantity": "500",
+   "uom": "PZA",
+   "carton_count": "25",
+   "carton_no": "",
+   "gross_weight": "640.00",
+   "net_weight": "585.00"
+  },
+  "expected_totals": {
+   "cartons": "55",
+   "gross_weight": "1,204.00",
+   "net_weight": "1,089.00"
+  },
+  "what_is_different": "GROSS is printed BEFORE NET — the reverse of the usual order — so a positional read swaps them and understates duty-bearing weight. \"Bultos\" is the package word (no \"carton\"/\"caja\" anywhere), \"U. de M.\" is the unit column, and a tariff code column sits between the description and the quantity. Mexican Spanish uses the anglo convention (comma thousands, period decimal), unlike the rest of Latin America."
+ },
+ {
+  "id": "americas_mideast_sa_bilingual_ar_en_cartons",
+  "title": "Saudi Arabia · bilingual Arabic/English packing list (cartons, net/gross kg)",
+  "note": "Saudi Arabia / foodstuffs export, RTL Arabic paired with English in every header",
+  "page": "| م / Item | البيان / Description of Goods | الكمية / Quantity | الوحدة / Unit | عدد الكراتين / No. of Cartons | الوزن الصافي (كجم) / Net Weight (KG) | الوزن القائم (كجم) / Gross Weight (KG) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | تمور معبأة 1 كجم / DATES PACKED 1 KG | 2,400 | PKT | 100 | 2,400.00 | 2,650.00 |\n| 2 | زيت زيتون 750 مل / OLIVE OIL 750 ML | 1,200 | BTL | 100 | 900.00 | 1,080.00 |\n| 3 | قهوة عربية مطحونة / ARABIC COFFEE POWDER | 600 | PKT | 25 | 300.00 | 345.00 |\n| الإجمالي / TOTAL |  | 4,200 |  | 225 | 3,600.00 | 4,075.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "تمور معبأة 1 كجم / DATES PACKED 1 KG",
+   "quantity": "2,400",
+   "uom": "PKT",
+   "carton_count": "100",
+   "carton_no": "",
+   "gross_weight": "2,650.00",
+   "net_weight": "2,400.00"
+  },
+  "expected_totals": {
+   "cartons": "225",
+   "gross_weight": "4,075.00",
+   "net_weight": "3,600.00"
+  },
+  "what_is_different": "Every header is RTL Arabic plus an English gloss in one cell, so the Arabic must be recognised (\"الوزن الصافي\" net vs \"الوزن القائم\" gross — the Saudi term for gross is literally 'standing weight', not 'إجمالي'). Descriptions are bilingual too. OCR emits the cells in visual order while the Arabic runs right-to-left, so header-to-column alignment cannot be inferred from reading direction. Row 1's net weight (2,400.00) is numerically identical to its quantity (2,400) — a column-swap here is invisible."
+ },
+ {
+  "id": "americas_mideast_us_generic_carton_range_lbs_inches",
+  "title": "USA · generic packing list (carton no. ranges, lbs, inch dimensions)",
+  "note": "United States / industrial fasteners export",
+  "page": "| CARTON NOS. | NO. OF CTNS | DESCRIPTION | QTY (PCS) | NET WT (LBS) | GROSS WT (LBS) | DIMENSIONS (IN) L x W x H |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1-20 | 20 | HEX BOLT 1/2 X 3 GALVANIZED | 4,000 | 440.00 | 506.00 | 18 x 12 x 10 |\n| 21-45 | 25 | FLAT WASHER 1/2 SS304 | 2,500 | 625.00 | 712.50 | 16 x 16 x 12 |\n| 46-60 | 15 | HEX NUT 1/2 GALVANIZED | 1,500 | 330.00 | 382.50 | 14 x 14 x 10 |\n| TOTAL | 60 |  | 8,000 | 1,395.00 | 1,601.00 |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "HEX BOLT 1/2 X 3 GALVANIZED",
+   "quantity": "4,000",
+   "uom": "PCS",
+   "carton_count": "20",
+   "carton_no": "1-20",
+   "gross_weight": "506.00",
+   "net_weight": "440.00"
+  },
+  "expected_totals": {
+   "cartons": "60",
+   "gross_weight": "1,601.00",
+   "net_weight": "1,395.00"
+  },
+  "what_is_different": "Two distinct carton columns side by side: a RANGE (\"1-20\") and a COUNT (20). Weights are in POUNDS, not kg, and a free-text dimension column (\"18 x 12 x 10\") sits at the end whose 'x'-separated numbers must not be mistaken for a quantity or a weight. Net precedes gross."
+ },
+ {
+  "id": "americas_mideast_za_pallet_then_carton_hierarchy",
+  "title": "South Africa · pallet-then-carton hierarchy with 'mass' columns and space-thousands decimals",
+  "note": "South Africa / canned deciduous fruit export, SI numeric convention",
+  "page": "| Pallet No. | Cartons per Pallet | Carton Nos. | Description of Goods | Quantity | Unit | Nett Mass (kg) | Gross Mass (kg) | Volume (m³) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | 48 | 1-48 | CANNED PEACH HALVES 410 g x 24 | 1 152 | CAN | 472,32 | 504,00 | 0,432 |\n| 2 | 40 | 49-88 | CANNED APRICOT HALVES 410 g x 24 | 960 | CAN | 393,60 | 420,00 | 0,360 |\n| 3 | 36 | 89-124 | FRUIT COCKTAIL 820 g x 12 | 432 | CAN | 367,20 | 392,40 | 0,324 |\n| TOTAL (3 PALLETS) | 124 |  |  | 2 544 |  | 1 233,12 | 1 316,40 | 1,116 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "CANNED PEACH HALVES 410 g x 24",
+   "quantity": "1 152",
+   "uom": "CAN",
+   "carton_count": "48",
+   "carton_no": "1-48",
+   "gross_weight": "472,32",
+   "net_weight": "504,00"
+  },
+  "expected_totals": {
+   "cartons": "124",
+   "gross_weight": "1 316,40",
+   "net_weight": "1 233,12"
+  },
+  "what_is_different": "A two-level package hierarchy: the row is a PALLET, and the shipping packages are the cartons on it, so three data rows describe 3 pallets AND 124 cartons — pick the wrong level and the declared package count is off by 40x. South African SI convention: SPACE as thousands separator and comma as decimal (\"1 233,12\"), and a space-separated quantity (\"1 152\") that OCR can split into two cells. Headers say \"Mass\", not \"Weight\", and \"Nett\" is spelled with two t's."
+ },
+ {
+  "id": "asia_industrial_cn_chemical_drums_un",
+  "title": "China chemical packing list — drums, tare/net/gross, UN number, no quantity column",
+  "note": "China / bulk industrial chemicals — dangerous-goods packing list, drums only",
+  "page": "| 桶号 DRUM NO. | 品名 COMMODITY | UN编号 UN NO. | 包装 PACKING | 桶数 DRUMS | 皮重 TARE (KGS) | 净重 N.W. (KGS) | 毛重 G.W. (KGS) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1-40 | 冰醋酸 GLACIAL ACETIC ACID 99.8% | UN2789 | 200KG/铁桶 STEEL DRUM | 40 | 320.00 | 8,000.00 | 8,320.00 |\n| 41-70 | 甲醇 METHANOL | UN1230 | 160KG/铁桶 STEEL DRUM | 30 | 255.00 | 4,800.00 | 5,055.00 |\n| 71-90 | 氢氧化钠溶液 SODIUM HYDROXIDE SOLUTION 32% | UN1824 | 250KG/塑桶 PLASTIC DRUM | 20 | 180.00 | 5,000.00 | 5,180.00 |\n| 合计 TOTAL |  |  |  | 90 | 755.00 | 17,800.00 | 18,555.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "冰醋酸 GLACIAL ACETIC ACID 99.8%",
+   "quantity": "",
+   "uom": "",
+   "carton_count": "40",
+   "carton_no": "1-40",
+   "gross_weight": "8,320.00",
+   "net_weight": "8,000.00"
+  },
+  "expected_totals": {
+   "cartons": "90",
+   "gross_weight": "18,555.00",
+   "net_weight": "17,800.00"
+  },
+  "what_is_different": "There is NO quantity column and no unit column — the drums ARE the quantity, and the goods are sold by weight. A parser that insists on a quantity must either leave it empty or take the drum count; it must not silently promote the net weight into the quantity field. THREE weight columns appear, and TARE sits leftmost, so a one-column shift reads tare (320.00) as net. The tare/net/gross relation is exact on every row (net + tare = gross), and the PACKING cell embeds a per-drum weight in kg (200KG/铁桶) that must not be read as a row weight — 200 x 40 = 8,000 matches the printed net, which is the only place that per-unit figure is allowed to be used."
+ },
+ {
+  "id": "asia_industrial_cn_machinery_wooden_cases",
+  "title": "China machinery packing list — wooden cases, L*W*H cm, N.W./G.W. per case",
+  "note": "China / heavy machine tools — bilingual 中英 packing list attached to a CNC lathe shipment",
+  "page": "| 箱号 CASE NO. | 品名 DESCRIPTION OF GOODS | 数量 QTY | 单位 UNIT | 尺寸 MEASUREMENT L*W*H (CM) | 净重 N.W.(KGS) | 毛重 G.W.(KGS) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | 数控车床 CNC LATHE CK6150 | 2 | SET | 320*180*195 | 2,400.00 | 2,650.00 |\n| 2 | 液压卡盘 HYDRAULIC CHUCK 8\" | 6 | PCS | 120*80*75 | 480.00 | 560.00 |\n| 3 | 刀塔总成 TURRET ASSEMBLY | 4 | PCS | 110*70*60 | 320.00 | 385.00 |\n| 合计 TOTAL: 3 WOODEN CASES 木箱 |  |  |  |  | 3,200.00 | 3,595.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "数控车床 CNC LATHE CK6150",
+   "quantity": "2",
+   "uom": "SET",
+   "carton_count": "",
+   "carton_no": "1",
+   "gross_weight": "2,650.00",
+   "net_weight": "2,400.00"
+  },
+  "expected_totals": {
+   "cartons": "3",
+   "gross_weight": "3,595.00",
+   "net_weight": "3,200.00"
+  },
+  "what_is_different": "One row = one wooden case, so the case NUMBER column (1, 2, 3) is a single number, not a count — a parser that sums it gets 6 packages instead of 3. The package count is printed only inside the totals LABEL cell (\"TOTAL: 3 WOODEN CASES\"), never in its own column. The dimension cell (320*180*195) is a bare numeric string with asterisks and must not be mistaken for a quantity or a weight. The qty column deliberately has NO total, because the rows mix SET and PCS — the totals row fills only the two weight columns, so the parser must not require every numeric column to be totalled."
+ },
+ {
+  "id": "asia_industrial_cn_solar_pallets_per_pallet",
+  "title": "China solar-panel packing list — pallets, pcs per pallet, kg per pallet x pallets",
+  "note": "China / PV modules — pallet-level packing list for a 20 GP of mono modules",
+  "page": "| 托盘号 PALLET NO. | 组件型号 MODULE TYPE | 每托片数 PCS/PALLET | 托盘数 PALLETS | 总片数 TOTAL PCS | 每托毛重 G.W./PALLET (KG) | 总净重 TOTAL N.W. (KG) | 总毛重 TOTAL G.W. (KG) | 托盘尺寸 PALLET SIZE (MM) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1-10 | 单晶光伏组件 MONO PV MODULE JKM545M-72HL4 | 31 | 10 | 310 | 890.0 | 8,600.0 | 8,900.0 | 2278x1134x35 |\n| 11-16 | 单晶光伏组件 MONO PV MODULE JKM450M-60HL4 | 31 | 6 | 186 | 745.0 | 4,320.0 | 4,470.0 | 1903x1134x30 |\n| 17-20 | 单晶光伏组件 MONO PV MODULE JKM410M-54HL4 | 36 | 4 | 144 | 720.0 | 2,760.0 | 2,880.0 | 1722x1134x30 |\n| 合计 TOTAL |  |  | 20 | 640 |  | 15,680.0 | 16,250.0 |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "单晶光伏组件 MONO PV MODULE JKM545M-72HL4",
+   "quantity": "310",
+   "uom": "PCS",
+   "carton_count": "10",
+   "carton_no": "1-10",
+   "gross_weight": "8,900.0",
+   "net_weight": "8,600.0"
+  },
+  "expected_totals": {
+   "cartons": "20",
+   "gross_weight": "16,250.0",
+   "net_weight": "15,680.0"
+  },
+  "what_is_different": "Both a PER-PALLET and a PER-ROW figure are printed for the same two things: 31 pcs/pallet x 10 pallets = 310 total pcs, and 890.0 kg/pallet x 10 pallets = 8,900.0 kg total G.W. Reading G.W./PALLET as the row gross understates the shipment by a factor of ten and the printed total then refuses to reconcile — this fixture exists to catch exactly that. Note the per-pallet gross column is deliberately NOT totalled (890+745+720 is a meaningless number and the document leaves that cell blank), so the parser must accept a totals row with holes in it. Two rows share the same pcs/pallet value (31) while differing in pallets, so the multiplication cannot be faked. Pallet numbers are ranges; there is no carton level below the pallet."
+ },
+ {
+  "id": "asia_industrial_cn_steel_bundles_theoretical",
+  "title": "China steel packing list — bundles, theoretical weight vs actual net/gross",
+  "note": "China / steel mill export — 中英 packing list where the mill prints both weight bases",
+  "page": "| 捆号 BUNDLE NO. | 品名及规格 DESCRIPTION & SIZE | 捆数 BUNDLES | 支数 PCS | 理论重量 THEORETICAL WEIGHT (KGS) | 实际净重 ACTUAL N.W. (KGS) | 实际毛重 ACTUAL G.W. (KGS) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1-12 | 热轧角钢 HOT ROLLED ANGLE BAR 50x50x5 | 12 | 480 | 21,600.000 | 21,384.000 | 21,504.000 |\n| 13-20 | 螺纹钢 DEFORMED BAR HRB400 Φ12 | 8 | 1,600 | 14,208.000 | 14,120.000 | 14,200.000 |\n| 21-26 | 圆钢 ROUND BAR Q235 Φ20 | 6 | 300 | 7,398.000 | 7,350.000 | 7,410.000 |\n| 合计 TOTAL |  | 26 | 2,380 | 43,206.000 | 42,854.000 | 43,114.000 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "热轧角钢 HOT ROLLED ANGLE BAR 50x50x5",
+   "quantity": "480",
+   "uom": "PCS",
+   "carton_count": "12",
+   "carton_no": "1-12",
+   "gross_weight": "21,504.000",
+   "net_weight": "21,384.000"
+  },
+  "expected_totals": {
+   "cartons": "26",
+   "gross_weight": "43,114.000",
+   "net_weight": "42,854.000"
+  },
+  "what_is_different": "THREE weight columns where the leftmost one is not a weight the customs declaration may use: theoretical weight is the mill's calculated figure (section weight x length x pcs) and always sits slightly above the actual net, close enough that reading it as the net looks entirely plausible — here it would overstate the consignment by 352 kg. All three columns total correctly, so arithmetic alone cannot choose between them; only the header word 理论/THEORETICAL can. Bundle numbers are ranges alongside a separate bundle count (1-12 / 12, then 13-20 / 8 where the range end no longer equals the count). Weights carry three decimals in the metric-tonne-derived kg convention, and the size cells contain Φ and x separators that OCR frequently reflows into the neighbouring numeric column."
+ },
+ {
+  "id": "asia_industrial_in_pharma_batch_expiry_cartons",
+  "title": "India pharma packing list — batch, mfg/exp dates, shipper cartons, lakh digit grouping",
+  "note": "India / formulations export — packing list accompanying a WHO-GMP tablet consignment",
+  "page": "| S.No. | Product Description | Batch No. | Mfg. Date | Exp. Date | Pack | Qty. (Tabs) | Shipper Cartons | Net Wt. (Kgs) | Gross Wt. (Kgs) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | AZITHROMYCIN TABLETS IP 250 MG | AZ2411A | 03/2026 | 02/2029 | 6 x 10 Tab | 1,20,000 | 25 | 210.500 | 268.750 |\n| 2 | PANTOPRAZOLE TABLETS IP 40 MG | PN2408B | 01/2026 | 12/2028 | 10 x 10 Tab | 90,000 | 18 | 162.000 | 205.200 |\n| 3 | CEFIXIME TABLETS IP 200 MG | CX2412C | 04/2026 | 03/2029 | 10 x 10 Tab | 60,000 | 12 | 108.000 | 138.600 |\n| Total |  |  |  |  |  | 2,70,000 | 55 | 480.500 | 612.550 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "AZITHROMYCIN TABLETS IP 250 MG",
+   "quantity": "1,20,000",
+   "uom": "TAB",
+   "carton_count": "25",
+   "carton_no": "",
+   "gross_weight": "268.750",
+   "net_weight": "210.500"
+  },
+  "expected_totals": {
+   "cartons": "55",
+   "gross_weight": "612.550",
+   "net_weight": "480.500"
+  },
+  "what_is_different": "Indian lakh digit grouping: 1,20,000 and 2,70,000 group the leading digits in TWOs, so a western thousands-parser reads 120 or 1.20 and the printed total stops matching. There is no UOM column — the unit exists only parenthesised in the header \"Qty. (Tabs)\", so the expected uom TAB has to be lifted out of the header text (relax this to empty if header-embedded units are out of scope). Two date columns (Mfg./Exp.) in mm/yyyy form sit between the batch code and the quantity and are pure distractors. Weights print three decimals, which is unusual and easily truncated. Cartons are counted but never numbered."
+ },
+ {
+  "id": "asia_industrial_jp_auto_parts_box_no",
+  "title": "Japan auto-parts packing list — part no, box no ranges, box count, gross/net",
+  "note": "Japan / OEM automotive spare parts — 日英 packing list from a Toyota-group parts exporter",
+  "page": "| 品番 PART NO. | 品名 DESCRIPTION | 箱番号 BOX NO. | 箱数 BOXES | 数量 Q'TY | 単位 UNIT | 正味重量 N.W.(KG) | 総重量 G.W.(KG) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 90919-01253 | イグニッションプラグ SPARK PLUG | 1-4 | 4 | 4,000 | PCS | 168.0 | 184.0 |\n| 17801-21050 | エアフィルター AIR FILTER | 5-6 | 2 | 600 | PCS | 96.0 | 108.0 |\n| 04465-33471 | ブレーキパッド BRAKE PAD | 7-10 | 4 | 800 | PCS | 640.0 | 692.0 |\n| 合計 TOTAL |  |  | 10 | 5,400 | PCS | 904.0 | 984.0 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "イグニッションプラグ SPARK PLUG",
+   "quantity": "4,000",
+   "uom": "PCS",
+   "carton_count": "4",
+   "carton_no": "1-4",
+   "gross_weight": "184.0",
+   "net_weight": "168.0"
+  },
+  "expected_totals": {
+   "cartons": "10",
+   "gross_weight": "984.0",
+   "net_weight": "904.0"
+  },
+  "what_is_different": "Box NUMBER (a hyphenated range \"1-4\") and box COUNT (\"4\") are printed as two separate columns whose values coincidentally match on row 1 and diverge on row 2 (\"5-6\" vs 2) — the classic way a parser proves it is reading 箱数 and not the last number of the range. Part numbers contain hyphens and digits (90919-01253) and must not be captured as a quantity or a carton range. Weights carry a single decimal place; the totals row repeats the unit token PCS in the UNIT column."
+ },
+ {
+  "id": "asia_industrial_kr_electronics_cbm",
+  "title": "Korea electronics packing list — MODEL, Q'TY, CTN, N/W, G/W, CBM",
+  "note": "South Korea / consumer electronics — 한영 packing list for a mixed AV container",
+  "page": "| 모델명 MODEL | 품명 DESCRIPTION | 수량 Q'TY | 단위 UNIT | 카톤수 CTN | 순중량 N/W (KGS) | 총중량 G/W (KGS) | 용적 CBM |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| SM-LED43A | 43\" LED TV | 200 | PCS | 100 | 1,400.0 | 1,650.0 | 12.500 |\n| SM-SB21B | SOUNDBAR 2.1CH | 300 | PCS | 50 | 375.0 | 450.0 | 4.250 |\n| SM-BT05C | BLUETOOTH SPEAKER | 480 | PCS | 40 | 192.0 | 232.0 | 2.800 |\n| 합계 TOTAL |  | 980 | PCS | 190 | 1,967.0 | 2,332.0 | 19.550 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "43\" LED TV",
+   "quantity": "200",
+   "uom": "PCS",
+   "carton_count": "100",
+   "carton_no": "",
+   "gross_weight": "1,650.0",
+   "net_weight": "1,400.0"
+  },
+  "expected_totals": {
+   "cartons": "190",
+   "gross_weight": "2,332.0",
+   "net_weight": "1,967.0"
+  },
+  "what_is_different": "Four numeric columns in a row (CTN, N/W, G/W, CBM) with no carton-number column at all — the only package information is a COUNT. The abbreviated Korean-market headers N/W and G/W use a slash rather than the dot form N.W./G.W., and CBM is a third small decimal that a column-shifted parser will happily read as a weight (12.500 looks exactly like a plausible kg figure). Row 1 has more cartons (100) than the row below has quantity (300), so package count and quantity cannot be told apart by magnitude."
+ },
+ {
+  "id": "asia_industrial_th_food_cases_best_before",
+  "title": "Thailand food packing list — cases, best-before, pack size, storage temperature",
+  "note": "Thailand / processed food exporter — Thai-English packing list, mixed-temperature LCL",
+  "page": "| ลำดับ No. | รายการสินค้า / DESCRIPTION | วันหมดอายุ / BEST BEFORE | จำนวน / CASES | ขนาดบรรจุ / PACK SIZE | น้ำหนักสุทธิ / NET WEIGHT (KG) | น้ำหนักรวม / GROSS WEIGHT (KG) | อุณหภูมิ / TEMP (°C) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | ข้าวหอมมะลิ / THAI HOM MALI RICE 5 KG | 15/06/2027 | 400 | 4 x 5 KG | 8,000.00 | 8,480.00 | AMBIENT |\n| 2 | กุ้งต้มสุกแช่แข็ง / FROZEN COOKED SHRIMP | 20/03/2027 | 250 | 10 x 1 KG | 2,500.00 | 2,825.00 | -18 |\n| 3 | น้ำพริกเผา / ROASTED CHILLI PASTE IN OIL | 01/12/2026 | 120 | 24 x 227 G | 653.76 | 806.40 | AMBIENT |\n| รวมทั้งสิ้น / GRAND TOTAL |  |  | 770 |  | 11,153.76 | 12,111.40 |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "ข้าวหอมมะลิ / THAI HOM MALI RICE 5 KG",
+   "quantity": "",
+   "uom": "",
+   "carton_count": "400",
+   "carton_no": "",
+   "gross_weight": "8,480.00",
+   "net_weight": "8,000.00"
+  },
+  "expected_totals": {
+   "cartons": "770",
+   "gross_weight": "12,111.40",
+   "net_weight": "11,153.76"
+  },
+  "what_is_different": "No quantity column and no carton numbers — only a case COUNT, so the packages are the only countable thing on the page. The PACK SIZE cell holds a multiplication in mixed units (4 x 5 KG, 24 x 227 G) that reconstructs the net weight only after a gram-to-kilogram conversion: 24 x 227 g = 5.448 kg x 120 cases = 653.76 kg, which is why row 3 is the only one whose net is not a round number. A negative number (-18) sits in the last column and must never be absorbed into a weight. Thai script headers with no Latin fallback on ลำดับ/จำนวน, and dd/mm/yyyy dates that a US date parser will invert (15/06 has no 15th month, but 01/12 silently flips)."
+ },
+ {
+  "id": "asia_industrial_tw_hardware_shared_carton_range",
+  "title": "Taiwan hardware packing list — one carton range shared by two product rows",
+  "note": "Taiwan / fasteners — 繁中英 packing list with shipping marks, two SKUs packed together",
+  "page": "| 唛头 SHIPPING MARKS | 箱號 CARTON NO. | 品名 DESCRIPTION | 規格 SPEC. | 數量 Q'TY | 單位 UNIT | 淨重 N.W.(KGS) | 毛重 G.W.(KGS) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| ACE/TPE/2401 | 1-20 | HEX BOLT 六角螺栓 | M10 x 50 | 8,000 | PCS | 320.00 | 348.00 |\n| ACE/TPE/2401 | 1-20 | HEX NUT 六角螺帽 | M10 | 8,000 | PCS | 160.00 | 172.00 |\n| ACE/TPE/2401 | 21-30 | FLAT WASHER 平墊圈 | M10 | 10,000 | PCS | 60.00 | 76.00 |\n| TOTAL 合計 : 30 CTNS |  |  |  | 26,000 | PCS | 540.00 | 596.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "HEX BOLT 六角螺栓",
+   "quantity": "8,000",
+   "uom": "PCS",
+   "carton_count": "",
+   "carton_no": "1-20",
+   "gross_weight": "348.00",
+   "net_weight": "320.00"
+  },
+  "expected_totals": {
+   "cartons": "30",
+   "gross_weight": "596.00",
+   "net_weight": "540.00"
+  },
+  "what_is_different": "The killer case: rows 1 and 2 share the SAME carton range 1-20 because bolts and nuts are packed together. Expanding each row's range and adding them gives 20+20+10 = 50 cartons, but the document prints 30 — the ranges must be UNIONED, not summed. The weights of the shared cartons are split between the two rows, so the weight columns still add up normally while the carton column does not. Marks & numbers occupy the first column, so the leftmost cell is neither a line number nor a description. Traditional-character headers (數量/淨重/毛重) differ from the simplified forms."
+ },
+ {
+  "id": "asia_industrial_vn_seafood_master_inner",
+  "title": "Vietnam seafood packing list — master cartons, inners per master, frozen net weight",
+  "note": "Vietnam / frozen seafood — song ngữ Việt-Anh packing list, European decimal comma",
+  "page": "| STT | Tên hàng hóa / DESCRIPTION OF GOODS | Số thùng / MASTER CARTONS | Số hộp mỗi thùng / INNERS PER CARTON | Tổng số hộp / TOTAL INNERS | Trọng lượng tịnh / NET WEIGHT (KG) | Trọng lượng cả bì / GROSS WEIGHT (KG) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | Tôm sú đông lạnh bỏ đầu / FROZEN BLACK TIGER SHRIMP HOSO 16/20 | 200 | 6 | 1.200 | 1.200,00 | 1.380,00 |\n| 2 | Cá tra phi lê đông lạnh / FROZEN PANGASIUS FILLET | 150 | 4 | 600 | 1.500,00 | 1.695,00 |\n| 3 | Mực ống đông lạnh / FROZEN SQUID TUBE U/10 | 80 | 5 | 400 | 800,00 | 928,00 |\n| TỔNG CỘNG / TOTAL |  | 430 |  | 2.200 | 3.500,00 | 4.003,00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Tôm sú đông lạnh bỏ đầu / FROZEN BLACK TIGER SHRIMP HOSO 16/20",
+   "quantity": "1.200",
+   "uom": "",
+   "carton_count": "200",
+   "carton_no": "",
+   "gross_weight": "1.380,00",
+   "net_weight": "1.200,00"
+  },
+  "expected_totals": {
+   "cartons": "430",
+   "gross_weight": "4.003,00",
+   "net_weight": "3.500,00"
+  },
+  "what_is_different": "Vietnamese numeric locale: dot is the THOUSANDS separator and comma the decimal, so row 1 prints 1.200 inners and 1.200,00 kg net — the same glyph sequence meaning 1200 in one column and 1200.00 in the other. Read as en-US, 1.200,00 becomes 1.2 and the whole consignment collapses. Two levels of packaging (master carton and inner box) with the multiplication printed: 200 masters x 6 inners = 1.200 inners; the DECLARABLE package count is the master carton, so the parser must take 430 and not 2.200. Full Vietnamese diacritics in headers (Trọng lượng tịnh / cả bì) and in every description. There is no UOM column at all — the counted unit only appears as the word \"hộp\" inside a header."
+ },
+ {
+  "id": "asia_textile_bd_knitwear_size_breakdown",
+  "title": "Bangladesh · knitwear packing list (style, colour, S/M/L/XL breakdown per carton)",
+  "note": "Bangladesh / knit garments — Chittagong RMG buyer-nominated format",
+  "page": "| CARTON NO. | STYLE NO. | DESCRIPTION OF GOODS | COLOUR | S | M | L | XL | PCS/CTN | NO. OF CTNS | TOTAL PCS | N.W. (KGS) | G.W. (KGS) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1-25 | KN-2201 | MEN'S KNIT POLO SHIRT | NAVY | 3 | 6 | 6 | 3 | 18 | 25 | 450 | 112.50 | 127.50 |\n| 26-55 | KN-2201 | MEN'S KNIT POLO SHIRT | WHITE | 4 | 8 | 8 | 4 | 24 | 30 | 720 | 180.00 | 202.50 |\n| 56-75 | KN-2308 | LADIES' KNIT CARDIGAN | BLACK | 2 | 5 | 5 | 2 | 14 | 20 | 280 | 84.00 | 96.00 |\n| 76-100 | KN-2308 | LADIES' KNIT CARDIGAN | GREY MELANGE | 3 | 6 | 6 | 5 | 20 | 25 | 500 | 150.00 | 167.50 |\n| TOTAL |  |  |  |  |  |  |  |  | 100 | 1950 | 526.50 | 593.50 |\n",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "MEN'S KNIT POLO SHIRT",
+   "quantity": "450",
+   "uom": "PCS",
+   "carton_count": "25",
+   "carton_no": "1-25",
+   "gross_weight": "127.50",
+   "net_weight": "112.50"
+  },
+  "expected_totals": {
+   "cartons": "100",
+   "gross_weight": "593.50",
+   "net_weight": "526.50"
+  },
+  "what_is_different": "Four bare single-letter size columns (S, M, L, XL) that are per-carton assortment counts, not quantities — they sum to PCS/CTN, and the totals row deliberately leaves them BLANK because a per-carton assortment has no meaningful column sum. Any of S/M/L/XL landing in the quantity slot yields 3 pieces instead of 450. Same style repeated across two colour rows, so description alone does not identify a row."
+ },
+ {
+  "id": "asia_textile_cn_garment_carton_range_meas",
+  "title": "China · garment packing list (C/NO range, QTY/CTN, N.W./G.W., MEAS CBM)",
+  "note": "China / apparel export — the canonical Guangdong garment factory packing list",
+  "page": "| C/NO. | DESCRIPTION OF GOODS | CTNS | QTY/CTN (PCS) | TOTAL QTY (PCS) | N.W.(KGS) | G.W.(KGS) | MEAS.(CBM) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1-50 | MEN'S COTTON T-SHIRT | 50 | 60 | 3000 | 525.00 | 600.00 | 4.500 |\n| 51-90 | LADIES' POLYESTER BLOUSE | 40 | 48 | 1920 | 384.00 | 440.00 | 3.600 |\n| 91-120 | MEN'S DENIM JEANS | 30 | 24 | 720 | 396.00 | 435.00 | 3.300 |\n| 121-150 | KIDS' KNIT HOODIE | 30 | 36 | 1080 | 315.00 | 360.00 | 2.700 |\n| TOTAL |  | 150 |  | 6720 | 1620.00 | 1835.00 | 14.100 |\n",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "MEN'S COTTON T-SHIRT",
+   "quantity": "3000",
+   "uom": "PCS",
+   "carton_count": "50",
+   "carton_no": "1-50",
+   "gross_weight": "600.00",
+   "net_weight": "525.00"
+  },
+  "expected_totals": {
+   "cartons": "150",
+   "gross_weight": "1835.00",
+   "net_weight": "1620.00"
+  },
+  "what_is_different": "Two carton columns that mean different things (C/NO. is a RANGE identifier, CTNS is the count) plus a per-carton RATE column (QTY/CTN) sitting immediately beside the row total (TOTAL QTY). Reading QTY/CTN as the quantity understates the shipment 20-60x; deriving the carton count from the C/NO range (50) must agree with the printed CTNS (50). MEAS.(CBM) is a volume, not a weight, and must not reach any weight slot."
+ },
+ {
+  "id": "asia_textile_id_furniture_pallet_carton",
+  "title": "Indonesia · furniture packing list (pallet→carton hierarchy, dimensions, CBM)",
+  "note": "Indonesia / wooden furniture — Jepara exporter, bilingual ID/EN",
+  "page": "| PALLET NO. | CARTON NO. | URAIAN BARANG / DESCRIPTION | JUMLAH KOLI / CTNS | QTY (SET) | UKURAN / DIMENSION (CM) | BERAT BERSIH / N.W (KG) | BERAT KOTOR / G.W (KG) | VOLUME / CBM |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| P-01 | 1-20 | KURSI MAKAN / DINING CHAIR | 20 | 40 | 60 x 55 x 90 | 480.00 | 540.00 | 5.940 |\n| P-02 | 21-32 | MEJA MAKAN / DINING TABLE | 12 | 12 | 160 x 90 x 20 | 600.00 | 660.00 | 3.456 |\n| P-03 | 33-50 | LEMARI SAMPING / SIDE CABINET | 18 | 18 | 100 x 45 x 80 | 720.00 | 786.00 | 6.480 |\n| P-04 | 51-60 | MEJA KOPI / COFFEE TABLE | 10 | 20 | 110 x 60 x 45 | 280.00 | 315.00 | 2.970 |\n| TOTAL 4 PALLETS | 1-60 |  | 60 | 90 |  | 2080.00 | 2301.00 | 18.846 |\n",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "KURSI MAKAN / DINING CHAIR",
+   "quantity": "40",
+   "uom": "SET",
+   "carton_count": "20",
+   "carton_no": "1-20",
+   "gross_weight": "540.00",
+   "net_weight": "480.00"
+  },
+  "expected_totals": {
+   "cartons": "60",
+   "gross_weight": "2301.00",
+   "net_weight": "2080.00"
+  },
+  "what_is_different": "Two levels of packing on the same row: 4 PALLETS containing 60 CARTONS. The declarable package count is the carton count (60), not the pallet count (4), yet 'PALLET NO.' matches the same carton-identifier vocabulary and the totals cell reads 'TOTAL 4 PALLETS' — a totals parser that harvests the first number from the label declares a 4-package shipment. DIMENSION is a per-carton L x W x H triple in one cell (must not be split into three numbers or read as a quantity), and CBM = LxWxH/1e6 x CTNS on every row. 'JUMLAH KOLI' is the Indonesian package count while a bare 'JUMLAH' would be the quantity."
+ },
+ {
+  "id": "asia_textile_in_home_textile_bales",
+  "title": "India · home-textile packing list (bale numbers, Net/Gross Wt. in KGS)",
+  "note": "India / home textiles — Karur/Panipat made-ups exporter, baled not cartoned",
+  "page": "| Sr. No. | Bale No. | Description of Goods | No. of Bales | Qty (Pcs) | Net Wt. (KGS) | Gross Wt. (KGS) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | 1-12 | COTTON BED SHEET SET | 12 | 600 | 480.00 | 516.00 |\n| 2 | 13-30 | TERRY BATH TOWEL | 18 | 1080 | 756.00 | 810.00 |\n| 3 | 31-40 | COTTON KITCHEN NAPKIN | 10 | 2000 | 300.00 | 330.00 |\n| 4 | 41-50 | PRINTED CUSHION COVER | 10 | 1500 | 225.00 | 255.00 |\n|  |  | TOTAL | 50 | 5180 | 1761.00 | 1911.00 |\n",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "COTTON BED SHEET SET",
+   "quantity": "600",
+   "uom": "PCS",
+   "carton_count": "12",
+   "carton_no": "1-12",
+   "gross_weight": "516.00",
+   "net_weight": "480.00"
+  },
+  "expected_totals": {
+   "cartons": "50",
+   "gross_weight": "1911.00",
+   "net_weight": "1761.00"
+  },
+  "what_is_different": "The package word is BALE, not carton/case/box/pallet — 'No. of Bales' is a package COUNT and 'Bale No.' a package RANGE, and a vocabulary built only on carton synonyms maps neither, losing the entire package basis. The totals row also puts the word TOTAL in the DESCRIPTION column (columns 1 and 2 are blank), so a totals detector anchored on the first cell will read the summary line as a fifth goods row."
+ },
+ {
+  "id": "asia_textile_kh_garment_po_style_colour",
+  "title": "Cambodia · garment packing list (PO/style/colour, shared style across rows)",
+  "note": "Cambodia / cut-make-trim garments — Phnom Penh factory, buyer PO driven",
+  "page": "| PO NO. | STYLE NO. | COLOUR | DESCRIPTION | CTN NO. | CTNS | QTY (PCS) | N.W. (KGS) | G.W. (KGS) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| PO-4471 | CB-1120 | NAVY | MEN'S WOVEN SHIRT | 1-35 | 35 | 1400 | 280.00 | 322.00 |\n| PO-4471 | CB-1120 | WHITE | MEN'S WOVEN SHIRT | 36-60 | 25 | 1000 | 200.00 | 230.00 |\n| PO-4488 | CB-2205 | BLACK | LADIES' TROUSER | 61-100 | 40 | 960 | 384.00 | 424.00 |\n| PO-4488 | CB-2205 | KHAKI | LADIES' TROUSER | 101-120 | 20 | 480 | 192.00 | 212.00 |\n| TOTAL |  |  |  | 1-120 | 120 | 3840 | 1056.00 | 1188.00 |\n",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "MEN'S WOVEN SHIRT",
+   "quantity": "1400",
+   "uom": "PCS",
+   "carton_count": "35",
+   "carton_no": "1-35",
+   "gross_weight": "322.00",
+   "net_weight": "280.00"
+  },
+  "expected_totals": {
+   "cartons": "120",
+   "gross_weight": "1188.00",
+   "net_weight": "1056.00"
+  },
+  "what_is_different": "Four rows but only two distinct descriptions and two distinct styles — rows are distinguished ONLY by colour, so any dedupe/merge on description or style collapses 3840 pieces into 2360. Three separate identifier columns (PO NO., STYLE NO., CTN NO.) all look like codes; the carton RANGES are contiguous and non-overlapping across rows and must reconstruct exactly to the printed total of 120, which is the check that catches a range read as a count."
+ },
+ {
+  "id": "asia_textile_lk_tea_chests_net_tare_gross",
+  "title": "Sri Lanka · tea packing list (chests, NET PER CHEST, tare, gross)",
+  "note": "Sri Lanka / bulk tea — Colombo auction lots, net + tare = gross",
+  "page": "| LOT NO. | INVOICE NO. | GRADE / DESCRIPTION | NO. OF CHESTS | NET PER CHEST (KGS) | TOTAL NET (KGS) | TARE (KGS) | GROSS (KGS) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| L-1024 | 8801 | BOPF (BROKEN ORANGE PEKOE FANNINGS) | 40 | 50.00 | 2000.00 | 160.00 | 2160.00 |\n| L-1025 | 8802 | OP1 (ORANGE PEKOE 1) | 25 | 45.00 | 1125.00 | 100.00 | 1225.00 |\n| L-1031 | 8803 | PEKOE | 30 | 48.00 | 1440.00 | 120.00 | 1560.00 |\n| L-1040 | 8804 | DUST 1 | 15 | 55.00 | 825.00 | 60.00 | 885.00 |\n| TOTAL |  |  | 110 |  | 5390.00 | 440.00 | 5830.00 |\n",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "BOPF (BROKEN ORANGE PEKOE FANNINGS)",
+   "quantity": "",
+   "uom": "",
+   "carton_count": "40",
+   "carton_no": "",
+   "gross_weight": "2160.00",
+   "net_weight": "2000.00"
+  },
+  "expected_totals": {
+   "cartons": "110",
+   "gross_weight": "5830.00",
+   "net_weight": "5390.00"
+  },
+  "what_is_different": "The single most dangerous packing-list shape: TWO columns whose header contains the word NET, one a PER-CHEST rate (NET PER CHEST) and one the row total (TOTAL NET). 'PER CHEST' is not a carton/box/pallet phrasing, so a rate detector keyed on package words does not fire, and the first NET-matching column wins — declaring 50 kg instead of 2000 kg on row 1. Also: the package word is CHEST (no carton synonym matches), there is no quantity column at all (tea is sold by weight), and the third weight column is TARE, which is neither net nor gross but satisfies net + tare = gross on every row and in the totals."
+ },
+ {
+  "id": "asia_textile_my_electronics_serial_ranges",
+  "title": "Malaysia · electronics packing list (serial-number ranges, units/ctn, cartons)",
+  "note": "Malaysia / consumer networking hardware — Penang assembly plant",
+  "page": "| CARTON NO. | MODEL | DESCRIPTION | SERIAL NO. RANGE | UNITS/CTN | NO. OF CTNS | QTY (UNITS) | N.W. (KG) | G.W. (KG) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1-25 | RTR-900X | WIRELESS ROUTER | SN0001001-SN0001500 | 20 | 25 | 500 | 175.00 | 212.50 |\n| 26-50 | SWH-1600 | NETWORK SWITCH 16-PORT | SN0002001-SN0002300 | 12 | 25 | 300 | 240.00 | 285.00 |\n| 51-70 | APX-450 | ACCESS POINT | SN0003001-SN0003200 | 10 | 20 | 200 | 90.00 | 116.00 |\n| 71-80 | PSU-12V | POWER ADAPTER 12V | SN0004001-SN0004400 | 40 | 10 | 400 | 60.00 | 78.00 |\n| TOTAL |  |  |  |  | 80 | 1400 | 565.00 | 691.50 |\n",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "WIRELESS ROUTER",
+   "quantity": "500",
+   "uom": "UNITS",
+   "carton_count": "25",
+   "carton_no": "1-25",
+   "gross_weight": "212.50",
+   "net_weight": "175.00"
+  },
+  "expected_totals": {
+   "cartons": "80",
+   "gross_weight": "691.50",
+   "net_weight": "565.00"
+  },
+  "what_is_different": "A SECOND hyphenated range column (SERIAL NO. RANGE) sitting beside the carton range: both are 'start-end' identifiers, but only the carton one is a package basis — counting the serial range as cartons declares 500 packages instead of 25. 'SERIAL NO.' also collides with the line-number vocabulary. UNITS/CTN is a rate whose row-2 and row-4 values (12, 40) bracket the carton counts, and QTY (UNITS) sits AFTER the carton count rather than before it, so column order gives no help. Serial-range width equals QTY on every row (1001-1500 = 500), the one arithmetic self-check this format offers."
+ },
+ {
+  "id": "asia_textile_pk_bedlinen_pcs_per_ctn",
+  "title": "Pakistan · bedlinen packing list (CTN NO., PCS/CTN, TOTAL PCS, N.W, G.W)",
+  "note": "Pakistan / bedlinen — Karachi home-textile mill, imperial size in the description",
+  "page": "| CTN NO. | DESCRIPTION | NO. OF CTNS | PCS/CTN | TOTAL PCS | N.W (KGS) | G.W (KGS) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1-30 | BLEACHED BED SHEET 90\"x100\" | 30 | 20 | 600 | 300.00 | 336.00 |\n| 31-70 | PILLOW CASE 20\"x30\" | 40 | 100 | 4000 | 400.00 | 452.00 |\n| 71-95 | DUVET COVER SET 3 PCS | 25 | 12 | 300 | 375.00 | 410.00 |\n| 96-120 | BOLSTER COVER 16\"x40\" | 25 | 60 | 1500 | 225.00 | 252.50 |\n| GRAND TOTAL |  | 120 | | 6400 | 1300.00 | 1450.50 |\n",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "BLEACHED BED SHEET 90\"x100\"",
+   "quantity": "600",
+   "uom": "PCS",
+   "carton_count": "30",
+   "carton_no": "1-30",
+   "gross_weight": "336.00",
+   "net_weight": "300.00"
+  },
+  "expected_totals": {
+   "cartons": "120",
+   "gross_weight": "1450.50",
+   "net_weight": "1300.00"
+  },
+  "what_is_different": "PCS/CTN and TOTAL PCS are adjacent and both plausible quantities, and on row 2 the rate (100) is LARGER than the carton count (40) — the usual 'the bigger number is the total' heuristic picks the wrong one on row 2 and the right one on row 1, so a single document parses inconsistently. Descriptions carry inch marks (90\"x100\") that look like stray quote characters to OCR, and one description ends in '3 PCS' which must not be harvested as the row quantity."
+ },
+ {
+  "id": "asia_textile_th_rubber_bales_weight_only",
+  "title": "Thailand · rubber goods packing list (bales, weight only, no quantity column)",
+  "note": "Thailand / natural rubber — Hat Yai processor, bilingual TH/EN headers",
+  "page": "| หมายเลขหีบห่อ / BALE NO. | รายการสินค้า / DESCRIPTION | จำนวนหีบห่อ / NO. OF BALES | น้ำหนักสุทธิ / NET WEIGHT (KGS) | น้ำหนักรวม / GROSS WEIGHT (KGS) |\n| --- | --- | --- | --- | --- |\n| 1-20 | ยางแผ่นรมควัน ชั้น 3 / RIBBED SMOKED SHEET RSS3 | 20 | 2240.00 | 2280.00 |\n| 21-45 | ยางแท่ง STR20 / STANDARD THAI RUBBER STR20 | 25 | 2800.00 | 2850.00 |\n| 46-60 | ยางแผ่นผึ่งแห้ง / AIR DRIED SHEET ADS | 15 | 1680.00 | 1710.00 |\n| 61-70 | ยางเครพ / CREPE RUBBER | 10 | 1000.00 | 1020.00 |\n| รวมทั้งสิ้น / TOTAL | | 70 | 7720.00 | 7860.00 |\n",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "ยางแผ่นรมควัน ชั้น 3 / RIBBED SMOKED SHEET RSS3",
+   "quantity": "",
+   "uom": "",
+   "carton_count": "20",
+   "carton_no": "1-20",
+   "gross_weight": "2280.00",
+   "net_weight": "2240.00"
+  },
+  "expected_totals": {
+   "cartons": "70",
+   "gross_weight": "7860.00",
+   "net_weight": "7720.00"
+  },
+  "what_is_different": "NO quantity column exists — the commodity is sold by weight, so the only countable is the bale count and the only declarable amounts are the two weights. A parser that requires a quantity column to accept a packing table stands down on a perfectly complete document; one that back-fills a quantity invents one. Thai-script headers precede the English, so the header cell's first token is non-Latin, and the totals label (รวมทั้งสิ้น) leads the row. Weights are large enough that a thousands separator misread would be catastrophic, and gross exceeds net by only ~1.8% (bale wrapping), so a net/gross swap is not detectable by magnitude."
+ },
+ {
+  "id": "asia_textile_vn_footwear_pairs_per_carton",
+  "title": "Vietnam · footwear packing list (bilingual VI/EN, PRS/CTN, carton range, MEAS)",
+  "note": "Vietnam / footwear — Bình Dương shoe factory, Vietnamese-English bilingual headers",
+  "page": "| SỐ HIỆU THÙNG / CARTON NO. | MÔ TẢ HÀNG HÓA / DESCRIPTION | MÃ HÀNG / ART. NO. | SỐ THÙNG / CTNS | ĐÔI/THÙNG (PRS/CTN) | TỔNG SỐ ĐÔI / TOTAL (PRS) | TRỌNG LƯỢNG TỊNH / N.W (KGS) | TRỌNG LƯỢNG CẢ BÌ / G.W (KGS) | THỂ TÍCH / MEAS (CBM) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1-40 | GIÀY THỂ THAO NAM / MEN'S SPORT SHOE | VN-8801 | 40 | 12 | 480 | 400.00 | 448.00 | 2.880 |\n| 41-90 | DÉP NỮ / LADIES' SANDAL | VN-8815 | 50 | 24 | 1200 | 360.00 | 420.00 | 3.000 |\n| 91-120 | GIÀY VẢI TRẺ EM / CHILDREN'S CANVAS SHOE | VN-8830 | 30 | 18 | 540 | 189.00 | 219.00 | 1.560 |\n| 121-150 | GIÀY DA NAM / MEN'S LEATHER BOOT | VN-8842 | 30 | 8 | 240 | 336.00 | 372.00 | 2.400 |\n| TỔNG CỘNG / TOTAL |  |  | 150 |  | 2460 | 1285.00 | 1459.00 | 9.840 |\n",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "GIÀY THỂ THAO NAM / MEN'S SPORT SHOE",
+   "quantity": "480",
+   "uom": "PRS",
+   "carton_count": "40",
+   "carton_no": "1-40",
+   "gross_weight": "448.00",
+   "net_weight": "400.00"
+  },
+  "expected_totals": {
+   "cartons": "150",
+   "gross_weight": "1459.00",
+   "net_weight": "1285.00"
+  },
+  "what_is_different": "Bilingual Vietnamese-first headers with full diacritics — the Vietnamese word for the row total (TỔNG SỐ ĐÔI) and for the carton count (SỐ THÙNG) both begin with SỐ, and the carton-range header (SỐ HIỆU THÙNG) is a near-duplicate of the count header. UOM is PAIRS (PRS/ĐÔI), never pieces: declaring 480 PCS instead of 480 PRS misstates a footwear line under most tariff regimes. The totals label is Vietnamese (TỔNG CỘNG), not the English word TOTAL."
+ },
+ {
+  "id": "europe_cz_balici_list_hmotnost_na_karton",
+  "title": "Czechia · Balicí list with per-carton gross weight next to the row total",
+  "note": "Czechia / glassware and porcelain",
+  "page": "| Č. | Popis zboží | Množství | MJ | Počet kartonů | Hmotnost brutto / karton (kg) | Hmotnost brutto celkem (kg) | Hmotnost netto celkem (kg) | Rozměry (cm) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | SKLENĚNÉ VÁZY BROUŠENÉ 25 CM | 480 | KS | 24 | 18,50 | 444,00 | 396,00 | 60 x 40 x 35 |\n| 2 | KŘIŠŤÁLOVÉ SKLENICE NA VÍNO 350 ML | 1 200 | KS | 40 | 12,25 | 490,00 | 442,00 | 50 x 35 x 30 |\n| 3 | PORCELÁNOVÝ SERVIS 18 DÍLŮ | 60 | SAD | 15 | 21,60 | 324,00 | 297,00 | 55 x 45 x 40 |\n| CELKEM |  |  |  | 79 |  | 1 258,00 | 1 135,00 |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "SKLENĚNÉ VÁZY BROUŠENÉ 25 CM",
+   "quantity": "480",
+   "uom": "KS",
+   "carton_count": "24",
+   "carton_no": "",
+   "gross_weight": "444.00",
+   "net_weight": "396.00"
+  },
+  "expected_totals": {
+   "cartons": "79",
+   "gross_weight": "1258.00",
+   "net_weight": "1135.00"
+  },
+  "what_is_different": "No carton-number column at all — only a count — so 'which cartons' is simply not recoverable, while a PER-CARTON gross weight column sits immediately left of the row gross (24 x 18,50 = 444,00). Reading the per-carton figure as the row weight would understate the shipment by a factor of the carton count, and nothing in the row's own arithmetic would object; only the printed CELKEM row catches it. Czech decimal comma plus space thousands (1 258,00)."
+ },
+ {
+  "id": "europe_de_packliste_kollo_abmessungen",
+  "title": "Germany · Packliste with Kollo-Nr. ranges, Brutto/Netto kg and Abmessungen",
+  "note": "Germany / industrial bearings and seals exporter",
+  "page": "| Kollo-Nr. | Warenbezeichnung | Menge | Einheit | Anzahl Kartons | Bruttogewicht (kg) | Nettogewicht (kg) | Abmessungen (cm) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1-12 | KUGELLAGER 6204-2RS | 2.400 | Stk | 12 | 186,00 | 174,00 | 40 x 30 x 25 |\n| 13-20 | WELLENDICHTRING 35X50X8 NBR | 1.600 | Stk | 8 | 96,40 | 88,00 | 35 x 25 x 20 |\n| 21-26 | SPANNHUELSE H2308 STAHL VERZINKT | 600 | Stk | 6 | 142,80 | 133,20 | 50 x 40 x 30 |\n| Gesamt |  | 4.600 | Stk | 26 | 425,20 | 395,20 |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "KUGELLAGER 6204-2RS",
+   "quantity": "2400",
+   "uom": "Stk",
+   "carton_count": "12",
+   "carton_no": "1-12",
+   "gross_weight": "186.00",
+   "net_weight": "174.00"
+  },
+  "expected_totals": {
+   "cartons": "26",
+   "gross_weight": "425.20",
+   "net_weight": "395.20"
+  },
+  "what_is_different": "German header vocabulary (Kollo-Nr., Warenbezeichnung, Menge, Bruttogewicht, Nettogewicht, Abmessungen) with a carton-NUMBER RANGE column sitting left of a separate carton-COUNT column, plus German thousands-dot / decimal-comma numerals: 2.400 is a quantity of two thousand four hundred, 425,20 is a weight of four hundred twenty-five point two."
+ },
+ {
+  "id": "europe_es_lista_empaque_palet_bultos",
+  "title": "Spain · Lista de empaque with pallet-then-carton hierarchy and volumen",
+  "note": "Spain / olive oil, olives, vinegar, paprika",
+  "page": "| Palet | Bultos n° | N° bultos | Descripción de la mercancía | Cantidad | Unidad | Peso bruto (kg) | Peso neto (kg) | Volumen (m³) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| PAL-01 | 1-24 | 24 | ACEITE DE OLIVA VIRGEN EXTRA 5 L | 1.440 | BOT | 1.176,00 | 1.080,00 | 1,152 |\n| PAL-01 | 25-40 | 16 | ACEITUNA MANZANILLA RELLENA 350 G | 3.840 | TAR | 512,00 | 448,00 | 0,768 |\n| PAL-02 | 41-70 | 30 | VINAGRE DE JEREZ RESERVA 500 ML | 3.600 | BOT | 750,00 | 690,00 | 1,440 |\n| PAL-02 | 71-78 | 8 | PIMENTÓN DE LA VERA DULCE 1 KG | 96 | LAT | 108,00 | 96,00 | 0,384 |\n| TOTALES | | 78 |  |  |  | 2.546,00 | 2.314,00 | 3,744 |",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "ACEITE DE OLIVA VIRGEN EXTRA 5 L",
+   "quantity": "1440",
+   "uom": "BOT",
+   "carton_count": "24",
+   "carton_no": "1-24",
+   "gross_weight": "1176.00",
+   "net_weight": "1080.00"
+  },
+  "expected_totals": {
+   "cartons": "78",
+   "gross_weight": "2546.00",
+   "net_weight": "2314.00"
+  },
+  "what_is_different": "Two-level packing hierarchy: the same pallet id repeats across consecutive rows (PAL-01 on rows 1-2, PAL-02 on rows 3-4) while the bulto ranges keep running, so the countable package unit is the bulto and the pallet column must NOT be counted or treated as a row separator. Volume is three-decimal with a comma (1,152) sitting in the same table as thousands-dot weights (1.176,00) — the same character means opposite things in adjacent columns."
+ },
+ {
+  "id": "europe_fr_liste_de_colisage_poids_unitaire",
+  "title": "France · Liste de colisage with per-colis gross weight beside the row totals",
+  "note": "France / agri-food (cheese, wine, olive oil) export",
+  "page": "| N° colis | Désignation des marchandises | Quantité | Unité | Nombre de colis | Poids brut unitaire (kg) | Poids brut total (kg) | Poids net total (kg) | Dimensions (cm) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 à 20 | FROMAGE COMTÉ AFFINÉ 12 MOIS | 400 | KG | 20 | 22,50 | 450,00 | 400,00 | 40 x 40 x 20 |\n| 21 à 45 | VIN ROUGE BORDEAUX A.O.C. 75 CL | 3 000 | BTL | 25 | 16,20 | 405,00 | 375,00 | 35 x 25 x 30 |\n| 46 à 60 | HUILE D'OLIVE VIERGE EXTRA 1 L | 900 | BTL | 15 | 13,40 | 201,00 | 180,00 | 30 x 25 x 28 |\n| TOTAUX |  |  |  | 60 |  | 1 056,00 | 955,00 |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "FROMAGE COMTÉ AFFINÉ 12 MOIS",
+   "quantity": "400",
+   "uom": "KG",
+   "carton_count": "20",
+   "carton_no": "1 à 20",
+   "gross_weight": "450.00",
+   "net_weight": "400.00"
+  },
+  "expected_totals": {
+   "cartons": "60",
+   "gross_weight": "1056.00",
+   "net_weight": "955.00"
+  },
+  "what_is_different": "Two gross-weight columns side by side: 'Poids brut unitaire' is PER COLIS (22,50 x 20 = 450,00) and must never be read as the row weight, and the totals row deliberately leaves that per-unit column blank so a parser that summed it would produce a total with no printed counterpart. Carton range uses the French 'à' form ('1 à 20'), not a hyphen, and mixed units (KG/BTL) mean no quantity total is printed."
+ },
+ {
+  "id": "europe_it_distinta_imballaggio_tara",
+  "title": "Italy · Distinta di imballaggio with peso lordo / tara / peso netto",
+  "note": "Italy / professional coffee machinery",
+  "page": "| Pos. | Descrizione della merce | Q.tà | U.M. | Colli n. | N. colli | Peso lordo (kg) | Tara (kg) | Peso netto (kg) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | MACCHINA PER CAFFÈ ESPRESSO PROFESSIONALE 2 GRUPPI | 6 | PZ | 1-6 | 6 | 372,00 | 24,00 | 348,00 |\n| 2 | MACINADOSATORE ELETTRONICO ON DEMAND | 6 | PZ | 7-12 | 6 | 108,00 | 9,00 | 99,00 |\n| 3 | RICAMBI E GUARNIZIONI ASSORTITE | 1 | CT | 13 | 1 | 18,50 | 1,50 | 17,00 |\n| TOTALE |  |  |  |  | 13 | 498,50 | 34,50 | 464,00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "MACCHINA PER CAFFÈ ESPRESSO PROFESSIONALE 2 GRUPPI",
+   "quantity": "6",
+   "uom": "PZ",
+   "carton_count": "6",
+   "carton_no": "1-6",
+   "gross_weight": "372.00",
+   "net_weight": "348.00"
+  },
+  "expected_totals": {
+   "cartons": "13",
+   "gross_weight": "498.50",
+   "net_weight": "464.00"
+  },
+  "what_is_different": "Three weight columns where the middle one is TARE, not a second net: lordo - tara = netto holds on every row and on the totals row (498,50 - 34,50 = 464,00). A parser that grabs the first two numeric weight columns as gross/net would declare tare as the net weight. Also mixes a carton-range row (1-6) with a single-carton row (13) in the same table."
+ },
+ {
+  "id": "europe_nl_paklijst_geen_aantal",
+  "title": "Netherlands · Paklijst with no quantity column at all",
+  "note": "Netherlands / flower bulbs",
+  "page": "| Colli nr. | Aantal colli | Soort verpakking | Omschrijving van de goederen | Brutogewicht (kg) | Nettogewicht (kg) | Volume (m³) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1-40 | 40 | DOZEN | BLOEMBOLLEN TULP DARWIN HYBRIDE GEMENGD | 620,00 | 560,00 | 1,600 |\n| 41-64 | 24 | DOZEN | BLOEMBOLLEN NARCIS TÊTE-À-TÊTE 12/14 | 384,00 | 348,00 | 0,960 |\n| 65-70 | 6 | KISTEN | PLANTGOED HYACINT GEMENGD 15/16 | 174,00 | 156,00 | 0,450 |\n| TOTAAL | 70 |  |  | 1.178,00 | 1.064,00 | 3,010 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "BLOEMBOLLEN TULP DARWIN HYBRIDE GEMENGD",
+   "quantity": "",
+   "uom": "DOZEN",
+   "carton_count": "40",
+   "carton_no": "1-40",
+   "gross_weight": "620.00",
+   "net_weight": "560.00"
+  },
+  "expected_totals": {
+   "cartons": "70",
+   "gross_weight": "1178.00",
+   "net_weight": "1064.00"
+  },
+  "what_is_different": "There is NO goods-quantity column — only package counts and weights, which is normal for bulk horticultural shipments. The only number that could be mistaken for a quantity is 'Aantal colli', and the package-type column ('DOZEN'/'KISTEN') is the closest thing to a unit of measure. A parser that insists on a quantity column will either stand down or promote the carton count to quantity."
+ },
+ {
+  "id": "europe_pl_lista_pakowa_ilosc_w_kartonie",
+  "title": "Poland · Lista pakowa with qty-per-carton x cartons = total qty",
+  "note": "Poland / personal protective equipment",
+  "page": "| Lp. | Nazwa towaru | Nr kartonów | Liczba kartonów | Ilość w kartonie | Ilość łącznie | J.m. | Waga brutto (kg) | Waga netto (kg) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | KAMIZELKA OSTRZEGAWCZA ŻÓŁTA KLASA 2 | 1-30 | 30 | 240 | 7 200 | SZT | 468,00 | 432,00 |\n| 2 | OKULARY OCHRONNE PRZEZROCZYSTE UV | 31-48 | 18 | 150 | 2 700 | SZT | 172,80 | 154,80 |\n| 3 | KASK BUDOWLANY BIAŁY Z REGULACJĄ | 49-60 | 12 | 40 | 480 | SZT | 168,00 | 153,60 |\n| RAZEM |  |  | 60 |  | 10 380 | SZT | 808,80 | 740,40 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "KAMIZELKA OSTRZEGAWCZA ŻÓŁTA KLASA 2",
+   "quantity": "7200",
+   "uom": "SZT",
+   "carton_count": "30",
+   "carton_no": "1-30",
+   "gross_weight": "468.00",
+   "net_weight": "432.00"
+  },
+  "expected_totals": {
+   "cartons": "60",
+   "gross_weight": "808.80",
+   "net_weight": "740.40"
+  },
+  "what_is_different": "Three numeric columns in a row could each pass as 'the quantity': liczba kartonów (30), ilość w kartonie (240) and ilość łącznie (7 200), and only the last is the declarable quantity — 30 x 240 = 7 200 on every row. Polish uses a SPACE as the thousands separator, so '7 200' and '10 380' must not be split into two cells or read as 7 and 200."
+ },
+ {
+  "id": "europe_pt_lista_embalagem_combinada",
+  "title": "Portugal/Brazil · combined invoice + Lista de embalagem in one table",
+  "note": "Brazil / green and roasted coffee export",
+  "page": "| Item | Descrição das mercadorias | NCM | Qtde | Unid. | Volumes | N° dos volumes | Peso bruto (kg) | Peso líquido (kg) | Valor unit. (USD) | Valor total (USD) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | CAFÉ VERDE ARÁBICA TIPO 2 SAFRA 2025 | 09011110 | 300 | SC | 300 | 1-300 | 18.150,00 | 18.000,00 | 210,00 | 63.000,00 |\n| 2 | CAFÉ VERDE CONILON PENEIRA 13 | 09011190 | 120 | SC | 120 | 301-420 | 7.260,00 | 7.200,00 | 165,00 | 19.800,00 |\n| 3 | CAFÉ TORRADO E MOÍDO 500 G | 09012100 | 40 | CX | 40 | 421-460 | 512,00 | 480,00 | 96,00 | 3.840,00 |\n| TOTAL GERAL |  |  |  |  | 460 |  | 25.922,00 | 25.680,00 |  | 86.640,00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "CAFÉ VERDE ARÁBICA TIPO 2 SAFRA 2025",
+   "quantity": "300",
+   "uom": "SC",
+   "carton_count": "300",
+   "carton_no": "1-300",
+   "gross_weight": "18150.00",
+   "net_weight": "18000.00"
+  },
+  "expected_totals": {
+   "cartons": "460",
+   "gross_weight": "25922.00",
+   "net_weight": "25680.00"
+  },
+  "what_is_different": "A single table carrying BOTH the commercial values and the packing data, so the row does self-verify on money (300 x 210,00 = 63.000,00) while the weights still only answer to the printed TOTAL GERAL. Quantity and volume count coincide numerically on rows 1-2 (a sack IS the package) but diverge in meaning, and row 3 breaks the coincidence by switching to CX. Weights in the tens of thousands exercise Portuguese thousands-dot / decimal-comma at 5 digits (18.150,00), where a locale mis-detection turns 18.150,00 into 18,15 kg."
+ },
+ {
+  "id": "europe_se_packlista_kollislag_markning",
+  "title": "Sweden · Packlista mixing pallar, kartonger and lådor as colli, with märkning",
+  "note": "Sweden / mechanical components",
+  "page": "| Kolli nr | Antal kolli | Kollislag | Varubeskrivning | Antal | Enhet | Bruttovikt (kg) | Nettovikt (kg) | Märkning |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1-4 | 4 | PALL | RULLAGER SKF 6205-2Z | 4 000 | ST | 1 240,00 | 1 160,00 | ACME/STO/1-4 |\n| 5-9 | 5 | KARTONG | TÄTNINGSRING NBR 35X50X8 | 2 500 | ST | 87,50 | 75,00 | ACME/STO/5-9 |\n| 10-12 | 3 | LÅDA | KUGGVÄXEL TYP G-40 | 6 | ST | 918,00 | 885,00 | ACME/STO/10-12 |\n| SUMMA | 12 |  |  | 6 506 | ST | 2 245,50 | 2 120,00 |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "RULLAGER SKF 6205-2Z",
+   "quantity": "4000",
+   "uom": "ST",
+   "carton_count": "4",
+   "carton_no": "1-4",
+   "gross_weight": "1240.00",
+   "net_weight": "1160.00"
+  },
+  "expected_totals": {
+   "cartons": "12",
+   "gross_weight": "2245.50",
+   "net_weight": "2120.00"
+  },
+  "what_is_different": "The package TYPE varies per row (pall / kartong / låda) yet all three are counted in one continuous kolli series, so 'cartons' here means heterogeneous colli and the 12 in the totals row spans pallets and boxes alike. Weights per colli differ by two orders of magnitude between rows (310 kg/pall vs 17,5 kg/kartong), so no per-carton sanity heuristic can flag a swap. A marks & numbers column ends the row and repeats the kolli range as free text, which must not be mistaken for a second carton column."
+ },
+ {
+  "id": "europe_tr_ceki_listesi_hacim",
+  "title": "Turkey · Çeki listesi with ebat and hacim (m³) derived from the carton count",
+  "note": "Turkey / home textiles",
+  "page": "| Sıra | Malın Cinsi | Miktar | Birim | Koli Adedi | Koli No | Brüt Ağırlık (kg) | Net Ağırlık (kg) | Ebat (cm) | Hacim (m³) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | PAMUKLU BORNOZ BEYAZ XL | 600 | ADET | 30 | 1-30 | 690,00 | 630,00 | 60 x 40 x 40 | 2,880 |\n| 2 | HAVLU SETİ 4 PARÇA | 400 | SET | 20 | 31-50 | 380,00 | 344,00 | 50 x 40 x 35 | 1,400 |\n| 3 | NEVRESİM TAKIMI ÇİFT KİŞİLİK | 150 | TAKIM | 15 | 51-65 | 297,00 | 270,00 | 55 x 40 x 30 | 0,990 |\n| TOPLAM |  |  |  | 65 |  | 1.367,00 | 1.244,00 |  | 5,270 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "PAMUKLU BORNOZ BEYAZ XL",
+   "quantity": "600",
+   "uom": "ADET",
+   "carton_count": "30",
+   "carton_no": "1-30",
+   "gross_weight": "690.00",
+   "net_weight": "630.00"
+  },
+  "expected_totals": {
+   "cartons": "65",
+   "gross_weight": "1.367,00",
+   "net_weight": "1244.00"
+  },
+  "what_is_different": "A dimensions column that is NOT a weight sits between the weights and the volume, and the volume is per-row-total not per-carton: 60x40x40 cm = 0,096 m³ x 30 kolis = 2,880. Three different Turkish units of measure (ADET / SET / TAKIM) in three rows mean the totals row prints no quantity sum — the only summable columns are koli adedi, the two weights and hacim."
+ },
+ {
+  "id": "structural_carried_forward_multipage",
+  "title": "Multi-page packing list with brought-forward / carried-forward subtotals",
+  "note": "China · stationery export, page 2 of 3 of a continuation-style packing list",
+  "page": "| Item No. | Description of Goods | Qty (PCS) | No. of Cartons | Carton Nos. | Gross Weight (KGS) | Net Weight (KGS) |\n| --- | --- | --- | --- | --- | --- | --- |\n| | BROUGHT FORWARD FROM PAGE 1 | 24,000 | 120 | 1-120 | 3,600.00 | 3,240.00 |\n| 4 | BALLPOINT PEN BLUE 0.7MM | 12,000 | 50 | 121-170 | 1,500.00 | 1,350.00 |\n| 5 | GEL PEN BLACK 0.5MM | 9,600 | 40 | 171-210 | 1,240.00 | 1,120.00 |\n| 6 | MECHANICAL PENCIL 0.5MM | 7,200 | 30 | 211-240 | 870.00 | 780.00 |\n| | SUB-TOTAL THIS PAGE | 28,800 | 120 | 121-240 | 3,610.00 | 3,250.00 |\n| | CARRIED FORWARD TO PAGE 3 | 52,800 | 240 | 1-240 | 7,210.00 | 6,490.00 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "BALLPOINT PEN BLUE 0.7MM",
+   "quantity": "12,000",
+   "uom": "PCS",
+   "carton_count": "50",
+   "carton_no": "121-170",
+   "gross_weight": "1,500.00",
+   "net_weight": "1,350.00"
+  },
+  "expected_totals": {
+   "cartons": "120",
+   "gross_weight": "3,610.00",
+   "net_weight": "3,250.00"
+  },
+  "what_is_different": "Two non-goods rows sit inside the table body: a BROUGHT FORWARD row above the data and a CARRIED FORWARD row below it. Both look exactly like goods rows (they carry quantity, cartons, gross and net) and both must be excluded from the item list, or page 2 alone declares the whole shipment twice. The page prints TWO totals rows: SUB-TOTAL THIS PAGE (28,800 / 120 / 3,610.00 / 3,250.00) is the exact column sum of the three goods rows and is the only one the printed-totals gate may check against this page; CARRIED FORWARD (52,800 / 240 / 7,210.00 / 6,490.00) is brought-forward plus this page's subtotal and belongs to the document, not the page. Carton numbering restarts nowhere — the ranges continue from the previous page (121-170), so a parser that assumes carton ranges start at 1 on every page will mis-key the cartons."
+ },
+ {
+  "id": "structural_cbm_per_row_and_total",
+  "title": "Packing list with measurement (CBM) per row and a total CBM",
+  "note": "Turkey/China trade lane · PVC flooring export, three-decimal CBM alongside two-decimal weights",
+  "page": "| No. | Description of Goods | HS Code | Q'ty | Unit | Ctns | Carton Nos. | N.W. (KGS) | G.W. (KGS) | Meas. (CBM) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | PVC FLOOR MAT 1.2M | 39181090 | 500 | ROLL | 100 | 1-100 | 2,500.00 | 2,750.00 | 18.400 |\n| 2 | PVC FLOOR MAT 2.0M | 39181090 | 300 | ROLL | 60 | 101-160 | 1,800.00 | 1,980.00 | 11.760 |\n| 3 | PVC SKIRTING BOARD | 39169000 | 1,000 | PCS | 40 | 161-200 | 640.00 | 712.00 | 4.320 |\n| TOTAL | | | | | 200 | 1-200 | 4,940.00 | 5,442.00 | 34.480 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "PVC FLOOR MAT 1.2M",
+   "quantity": "500",
+   "uom": "ROLL",
+   "carton_count": "100",
+   "carton_no": "1-100",
+   "gross_weight": "2,750.00",
+   "net_weight": "2,500.00"
+  },
+  "expected_totals": {
+   "cartons": "200",
+   "gross_weight": "5,442.00",
+   "net_weight": "4,940.00"
+  },
+  "what_is_different": "A third additive numeric column, Meas. (CBM), sums like the weights do (18.400 + 11.760 + 4.320 = 34.480) and is therefore indistinguishable from a weight column by shape alone — the only signal is the header 'Meas.' and the three-decimal convention. Declaring 34.480 as a gross weight, or 5,442.00 as the volume, both pass every structural check. The totals row also demonstrates a real vendor habit: because the units are MIXED (ROLL and PCS), the shipper deliberately leaves the Q'ty and Unit totals BLANK rather than adding 500 + 300 + 1,000. A parser that treats a blank total as 'totals missing' loses the gate; one that synthesises 1,800 as a quantity total invents a figure across incompatible units. Only cartons, net, gross and CBM are footed here, and all four foot exactly."
+ },
+ {
+  "id": "structural_combined_invoice_packing_one_table",
+  "title": "Combined commercial invoice and packing list in one table (value and weight side by side)",
+  "note": "Vietnam · rattan/bamboo furniture export, single COMMERCIAL INVOICE & PACKING LIST document",
+  "page": "| No. | Description of Goods | HS Code | Q'ty | Unit | Unit Price (USD) | Amount (USD) | Carton Nos. | CTNS | N.W. (KGS) | G.W. (KGS) | Meas. (CBM) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | RATTAN DINING CHAIR | 94018000 | 200 | PCS | 24.50 | 4,900.00 | 1-100 | 100 | 1,200.00 | 1,350.00 | 12.500 |\n| 2 | RATTAN COFFEE TABLE | 94036000 | 80 | PCS | 55.00 | 4,400.00 | 101-140 | 40 | 760.00 | 850.00 | 6.400 |\n| 3 | BAMBOO SIDE TABLE | 94036000 | 120 | PCS | 18.00 | 2,160.00 | 141-200 | 60 | 690.00 | 780.00 | 5.100 |\n| TOTAL | | | 400 | PCS | | 11,460.00 | 1-200 | 200 | 2,650.00 | 2,980.00 | 24.000 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "RATTAN DINING CHAIR",
+   "quantity": "200",
+   "uom": "PCS",
+   "carton_count": "100",
+   "carton_no": "1-100",
+   "gross_weight": "1,350.00",
+   "net_weight": "1,200.00"
+  },
+  "expected_totals": {
+   "cartons": "200",
+   "gross_weight": "2,980.00",
+   "net_weight": "2,650.00"
+  },
+  "what_is_different": "One table carries BOTH the invoice arithmetic and the packing data, so the document is simultaneously an invoice role and a packing role. Two numeric families sit next to each other and each has its own totals cell: money (Unit Price x Q'ty = Amount, 200 x 24.50 = 4,900.00 etc., summing to 11,460.00) and weight (1,200.00 + 760.00 + 690.00 = 2,650.00 net, 1,350.00 + 850.00 + 780.00 = 2,980.00 gross). The danger is column bleed between the families: 'Amount (USD)' 4,900.00 and 'G.W. (KGS)' 1,350.00 are both plain decimals, and reading Amount as a weight or N.W. as the line value both produce a fully plausible declaration. The row-level arithmetic gate is available here (it is not on a pure packing list), so this is the one packing-shaped table where the value columns can be self-verified."
+ },
+ {
+  "id": "structural_dimension_column_not_weights",
+  "title": "Packing list with an L x W x H dimension column whose numbers must not be read as weights",
+  "note": "China · LED lighting export, carton dimensions printed per row",
+  "page": "| Item | Description | Qty | Unit | Ctns | Carton No. | Carton Size L x W x H (cm) | N.W. (kg) | G.W. (kg) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | LED TUBE LIGHT T8 18W | 1,200 | PCS | 40 | 1-40 | 60 x 40 x 30 | 320.00 | 368.00 |\n| 2 | LED FLOOD LIGHT 50W | 300 | PCS | 25 | 41-65 | 45 x 35 x 25 | 262.50 | 300.00 |\n| 3 | LED PANEL LIGHT 40W | 600 | PCS | 30 | 66-95 | 62 x 62 x 12 | 405.00 | 450.00 |\n| TOTAL | | 2,100 | PCS | 95 | 1-95 | | 987.50 | 1,118.00 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "LED TUBE LIGHT T8 18W",
+   "quantity": "1,200",
+   "uom": "PCS",
+   "carton_count": "40",
+   "carton_no": "1-40",
+   "gross_weight": "368.00",
+   "net_weight": "320.00"
+  },
+  "expected_totals": {
+   "cartons": "95",
+   "gross_weight": "1,118.00",
+   "net_weight": "987.50"
+  },
+  "what_is_different": "A single cell holds three numbers joined by 'x' ('60 x 40 x 30'). OCR sometimes splits that cell on the separator and shifts every column to its right by two, which slides the dimension figures into the weight columns and the real weights off the end of the row — a shipment whose gross weight becomes 30 kg instead of 368 kg. The specific numbers are chosen to be individually plausible in the wrong places: 40 equals row 1's real carton count, 30 and 25 read as small carton weights, and 62 x 62 makes the mis-split symmetric so the shift is not obvious from the values. The totals row deliberately leaves the dimension column blank (dimensions are not additive) while filling qty 2,100, ctns 95, net 987.50 and gross 1,118.00, all exact column sums — so a column shift that pushes dimension numbers into the weight columns fails the gate immediately."
+ },
+ {
+  "id": "structural_handwritten_no_ruled_columns_refusal",
+  "title": "Handwritten packing list with no ruled columns — refusal case",
+  "note": "Sri Lanka · small textile consignment, hand-written note scanned as the packing list",
+  "page": "PACKING LIST\n\nM/s SEA STAR TRADING (PVT) LTD\nCOLOMBO 15\nDate 12/03/26\n\n1. Cotton bed sheets - 20 ctns 340 kg\n2. Pillow covers 8 ctns abt 96 kgs\n3. Curtain cloth rolls — 5 rolls, 210 kg (gross)\n\n| Total 33 ctns/rolls | 646 kgs gross approx. |\n| --- | --- |\n\nsd/-\nfor SEA STAR TRADING\n",
+  "expected_rows": 0,
+  "should_parse": false,
+  "expected_first_row": {
+   "description": "",
+   "quantity": "",
+   "uom": "",
+   "carton_count": "",
+   "carton_no": "",
+   "gross_weight": "",
+   "net_weight": ""
+  },
+  "expected_totals": {
+   "cartons": "",
+   "gross_weight": "",
+   "net_weight": ""
+  },
+  "what_is_different": "The scan has no ruled columns, so Mistral emits the goods as prose lines and only manages a degenerate two-cell table where the writer drew a rough line under the list. There is no header row, so there is no column map and nothing to anchor description, quantity, carton or weight against — the parser must decline the page rather than guess positions from the text order. Everything about the content also argues for refusal even if a grid could be forced: the weights are hedged ('abt 96 kgs', '646 kgs gross approx.'), net and gross are never distinguished (only line 3 says gross, and only for itself), and the units are mixed cartons and rolls so '33 ctns/rolls' is not a carton count. The figures happen to reconcile (20+8+5 = 33; 340+96+210 = 646), which is precisely the trap: an arithmetic-only gate would close on a page whose weight basis is unknown, and weight basis is what drives duty. Correct behaviour is refusal and escalation, not a plausible three-item table."
+ },
+ {
+  "id": "structural_no_description_only_item_codes",
+  "title": "Packing list with no description column at all — item codes and weights only",
+  "note": "Japan · automotive spare parts, code-only shipper packing list",
+  "page": "| Part No. | Rev | Carton No. | Q'ty | Unit | N.W. (kg) | G.W. (kg) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1KD-88710-A | C | 1-12 | 600 | PCS | 288.00 | 312.00 |\n| 2GR-45230-B | A | 13-20 | 400 | PCS | 176.00 | 192.00 |\n| 3ZR-11450 | D | 21-38 | 900 | PCS | 405.00 | 441.00 |\n| TOTAL | | 38 CTNS | 1,900 | PCS | 869.00 | 945.00 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "1KD-88710-A",
+   "quantity": "600",
+   "uom": "PCS",
+   "carton_count": "",
+   "carton_no": "1-12",
+   "gross_weight": "312.00",
+   "net_weight": "288.00"
+  },
+  "expected_totals": {
+   "cartons": "38",
+   "gross_weight": "945.00",
+   "net_weight": "869.00"
+  },
+  "what_is_different": "There is no goods-description column anywhere on the page — the shipper identifies goods purely by part number, and a customs description has to fall back to the code (or be sourced from the invoice). A parser that requires a description header before it will own the table stands down here and hands a perfectly regular grid to the LLM. Second trap: there is no carton-COUNT column either, only carton-number RANGES; the counts (12, 8, 18) exist only as the width of '1-12', '13-20', '21-38', and the totals row prints the count '38 CTNS' inside the carton-NUMBER column, so the totals gate must compare 38 against summed range widths, not against a column it can read directly. The 'Rev' column (C, A, D) is a revision letter and must not be mistaken for a country of origin."
+ },
+ {
+  "id": "structural_no_quantity_column",
+  "title": "Packing list with no quantity column at all — packages and weights only",
+  "note": "Germany · machine-tool spare parts, bilingual DE/EN Packliste",
+  "page": "| Pos. | Warenbezeichnung / Description of goods | Colli / Packages | Karton-Nr. / Carton No. | Nettogewicht (kg) | Bruttogewicht (kg) |\n| --- | --- | --- | --- | --- | --- |\n| 1 | Ersatzteile für Werkzeugmaschinen / Spare parts for machine tools | 14 | 1-14 | 412,50 | 466,00 |\n| 2 | Hydraulikschläuche / Hydraulic hoses | 6 | 15-20 | 128,40 | 149,60 |\n| 3 | Dichtungssätze / Sealing kits | 9 | 21-29 | 63,75 | 78,90 |\n| Summe / Total | | 29 | 1-29 | 604,65 | 694,50 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Ersatzteile für Werkzeugmaschinen / Spare parts for machine tools",
+   "quantity": "",
+   "uom": "",
+   "carton_count": "14",
+   "carton_no": "1-14",
+   "gross_weight": "466,00",
+   "net_weight": "412,50"
+  },
+  "expected_totals": {
+   "cartons": "29",
+   "gross_weight": "694,50",
+   "net_weight": "604,65"
+  },
+  "what_is_different": "No quantity and no unit-of-measure column exist. The only integers on the page are the package count (Colli) and the carton-number range, and the single worst failure mode is borrowing Colli as the declared quantity — 14 'pieces' of spare parts is wrong and looks right. Quantity must stay empty and be sourced from the invoice. German numeric convention throughout: comma is the decimal separator (412,50 kg), so a locale-blind parser reads 412,50 as 41,250 and inflates the net weight by three orders of magnitude — and the totals row 604,65 / 694,50 is the only thing that would catch it. Bilingual headers ('Nettogewicht' / 'Bruttogewicht', 'Colli' for packages) are the real German vocabulary; 'Colli' in particular is not an English cognate of anything and is easily left unmapped."
+ },
+ {
+  "id": "structural_one_product_many_carton_sizes",
+  "title": "One product split across several rows, one row per carton size, with per-carton weights",
+  "note": "Bangladesh · hosiery export, single style packed in three carton configurations",
+  "page": "| Style | Description | Qty per Carton (DOZ) | No. of Cartons | Carton Nos. | Total Qty (DOZ) | N.W./CTN (KGS) | Total N.W. (KGS) | G.W./CTN (KGS) | Total G.W. (KGS) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| MS-220 | MEN'S COTTON SOCKS BLACK | 24 | 50 | 1-50 | 1,200 | 14.40 | 720.00 | 15.50 | 775.00 |\n| MS-220 | MEN'S COTTON SOCKS BLACK | 12 | 30 | 51-80 | 360 | 7.20 | 216.00 | 8.00 | 240.00 |\n| MS-220 | MEN'S COTTON SOCKS BLACK | 6 | 20 | 81-100 | 120 | 3.60 | 72.00 | 4.20 | 84.00 |\n| TOTAL | | | 100 | 1-100 | 1,680 | | 1,008.00 | | 1,099.00 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "MEN'S COTTON SOCKS BLACK",
+   "quantity": "1,200",
+   "uom": "DOZ",
+   "carton_count": "50",
+   "carton_no": "1-50",
+   "gross_weight": "775.00",
+   "net_weight": "720.00"
+  },
+  "expected_totals": {
+   "cartons": "100",
+   "gross_weight": "1,099.00",
+   "net_weight": "1,008.00"
+  },
+  "what_is_different": "Every row is the SAME product and the same style number; the rows differ only by carton configuration (24, 12 and 6 dozen per carton). Nothing in the description distinguishes them, so a de-duplicator that collapses identical descriptions destroys two thirds of the shipment, while a merger that keeps three separate customs items over-fragments one HS line. PER-CARTON and PER-ROW weights sit in adjacent columns with near-identical headers: N.W./CTN 14.40 next to Total N.W. 720.00. Reading the per-carton column as the row weight declares 14.40 kg instead of 720.00 kg — a 50x understatement that no other number on a packing list contradicts, because only the totals row (1,008.00 / 1,099.00) is a sum of the TOTAL columns and the per-carton columns are deliberately left blank on the totals row. Both multiplications are printed and must hold: cartons x per-carton = total, for qty (50 x 24 = 1,200), net (50 x 14.40 = 720.00) and gross (50 x 15.50 = 775.00)."
+ },
+ {
+  "id": "structural_pallet_then_carton_hierarchy",
+  "title": "Packing list with pallet rows above their member carton rows (two-level hierarchy)",
+  "note": "Malaysia · medical disposables, palletised export packing list with tare column",
+  "page": "| Pallet No. | Carton Nos. | Item Code | Description | Qty | Unit | Ctns | Net Wt (KG) | Tare (KG) | Gross Wt (KG) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| PLT-01 | 1-8 | SKU-4410 | NITRILE EXAM GLOVE BOX M | 8,000 | PCS | 8 | 192.00 | 22.00 | 214.00 |\n| PLT-01 | 9-20 | SKU-4411 | NITRILE EXAM GLOVE BOX L | 12,000 | PCS | 12 | 288.00 | 33.00 | 321.00 |\n| PLT-01 | - | PALLET | EUR PALLET 1200x800 WOOD | | | | 0.00 | 25.00 | 25.00 |\n| SUB-TOTAL PLT-01 | 1-20 | | | 20,000 | PCS | 20 | 480.00 | 80.00 | 560.00 |\n| PLT-02 | 21-35 | SKU-5520 | FACE MASK 3-PLY | 30,000 | PCS | 15 | 300.00 | 30.00 | 330.00 |\n| PLT-02 | - | PALLET | EUR PALLET 1200x800 WOOD | | | | 0.00 | 25.00 | 25.00 |\n| SUB-TOTAL PLT-02 | 21-35 | | | 30,000 | PCS | 15 | 300.00 | 55.00 | 355.00 |\n| GRAND TOTAL | 1-35 | | 2 PALLETS / 35 CTNS | 50,000 | PCS | 35 | 780.00 | 135.00 | 915.00 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "NITRILE EXAM GLOVE BOX M",
+   "quantity": "8,000",
+   "uom": "PCS",
+   "carton_count": "8",
+   "carton_no": "1-8",
+   "gross_weight": "214.00",
+   "net_weight": "192.00"
+  },
+  "expected_totals": {
+   "cartons": "35",
+   "gross_weight": "915.00",
+   "net_weight": "780.00"
+  },
+  "what_is_different": "Three kinds of row share one grid: goods rows, packing-material rows (the two EUR PALLET lines, 0.00 net / 25.00 tare / 25.00 gross), and per-pallet SUB-TOTAL rows. Only three rows are goods. Counting all eight body rows gives eight items; counting the sub-totals gives double the weight. The GRAND TOTAL is an exact column sum of every non-subtotal row (192.00+288.00+0.00+300.00+0.00 = 780.00 net; 214.00+321.00+25.00+330.00+25.00 = 915.00 gross; 22.00+33.00+25.00+30.00+25.00 = 135.00 tare; 8+12+15 = 35 ctns), and each sub-total is an exact sum of its own block — so the printed-totals gate can only close if the pallet lines are treated as weight-bearing non-goods. Net + Tare = Gross holds on every row and on both sub-totals, which is the tare column's only cross-check; goods-row gross alone sums to 865.00, and the 50.00 kg shortfall against the printed 915.00 is the pallet timber, not a missing item."
+ },
+ {
+  "id": "structural_summary_block_instead_of_totals_row",
+  "title": "Packing list with a free-text summary block instead of a totals row",
+  "note": "China · stainless steel houseware export, summary printed as prose under the table",
+  "page": "| S/N | DESCRIPTION | QTY | UNIT | CTN NO. | CTNS | N.W. (KGS) | G.W. (KGS) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | STAINLESS STEEL VACUUM FLASK 500ML | 2,400 | PCS | 1-50 | 50 | 720.00 | 800.00 |\n| 2 | STAINLESS STEEL VACUUM FLASK 750ML | 1,800 | PCS | 51-95 | 45 | 675.00 | 742.50 |\n| 3 | STAINLESS STEEL LUNCH BOX 1.2L | 1,000 | PCS | 96-120 | 25 | 750.00 | 857.50 |\n\nTOTAL: 120 CTNS / 5,200 PCS / N.W. 2,145.00 KGS / G.W. 2,400.00 KGS\n\nSHIPPING MARKS: NIL / MADE IN CHINA\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "STAINLESS STEEL VACUUM FLASK 500ML",
+   "quantity": "2,400",
+   "uom": "PCS",
+   "carton_count": "50",
+   "carton_no": "1-50",
+   "gross_weight": "800.00",
+   "net_weight": "720.00"
+  },
+  "expected_totals": {
+   "cartons": "120",
+   "gross_weight": "2,400.00",
+   "net_weight": "2,145.00"
+  },
+  "what_is_different": "The table ends at the last goods row — there is no totals row inside the pipe grid at all. The document's only cross-check is the free-text line under the table, 'TOTAL: 120 CTNS / 5,200 PCS / N.W. 2,145.00 KGS / G.W. 2,400.00 KGS', which OCR emits as an ordinary paragraph outside the markdown table. A printed-totals gate that only reads the table's last row finds nothing, concludes the document prints no totals, and drops its safety net on a page that actually has one. The figures do reconcile exactly (50+45+25 = 120 ctns; 2,400+1,800+1,000 = 5,200 pcs; 720.00+675.00+750.00 = 2,145.00 net; 800.00+742.50+857.50 = 2,400.00 gross), so the gate must be able to harvest labelled totals from prose. Note the near-collision that punishes sloppy label matching: '2,400' appears both as row 1's quantity in PCS and as the total gross weight in KGS."
+ },
+ {
+  "id": "weight_traps_cno_range_looks_like_count",
+  "title": "Korea/China · C/NO. column holding ranges that look like carton counts",
+  "note": "Korea (Busan) → battery and power accessories; forwarder short-header style",
+  "page": "| No. | C/NO. | DESCRIPTION | Q'TY (PCS) | N.W. (KGS) | G.W. (KGS) | MEAS. (CBM) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | 1-50 | LITHIUM BATTERY PACK 5000mAh | 2,000 | 620.00 | 700.00 | 2.500 |\n| 2 | 51-80 | POWER ADAPTER 45W | 1,200 | 336.00 | 390.00 | 1.500 |\n| 3 | 81-95 | USB DATA CABLE 1.5M | 3,000 | 150.00 | 186.00 | 0.750 |\n| TOTAL: 95 CTNS |  |  | 6,200 | 1,106.00 | 1,276.00 | 4.750 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "LITHIUM BATTERY PACK 5000mAh",
+   "quantity": "2,000",
+   "uom": "PCS",
+   "carton_count": "",
+   "carton_no": "1-50",
+   "gross_weight": "700.00",
+   "net_weight": "620.00"
+  },
+  "expected_totals": {
+   "cartons": "95",
+   "gross_weight": "1,276.00",
+   "net_weight": "1,106.00"
+  },
+  "what_is_different": "'C/NO.' names WHICH cartons, not HOW MANY, and its cells are ranges: 1-50, 51-80, 81-95. There is no carton-count column at all — the count must be derived from the range (50, 30, 15) and reconciled against the only place the total appears, inside the totals ROW LABEL ('TOTAL: 95 CTNS') rather than in a column. A parser that treats C/NO. as a count reads 1 (first token), or 50 (last token), or -49 (the subtraction), and any of those sums to something other than 95. Note also that the description cell carries digits ('5000mAh', '45W', '1.5M') that must not be harvested as numerics. (Fixture note: the generator originally stated a net weight of 186.00 for row 1, which is not the figure the table prints — corrected to the printed 620.00 so the fixture tests the C/NO-vs-count trap it is named for.)"
+ },
+ {
+  "id": "weight_traps_gross_before_net",
+  "title": "Vietnam · bilingual packing list with gross printed BEFORE net",
+  "note": "Vietnam (Hải Phòng) → footwear/bags; Vietnamese/English bilingual, comma decimals",
+  "page": "| STT | Mô tả hàng hóa / Description of Goods | Số kiện / Packages | Số lượng / Quantity | ĐVT / Unit | Trọng lượng cả bì (KGS) / Gross Weight | Trọng lượng tịnh (KGS) / Net Weight |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | GIÀY THỂ THAO / SPORTS SHOES | 50 | 600 | ĐÔI / PAIRS | 640,00 | 590,00 |\n| 2 | DÉP XỐP EVA / EVA SANDALS | 30 | 900 | ĐÔI / PAIRS | 315,00 | 288,00 |\n| 3 | BALO VẢI / FABRIC BACKPACK | 20 | 400 | CÁI / PCS | 268,00 | 244,00 |\n| TỔNG CỘNG / TOTAL |  | 100 | 1.900 |  | 1.223,00 | 1.122,00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "GIÀY THỂ THAO / SPORTS SHOES",
+   "quantity": "600",
+   "uom": "ĐÔI",
+   "carton_count": "50",
+   "carton_no": "",
+   "gross_weight": "640,00",
+   "net_weight": "590,00"
+  },
+  "expected_totals": {
+   "cartons": "100",
+   "gross_weight": "1.223,00",
+   "net_weight": "1.122,00"
+  },
+  "what_is_different": "Column ORDER is reversed from the near-universal net-then-gross convention: gross comes first. A parser that assumes 'the first weight column is net, the second is gross' by position rather than by header text swaps them on every row, and the swap survives the totals gate because both printed totals still add up — the document is self-consistent under the wrong reading. The only defence is reading the Vietnamese header text ('cả bì' = gross/with-packaging, 'tịnh' = net), which requires the diacritics to survive OCR. Vietnamese locale: comma decimal, dot thousands (1.900 is nineteen hundred pairs, not 1.9)."
+ },
+ {
+  "id": "weight_traps_lbs_with_kg_conversion",
+  "title": "USA · packing list in LBS with a parallel KGS conversion column",
+  "note": "USA (Chicago) → industrial parts; imperial primary, metric conversion printed alongside",
+  "page": "| Line | Description | Carton Nos. | No. of Cartons | Qty | Unit | Net Wt (LBS) | Net Wt (KGS) | Gross Wt (LBS) | Gross Wt (KGS) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | ALUMINUM MOUNTING BRACKET | 1-30 | 30 | 600 | EA | 900.00 | 408.23 | 1,050.00 | 476.27 |\n| 2 | STEEL FASTENER SET, ZINC PLATED | 31-55 | 25 | 500 | SET | 750.00 | 340.19 | 860.00 | 390.09 |\n| 3 | RUBBER GASKET, EPDM | 56-70 | 15 | 1,500 | EA | 300.00 | 136.08 | 375.00 | 170.10 |\n| TOTALS |  |  | 70 | 2,600 |  | 1,950.00 | 884.50 | 2,285.00 | 1,036.46 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "ALUMINUM MOUNTING BRACKET",
+   "quantity": "600",
+   "uom": "EA",
+   "carton_count": "30",
+   "carton_no": "1-30",
+   "gross_weight": "476.27",
+   "net_weight": "408.23"
+  },
+  "expected_totals": {
+   "cartons": "70",
+   "gross_weight": "1,036.46",
+   "net_weight": "884.50"
+  },
+  "what_is_different": "Every weight is printed twice, once in LBS and once converted to KGS, so there are FOUR weight columns and only two of them are declarable. Taking the LBS figures at face value inflates the declaration by 2.2x, and taking one of each (net LBS 900.00 with gross KGS 476.27) yields the impossible gross < net. The unit lives only in the header parenthesis, not in the cells. US locale: dot decimal with comma thousands, so '1,050.00' must not be read as 1.05 or as two cells. Row-wise rounding means the KGS totals are the sum of the rounded rows (884.50) rather than the conversion of the LBS total (884.51) — the totals gate must compare against the printed column sum, not re-derive it."
+ },
+ {
+  "id": "weight_traps_net_per_piece_and_total_net",
+  "title": "China · electronics packing list printing NET WT/PC beside TOTAL NET WT",
+  "note": "China → export electronics/accessories; classic Shenzhen forwarder layout",
+  "page": "| ITEM | DESCRIPTION OF GOODS | CTN NO. | CTNS | QTY/CTN | TOTAL QTY (PCS) | NET WT/PC (KGS) | TOTAL NET WT (KGS) | GROSS WT (KGS) | MEAS. (CBM) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | USB-C CHARGER 65W | 1-20 | 20 | 50 | 1000 | 0.180 | 180.00 | 210.00 | 0.900 |\n| 2 | HDMI CABLE 2M | 21-45 | 25 | 100 | 2500 | 0.060 | 150.00 | 178.00 | 1.125 |\n| 3 | WIRELESS MOUSE 2.4G | 46-60 | 15 | 40 | 600 | 0.095 | 57.00 | 72.50 | 0.675 |\n| TOTAL |  |  | 60 |  | 4100 |  | 387.00 | 460.50 | 2.700 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "USB-C CHARGER 65W",
+   "quantity": "1000",
+   "uom": "PCS",
+   "carton_count": "20",
+   "carton_no": "1-20",
+   "gross_weight": "210.00",
+   "net_weight": "180.00"
+  },
+  "expected_totals": {
+   "cartons": "60",
+   "gross_weight": "460.50",
+   "net_weight": "387.00"
+  },
+  "what_is_different": "Two net-weight columns sit side by side: a per-PIECE net (0.180) and the row's TOTAL net (180.00). Whichever column the parser binds to 'net weight' it will produce a plausible number, but binding NET WT/PC understates the shipment by ~4000x. The printed total (387.00) matches only the TOTAL NET WT column, so the totals gate is the only thing that can tell them apart. Same shape for QTY/CTN (50) vs TOTAL QTY (1000). Rows also carry carton RANGES plus an explicit carton COUNT column, and per-carton x cartons = total qty on every row."
+ },
+ {
+  "id": "weight_traps_shared_carton_range",
+  "title": "Bangladesh · assorted packing where three styles share one carton range",
+  "note": "Bangladesh (Chattogram) → knitwear; assorted/mixed cartons, 'DO' ditto marks",
+  "page": "| C/NO. | STYLE NO. | DESCRIPTION OF GOODS | QTY (PCS) | N.W. (KGS) | G.W. (KGS) |\n| --- | --- | --- | --- | --- | --- |\n| 1-100 | MS-2201 | MEN'S KNIT POLO SHIRT, 100% COTTON | 2,000 | 400.00 | 445.00 |\n| DO | MS-2202 | MEN'S DENIM SHORTS | 1,500 | 525.00 | 570.00 |\n| DO | MS-2203 | BOY'S HOODED JACKET, FLEECE | 1,000 | 480.00 | 520.00 |\n| TOTAL 100 CTNS |  |  | 4,500 | 1,405.00 | 1,535.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "MEN'S KNIT POLO SHIRT, 100% COTTON",
+   "quantity": "2,000",
+   "uom": "PCS",
+   "carton_count": "",
+   "carton_no": "1-100",
+   "gross_weight": "445.00",
+   "net_weight": "400.00"
+  },
+  "expected_totals": {
+   "cartons": "100",
+   "gross_weight": "1,535.00",
+   "net_weight": "1,405.00"
+  },
+  "what_is_different": "One carton range, 1-100, covers ALL THREE styles — the cartons are assorted, each holding a mix — and rows two and three carry the ditto mark 'DO' instead of repeating it. Cartons must therefore be counted ONCE for the whole table, not per row: attributing 100 to each line gives 300 packages against a printed 100, which is the classic package-count overcount. The weights, by contrast, ARE per row and do sum to the printed totals, so the same table needs per-row treatment for weight and whole-table treatment for cartons simultaneously. 'DO' must not be read as a description, a style, or a number, and the carton total again appears only inside the totals row label."
+ },
+ {
+  "id": "weight_traps_single_unlabelled_weight_kg",
+  "title": "India · spice export packing list with one bare 'Weight (Kg)' column",
+  "note": "India (Kochi) → agri-commodity spices; single undifferentiated weight column",
+  "page": "| Sr. No. | Description of Goods | No. of Packages | Quantity | UOM | Weight (Kg) |\n| --- | --- | --- | --- | --- | --- |\n| 1 | TURMERIC POWDER (CURCUMA LONGA) | 80 | 2000 | KGS | 2064.00 |\n| 2 | CORIANDER SEEDS WHOLE | 60 | 1500 | KGS | 1548.00 |\n| 3 | CUMIN SEEDS WHOLE | 40 | 1000 | KGS | 1032.00 |\n| Total | 180 | 4500 |  | 4644.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "TURMERIC POWDER (CURCUMA LONGA)",
+   "quantity": "2000",
+   "uom": "KGS",
+   "carton_count": "80",
+   "carton_no": "",
+   "gross_weight": "2064.00",
+   "net_weight": ""
+  },
+  "expected_totals": {
+   "cartons": "180",
+   "gross_weight": "4644.00",
+   "net_weight": ""
+  },
+  "what_is_different": "Exactly ONE weight column, headed neither net nor gross — just 'Weight (Kg)'. There is no evidence in the document for calling it net, so the safe read is gross (the larger, sack-inclusive figure) with net left unclaimed; inventing a net weight here is the silent failure. Second trap: the Quantity column is itself denominated in KGS (2000 KGS of turmeric), so the row carries two mass-looking numbers and the parser must not promote the quantity to net weight — note 2000 KGS quantity vs 2064.00 kg weight, the difference being the sacks. Also note the totals row is SHORT one cell (its 'Total' label occupies the Sr. No. column and the row has five cells against six headers), which is exactly how OCR emits a totals row whose label spans two columns."
+ },
+ {
+  "id": "weight_traps_tare_between_net_and_gross",
+  "title": "Deutschland · Packliste with a Tara column sitting between Netto and Brutto",
+  "note": "Germany → bulk chemicals in steel drums; German headers, comma decimals",
+  "page": "| Pos. | Warenbezeichnung | Anzahl Fässer | Menge | Einheit | Nettogewicht (kg) | Tara (kg) | Bruttogewicht (kg) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | ISOPROPYLALKOHOL 99,9% | 12 | 2.400 | LTR | 1.884,00 | 96,00 | 1.980,00 |\n| 2 | ETHYLENGLYKOL TECHNISCH | 8 | 1.600 | LTR | 1.776,00 | 64,00 | 1.840,00 |\n| 3 | NATRONLAUGE 50% | 5 | 1.000 | LTR | 1.515,00 | 40,00 | 1.555,00 |\n| GESAMT |  | 25 | 5.000 |  | 5.175,00 | 200,00 | 5.375,00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "ISOPROPYLALKOHOL 99,9%",
+   "quantity": "2.400",
+   "uom": "LTR",
+   "carton_count": "12",
+   "carton_no": "",
+   "gross_weight": "1.980,00",
+   "net_weight": "1.884,00"
+  },
+  "expected_totals": {
+   "cartons": "25",
+   "gross_weight": "5.375,00",
+   "net_weight": "5.175,00"
+  },
+  "what_is_different": "A third weight column — Tara (tare, the empty drum weight) — is wedged BETWEEN Netto and Brutto, so the adjacency heuristic 'net and gross are neighbours' fails and a positional parser reads tare as gross (96,00 against a real 1.980,00 — a 20x understatement that still totals cleanly on its own column). Tare is arithmetically checkable: net + tare = gross on every row and on the totals line (5.175,00 + 200,00 = 5.375,00), and tare = 8,00 kg x drums. German locale: comma decimal, dot thousands, and the description itself contains a decimal comma ('99,9%') and a percent sign that must not be mistaken for a numeric cell."
+ },
+ {
+  "id": "weight_traps_totals_row_weights_only",
+  "title": "España · lista de empaque whose TOTAL row fills only the weight columns",
+  "note": "Spain (Sevilla) → food exports; Spanish headers, comma decimals",
+  "page": "| N.º | Descripción de la mercancía | Bultos | Cantidad | Unidad | Peso neto (kg) | Peso bruto (kg) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | ACEITE DE OLIVA VIRGEN EXTRA 5 L | 60 | 720 | UDS | 3.240,00 | 3.480,00 |\n| 2 | ACEITUNA VERDE RELLENA 350 G | 45 | 1.080 | UDS | 378,00 | 522,00 |\n| 3 | VINAGRE DE JEREZ 750 ML | 25 | 300 | UDS | 225,00 | 297,00 |\n| TOTAL |  |  |  |  | 3.843,00 | 4.299,00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "ACEITE DE OLIVA VIRGEN EXTRA 5 L",
+   "quantity": "720",
+   "uom": "UDS",
+   "carton_count": "60",
+   "carton_no": "",
+   "gross_weight": "3.480,00",
+   "net_weight": "3.240,00"
+  },
+  "expected_totals": {
+   "cartons": "",
+   "gross_weight": "4.299,00",
+   "net_weight": "3.843,00"
+  },
+  "what_is_different": "The totals row prints ONLY the two weight columns; Bultos and Cantidad are left blank. So the parser gets a totals gate for weight but none for cartons or quantity — and, worse, a totals row that is mostly empty cells is the shape most easily mistaken for a data row (or dropped entirely, taking the gate with it). The carton total must be derived (60+45+25 = 130) and cannot be verified against anything printed, which is why the expected carton total here is empty rather than asserted. Spanish locale: comma decimal, dot thousands, and the descriptions end in unit tokens ('5 L', '350 G', '750 ML') that look like weight units — '350 G' next to a grams-capable parser is the specific trap."
+ },
+ {
+  "id": "weight_traps_weight_in_grams",
+  "title": "India · jewellery packing list weighed in grams, not kilograms",
+  "note": "India (Jaipur) → fashion jewellery; gram-denominated weights to three decimals",
+  "page": "| Sr. | Description of Goods | No. of Boxes | No. of Pcs | Net Wt. (Gms) | Gross Wt. (Gms) |\n| --- | --- | --- | --- | --- | --- |\n| 1 | GOLD PLATED BRASS EARRINGS | 6 | 300 | 4,500.000 | 5,120.000 |\n| 2 | SILVER PENDANT 925 STERLING | 4 | 200 | 3,200.000 | 3,640.000 |\n| 3 | BRASS BANGLE SET, LACQUERED | 5 | 250 | 7,750.000 | 8,300.000 |\n| TOTAL | 15 | 750 | 15,450.000 | 17,060.000 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "GOLD PLATED BRASS EARRINGS",
+   "quantity": "300",
+   "uom": "PCS",
+   "carton_count": "6",
+   "carton_no": "",
+   "gross_weight": "5,120.000",
+   "net_weight": "4,500.000"
+  },
+  "expected_totals": {
+   "cartons": "15",
+   "gross_weight": "17,060.000",
+   "net_weight": "15,450.000"
+  },
+  "what_is_different": "The weight unit is GRAMS ('Gms'), declared to three decimals — a shipment of 17.06 kg that reads as 17,060 kg if the unit in the header is ignored, a 1000x error that no arithmetic check inside the document can catch because the grams column totals perfectly. The three-decimal precision plus comma thousands ('15,450.000') is also the shape most likely to be misread as a European decimal comma, giving 15.450. Small carton counts and a totals row that, like many Indian formats, is one cell short because the 'TOTAL' label occupies the Sr. column."
+ },
+ {
+  "id": "weight_traps_weight_per_carton_and_total",
+  "title": "Türkiye · bilingual textile packing list with koli başına brüt beside toplam brüt",
+  "note": "Türkiye (İstanbul) → EU apparel; Turkish/English bilingual headers, comma decimals",
+  "page": "| Sıra No. | Malın Cinsi / Description of Goods | Koli Adedi / No. of Cartons | Adet / Quantity | Birim / Unit | Koli Başına Brüt Ağırlık (KG) / Gross Wt. per Carton | Toplam Brüt Ağırlık (KG) / Total Gross Wt. | Toplam Net Ağırlık (KG) / Total Net Wt. |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | PAMUKLU TİŞÖRT / COTTON T-SHIRT | 40 | 800 | ADET | 12,50 | 500,00 | 470,00 |\n| 2 | KOT PANTOLON / DENIM TROUSERS | 25 | 500 | ADET | 18,00 | 450,00 | 424,00 |\n| 3 | ÖRME HIRKA / KNITTED CARDIGAN | 15 | 300 | ADET | 14,40 | 216,00 | 202,50 |\n| TOPLAM / TOTAL |  | 80 | 1.600 |  |  | 1.166,00 | 1.096,50 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "PAMUKLU TİŞÖRT / COTTON T-SHIRT",
+   "quantity": "800",
+   "uom": "ADET",
+   "carton_count": "40",
+   "carton_no": "",
+   "gross_weight": "500,00",
+   "net_weight": "470,00"
+  },
+  "expected_totals": {
+   "cartons": "80",
+   "gross_weight": "1.166,00",
+   "net_weight": "1.096,50"
+  },
+  "what_is_different": "A PER-CARTON gross weight column immediately precedes the row total, in Turkish-first bilingual headers ('Koli Başına Brüt Ağırlık' vs 'Toplam Brüt Ağırlık' — the discriminating words are 'Koli Başına' and 'Toplam', not the weight word). Turkish numeric locale: comma decimal, dot thousands, so the total reads 1.166,00. Per-carton x carton count equals the row total on every line (40 x 12,50 = 500,00), and the per-carton column has NO printed total — a parser that binds it and then sums gets 44,90 against a printed 1.166,00. Carton numbers are never printed, only counts."
+ }
+]

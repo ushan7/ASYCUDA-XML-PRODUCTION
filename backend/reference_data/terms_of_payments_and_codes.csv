@@ -1,0 +1,32 @@
+Code,Description
+000,None
+100,Under Credit
+200,Under Letter of Credit (L/C)
+202,Duty Deposit (Dharauti) Under L.C.
+203,Duty on Record (Lagat)
+204,Bank Guarantee Under L.C.
+205,Partial Bank Guarantee Under L.C.
+206,VAT BG for Hydro
+207,Cash Guarantee (Passbook) Under L.C.
+208,Revolving Passbook under L.C.
+300,Import Under Barter System
+400,Bank Draft T.T. System
+402,Duty Deposit Under Bank Draft & T.T
+404,Bank Guarantee Under Draft & T.T.
+405,Partial Bank Guarantee Under Draft
+407,Cash Guarantee (Passbook) Under Draft
+408,Revolving Passbook under Draft
+500,Payment Through Credit Card
+502,Duty Deposit Under Credit Card
+504,Bank Guarantee Under Draft & T.T.
+505,Partial Bank Guarantee Under Draft & T.T.
+507,Cash Guarantee (Passbook) Under Other
+508,Revolving Passbook under Other
+600,Document Against Payment (DAP)
+700,Adv. Payment Cash Against Docs (CAD)
+902,Duty Deposit Under Other Payments
+903,Duty on Record (Lagat) Other TOP
+904,Bank Guarantee Under Other Payments
+905,Partial Bank Guarantee Under Other
+906,Draft Against Acceptance
+999,No CSF

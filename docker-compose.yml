@@ -1,0 +1,97 @@
+# Local / LAN deployment.  Credentials come from the environment — copy
+# .env.example to .env beside this file and fill it in; nothing here is a usable
+# default, on purpose.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: easycustoms
+      # No default: a blank POSTGRES_PASSWORD stops the stack rather than
+      # bringing up a database whose password is its own name.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: easycustoms
+    # Bound to loopback, not 0.0.0.0.  Published as "5432:5432" this was the
+    # whole LAN's to connect to, and the password used to be "easycustoms".
+    # Comment the block out entirely unless you need a local psql.
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U easycustoms"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Schema migrations, as a one-shot step rather than something the API does to
+  # itself at startup.  On Postgres the app REFUSES to serve a database that is
+  # not at head (app/database.py) instead of quietly create_all-ing it, so this
+  # is what makes the schema exist — and running it here, once, means N API
+  # replicas cannot race each other applying the same DDL.
+  #
+  # A database that predates alembic needs a stamp first, not an upgrade; see
+  # alembic/versions/*_baseline_schema.py. This service is for the normal case:
+  # a fresh volume.
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      EASYCUSTOMS_DATABASE_URL: postgresql+psycopg://easycustoms:${POSTGRES_PASSWORD:?}@db:5432/easycustoms
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      EASYCUSTOMS_DATABASE_URL: postgresql+psycopg://easycustoms:${POSTGRES_PASSWORD:?}@db:5432/easycustoms
+      # The login account.  Without these the app fails CLOSED — every route
+      # answers 401 and nobody can sign in — which is what this compose file
+      # used to do silently, because it set no auth variables at all.
+      EASYCUSTOMS_AUTH_USERNAME: ${EASYCUSTOMS_AUTH_USERNAME:?set it in .env}
+      EASYCUSTOMS_AUTH_PASSWORD: ${EASYCUSTOMS_AUTH_PASSWORD:?set it in .env}
+      # Generate: python -c "import secrets; print(secrets.token_hex(32))"
+      # Unset = a per-process key, i.e. every restart signs the operator out.
+      EASYCUSTOMS_AUTH_SECRET: ${EASYCUSTOMS_AUTH_SECRET:?set it in .env}
+      EASYCUSTOMS_OCR_PROVIDER: ${EASYCUSTOMS_OCR_PROVIDER:-offline}
+      EASYCUSTOMS_EXTRACTION_PROVIDER: ${EASYCUSTOMS_EXTRACTION_PROVIDER:-offline}
+      # For live extraction switch the two providers above to mistral / openai
+      # and supply the keys below from .env.
+      EASYCUSTOMS_MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}
+      EASYCUSTOMS_OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      # Uploaded customs documents. Without this every stored document is
+      # destroyed by `docker compose build`.
+      - storage:/app/storage
+    # The app needs to write only storage/, which is a volume.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      # Start only after the schema is at head — otherwise the API refuses to
+      # boot and the stack looks broken on first run.
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:
+  storage:

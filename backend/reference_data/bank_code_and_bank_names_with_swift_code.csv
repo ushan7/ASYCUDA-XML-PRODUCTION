@@ -1,0 +1,280 @@
+Bank Code,Bank Name,SWIFT Code
+10001000,Nepal Rastra Bank,NRBLNPKA
+11001000,Nepal Bank Ltd,NEBLNPKA
+11002000,Rastriya Banijya Bank,RBBANPKA
+11003000,Nabil Bank Limited,NARBNPKA
+11004000,Nepal Investment Mega Bank,NIBLNPKA
+11005000,Standard Chartered Bank Nepal Limited,SCBLNPKA
+11006000,Himalayan Bank Limited,HIMANPKA
+11007000,Nepal SBI Bank Limited,NSBINPKA
+11008000,Nepal Bangladesh Bank Limited,NBBLNPKA
+11009000,Everest Bank Limited,EVBLNPKA
+11010000,Bank of Kathmandu Limited,BOKLNPKA
+11011000,Nepal Credit and Commerce Bank Limited,NCCBNPKA
+11012000,Nepal Industrial and Commercial Bank,NICENPKA
+11012003,NIC ASIA BANK LTD,NICENPKA
+11013000,Lumbini Bank Limited,LUBLNPKA
+11014000,Machhapuchhre Bank Limited,MBLNNPKA
+11014051,"Machhapuchhre Bank L, Parasi Branch",MBLNNPKA
+11015000,Kumari Bank Limited,KMBLNPKA
+11016000,Laxmi Sunrise Bank Limited,LXBLNPKA
+11017000,Siddhartha Bank Limited,SIDDNPKA
+11018000,Agriculture Development Bank,ADBLNPKA
+11019000,Global IME Bank Limited,GLBBNPKA
+11020000,Citizens Bank International,CTZNNPKA
+11021000,Prime Commercial Bank Ltd.,PCBLNPKA
+11021001,"Prime Commercial Bank, KamalPokhari",PCBLNPKA
+11022000,Bank of Asia Nepal Ltd.,BAONNPKA
+11023000,Sunrise Bank Ltd.,SRBLNPKA
+11024000,DCBL Bank Ltd.,DCBLNPKA
+11025000,NMB Bank Ltd,NMBBNPKA
+11026000,Kist Bank Ltd.,Not Available
+11026001,PRABHU BANK LTD,PRVUNPKA
+11027000,Janta Bank Nepal Ltd,Not Available
+11028000,Mega Bank Nepal Ltd,MBNLNPKA
+11029000,Commerz and Trust Bank Nepal Ltd.,Not Available
+11030001,Civil Bank Limited,CIVLNPKA
+11031000,Century Commercial Bank,CCBNNPKA
+11032000,Sanima Bank Ltd.,SANINPKA
+11064006,Prabhu Bittiya Sanstha Ltd.,Not Available
+11064009,Prabhu Bittiya Sanstha Ltd,Not Available
+12001000,Agricultural Development Bank,ADBLNPKA
+12002000,Nepal Industrial Development Corporation,Not Available
+12003000,Nepal Development Bank Ltd.,Not Available
+12004000,Udhayam Development Bank Ltd.,Not Available
+12005000,Malika Development Bank Ltd.,Not Available
+12006000,Siddhartha Bank Ltd.,SIDDNPKA
+12007000,Development Credit Bank Ltd.,Not Available
+12008000,United Development Bank Ltd.,Not Available
+12009000,Mahalaxmi Bikas Bank Ltd,Not Available
+12010000,Narayani Industrial Development Bank,Not Available
+12011000,Paschimanchal Bikash Bank Ltd.,Not Available
+12012000,Sahayogi Bikash Bank,Not Available
+12013000,Pashupati Bikash Bank,Not Available
+12014000,Karnali Bikash Bank,Not Available
+12015000,Triveni Bikash Bank,Not Available
+12016000,Annapurna Bikash Bank,Not Available
+12017000,Bhrikuti Development Bank Ltd.,Not Available
+12018000,Subhechha Bikash Bank,Not Available
+12019000,Bageshwori Bikash Bittiya Sanstha Ltd.,Not Available
+12020000,Sanima Bikash Bank Limited,Not Available
+12021000,Gaurishankar Bikash Bank Ltd.,Not Available
+12022000,Gurkha Development Bank Ltd.,Not Available
+12023000,Gandaki Development Bank Ltd.,Not Available
+12024000,Infrastructure Development Bank Ltd,Not Available
+12025000,Business Development Financial Inst,Not Available
+12026000,Biratlaxmi Bikash Bank Ltd.,Not Available
+12027000,Excel Credit and Commerce Financial,Not Available
+12028000,Western Development Bank Ltd.,Not Available
+12029000,Himchuli Bikash Bittiya Sanstha Ltd,Not Available
+12030000,Araniko Bikas Bank Ltd.,Not Available
+12031000,Nepal Development and Employment Pr,Not Available
+12032000,Clean Energy Development Bank Ltd.,Not Available
+12033000,Miteri Bittiya Sanstha Ltd.,Not Available
+12034000,Tinau Bikas Bittiya Sanstha Ltd.,Not Available
+12035000,Gaidakot Bikas Bank Ltd.,Not Available
+12036000,Muktinath Bikash Bank Ltd,Not Available
+12037000,Sewa Bikas Bank Ltd.,Not Available
+12038000,Kankai Bikash Bank Ltd.,Not Available
+12039000,Public Development Financial Instit,Not Available
+12040000,Mahakali Bikash Bank Limited,Not Available
+12041000,Ace Development Bank Ltd.,ACDENPKA
+12042000,Bhargav Bikash Bank Ltd.,Not Available
+12043000,Shangrila Bikash Bank Ltd.,Not Available
+12044000,Resunga Bikash Bank,Not Available
+12045000,Rara Bikash Bank,Not Available
+12046000,Diyalo Bikash Bank,Not Available
+12047000,Country Development Bank,Not Available
+12048000,Alpine Development Bank,Not Available
+12062000,"Hamro Bikash Bank, Battar, Nwakot",Not Available
+12063000,KakreVihar Bikash Bank Ltd,Not Available
+12064000,Shine Development Bank Ltd.,Not Available
+12065000,Pacific Development Bank Ltd.,Not Available
+12066000,Civic Development Bank,Not Available
+12067000,International Development Bank,Not Available
+12068000,Gulmi Bikas Bank,Not Available
+12069000,Kanchan Development Bank,Not Available
+12070000,Matribhumi Bikash Bank Ltd,Not Available
+12071000,Bright Development Bank,Not Available
+12072000,Innovative Development Bank,Not Available
+12073000,Jhimruk Bikash Bank,Not Available
+12074000,Metro Development Bank,Not Available
+12075000,Vibor Bikas Bank,Not Available
+12076000,Gaumukhi Bikash Bank,Not Available
+12077000,Raptiveri Bikas Bank,Not Available
+12078000,Consumer Development Bank Ltd,Not Available
+12079000,Khandbari Development Bank Ltd,Not Available
+12080000,Tourism Development Bank Ltd,Not Available
+12081000,Mission Development Bank Ltd,Not Available
+12082000,Surya Development Bank Ltd,Not Available
+12083000,Mount Makalu Development Bank Ltd,Not Available
+12084000,Sindhu Bikash Bank Ltd,Not Available
+12085000,Sahara Bikash Bank Ltd.,Not Available
+12086000,Social Development Bank Ltd.,Not Available
+12087000,Community Development Bank,Not Available
+12088000,Cosmos Development Bank,Not Available
+13001000,Nepal Housing Development Finance C,Not Available
+13002000,Nepal Finance and Savings Co. Ltd.,Not Available
+13008000,Merchantile Finance Co. Ltd.,Not Available
+13009000,Kathmandu Finance Ltd.,Not Available
+13010000,Himalaya Finance and Savings Co. Ltd,Not Available
+13011000,Union Finance Co. Ltd.,Not Available
+13012000,Narayani Finance Ltd.,Not Available
+13013000,Gorkha Finance Ltd.,Not Available
+13014000,Paschhimanchal Finance Co. Ltd.,Not Available
+13015000,Nepal Housing and Merchant Finance,Not Available
+13016000,Universal Finance and Capital Marke,Not Available
+13017000,Samjhana Finance Co. Ltd.,Not Available
+13018000,Goodwill Finance Ltd,Not Available
+13019000,Siddhartha Finance Co. Ltd.,Not Available
+13020000,Sri Investment and Finance Co. Ltd.,Not Available
+13021000,Lumbini Finance and Leasing Co. Ltd,Not Available
+13022000,Investa Finance Ltd.,Not Available
+13023000,Yeti Finance Co. Ltd.,Not Available
+13024000,Standard Finance Ltd.,Not Available
+13025000,Ace Finance Co. Ltd.,Not Available
+13026000,International Leasing and Finance C,Not Available
+13026005,Kist Bank Ltd.,Not Available
+13027000,Mahalaxmi Finance Ltd.,Not Available
+13028000,Lalitpur Finance Company Ltd.,Not Available
+13029000,Bhajuratna Finance and Shaving Co.,Not Available
+13030000,United Finance Company Ltd.,Not Available
+13031000,General Finance Co. Ltd.,Not Available
+13032000,Nepal Srilanka Merchant Bank Ltd.,Not Available
+13033000,Merchant Finance Company Ltd.,Not Available
+13034000,Alpic Everest Finance Ltd.,Not Available
+13035000,Nepal Merchant Banking and Finance,Not Available
+13036000,Navadurga Finance Co. Ltd.,Not Available
+13037000,Janaki Finance Ltd.,Not Available
+13038000,Pokhara Finance Ltd.,Not Available
+13039000,Central Finance Co. Ltd.,Not Available
+13040000,Premier Finance Co. Ltd.,Not Available
+13041000,Arun Finance and Saving Co. Ltd.,Not Available
+13042000,Multipurpose Saving and Investment,Not Available
+13043000,Butwal Finance Ltd.,Not Available
+13044000,Shrijana Finance Ltd.,Not Available
+13045000,Nepal Bangladesh Finance and Leasi,Not Available
+13046000,Om Finance Ltd.,Not Available
+13047000,Cosmic Merchant Banking and Finance,Not Available
+13048000,World Merchant Banking and Finance,Not Available
+13049000,Capital Merchant Banking and Finance,Not Available
+13050000,Crystal Finance Ltd.,Not Available
+13051000,Royal Merchant Banking and Finance,Not Available
+13052000,Guheshwori Merchant Banking and Fin,Not Available
+13053000,Patan Finance Ltd.,Not Available
+13054000,KIST - Upgraded to CB,Not Available
+13054002,Kist Merchant Banking and finance L,Not Available
+13055000,Fewa Finance Ltd.,Not Available
+13056000,Everest Finance Co. Ltd.,Not Available
+13057000,Birgunj Finance Ltd.,Not Available
+13058000,Prudential Merchant Banking and Fin,Not Available
+13059000,ICFC Finance Ltd.,Not Available
+13060000,IME Financial Institution,Not Available
+13061000,Sagarmartha Merchant Banking and Fin,Not Available
+13062000,Sikhar Bittiya Sanstha Ltd.,Not Available
+13063000,Civil Merchant Bittiya Sanstha Ltd.,Not Available
+13064000,"Prabhu Finance Co. Ltd., Corporate",Not Available
+13065000,Imperial Bittiya Sanstha Ltd.,Not Available
+13066000,Kuber Merchant Finance Ltd.,Not Available
+13067000,Nepal Express Financial Institution,Not Available
+13068000,Valley Bittiya Sanstha Ltd.,Not Available
+13069000,Seti Bittiya Sanstha Ltd.,Not Available
+13070000,Hama Bittiya Sanstha Ltd.,Not Available
+13071000,Reliable Finance Ltd.,Not Available
+13072000,Lord Buddha Financial Institution L,Not Available
+13073000,Swastik Marchant Finance Co. Ltd.,Not Available
+13074000,API Finance Ltd.,Not Available
+13075000,Namaste Bittiya Sanstha Ltd.,Not Available
+13076000,Kaski Finance Ltd.,Not Available
+13077000,Surya Darshan Financial Inst. Ltd.,Not Available
+13078000,Zenith Finance Ltd.,Not Available
+13079000,Unique Financial Inst. Ltd.,Not Available
+13080000,Manjushree Financial Inst. Ltd.,Not Available
+13081000,Subhalaxmi Finance Ltd.,Not Available
+13082000,Jebils Finance Ltd,Not Available
+13083000,Reliance Finance Ltd,Not Available
+13084000,Lotus Development Finance Ltd,Not Available
+14001000,Purbanchal Gramin Bikas Bank,Not Available
+14002000,Sudur Paschimanchal Gramin Bikas Bank,Not Available
+14003000,Paschimanchal Gramin Bikas Bank,Not Available
+14004000,Madhya Paschimanchal Gramin Bikas Bank,Not Available
+14005000,Madhyamanchal Gramin Bikas Bank,Not Available
+14006000,Nirdhan Utthan Bank,Not Available
+14007000,Rural Microfinance Development Cent,Not Available
+14008000,Deprosc Development Bank,Not Available
+14009000,Chhimek Development Bank,Not Available
+14010000,Shwabalamban Development Bank Ltd.,Not Available
+14011000,Sana Kisan Bikas Bank,Not Available
+14012000,Nerude Bittiya Sanstha Ltd.,Not Available
+14013000,Naya Nepal Laghubitta Bikas Bank LT,Not Available
+14014000,Summit Microfinance Development Ban,Not Available
+14015000,Sorojgar Laghubitta Bikas Bank Ltd,Not Available
+14016000,First Micro Finance Development Ban,Not Available
+14017000,NAGBELI LAGHUBITTA BIKAS BANK LTD,Not Available
+14018000,Kalika Microcredit Dev. Bank Ltd,Not Available
+14019000,Mirmire Microfinance Development Ba,Not Available
+15001000,Nabajivan Sahakari Sanstha Ltd.,Not Available
+15002000,Sagun Sahakari Sanstha Ltd.,Not Available
+15003000,Nepal Sahakari Bittiya Sanstha Ltd.,Not Available
+15004000,"The Sahara Loan, Savings and Invest",Not Available
+15005000,Bindabasini Bachat tatha Rin Sahaka,Not Available
+15006000,Mahila Sahakari Sanstha Ltd.,Not Available
+15007000,Nepal Bahu-Uddeshiya Sahakari Sanst,Not Available
+15008000,Rajshree Saving and Investment Co-o,Not Available
+15009000,Sahakari Bittiya Bikas Sanstha Ltd.,Not Available
+15010000,Shree Manakamana Sahakari Sanstha L,Not Available
+15011000,Bheri Sahakari Sanstha Ltd.,Not Available
+15012000,Biku Bachat tatha Rin Sahakari Sans,Not Available
+15013000,Amarawati Bahu-Uddeshiya Sahakari S,Not Available
+15014000,Kisan Bahu-Uddeshiya Sahakari Sanst,Not Available
+15015000,Himalaya Sahakari Sanstha Ltd.,Not Available
+15016000,Star Bahu-Uddeshiya Bachat tatha Ri,Not Available
+15017000,Upakar Bachat Kosh tatha Rin Sahaka,Not Available
+15018000,Rashtriya Sahakari Bank Ltd.,Not Available
+16001000,Nepal Grameen Bikas Samaj Kendra,Not Available
+16002000,Nepal Grameen Bikas Sanstha,Not Available
+16003000,Nepal Sikara Grameen Bikas Karyakra,Not Available
+16004000,Chartare Yuba Club,Not Available
+16005000,Mahuli Samudayik Bikas Kendra,Not Available
+16006000,Samuhik Yuba Club,Not Available
+16007000,Samudayik Mahila Bikas Kendra,Not Available
+16008000,Grameen Samudayako Lagi Yojana Prat,Not Available
+16009000,Grameen Jagaran Manch,Not Available
+16010000,Sarbodaya Grameen Bikas Sangh,Not Available
+16011000,Jan Jagaran Manch,Not Available
+16012000,Rastriya Shaichhik Tatha Samajik Bi,Not Available
+16013000,Dhaulagiri Samudayik Srot Bikas,Not Available
+16014000,Nepal Batabaran Tatha Pradusan Unmu,Not Available
+16015000,Bikaska Lagi Sthaniya Swayam Sebak,Not Available
+16016000,Nepal Mahila Udhyami Sangh,Not Available
+16017000,Mahila Adhikar Tatha Bikas Kendra,Not Available
+16018000,MANUSHI,Not Available
+16019000,Jeewan Bikas Samaj,Not Available
+16020000,Nari Utthan Tatha Balbalika Samranc,Not Available
+16021000,Mahila Adarsha Sewa Kendra,Not Available
+16022000,Patan Business and Professional Wom,Not Available
+16023000,Nari Utthan Kendra,Not Available
+16024000,Mahila Swabalamban Samaj,Not Available
+16025000,Nepal Mahila Utthan Kendra,Not Available
+16026000,Bhagawan Yuba Club,Not Available
+16027000,Srijanatmak Mahila Batabaran Bikas,Not Available
+16028000,Srijana Samudayeek Bikas Kendra,Not Available
+16029000,Sreejana Bikas Kendra,Not Available
+16030000,Gharelu Tatha Sana Uddhyog Sangh,Not Available
+16031000,Grammen Chhetra Bikas Tatha Anusand,Not Available
+16032000,"Adarsha Yubak Club, Bhaktapur",Not Available
+16033000,Society Welfare Action Nepal (SWAN),Not Available
+16034000,Social Upgrade in Progress of Educa,Not Available
+16035000,Nepal Mahila Samudayeek Sewa Kendra,Not Available
+16036000,Gramen Mahila Utsukta Bikas Manch,Not Available
+16037000,Grameen Mahila Bikas Sanstha,Not Available
+16038000,Ama Samaj Sangh,Not Available
+16039000,"Grameen Mahila Utthan Kendra, Dang",Not Available
+16040000,"Khurkot Yuba Club, Parbat",Not Available
+16041000,Grameen sewa Nepal,Not Available
+16042000,Nari Avudya Kendra,Not Available
+16043000,Mahila Upakar Manch,Not Available
+16044000,Chhimek Samaj Sewa Sanstha,Not Available
+16045000,Sawabalamban Bikas Kendra,Not Available
+16046000,Bikash Aayoiana Sewa Kendra (DEPROS,Not Available
+16047000,Grameen Swayam Sebak Samaj,Not Available

@@ -1,0 +1,1906 @@
+[
+ {
+  "id": "east_med_bg_faktura_dds",
+  "title": "Bulgarian Faktura (Cyrillic, DDS, bilingual)",
+  "note": "Bulgaria / industrial pumps and hydraulics wholesale",
+  "page": "| № | Наименование на стоката / Description of goods | Мярка / Unit | Количество / Quantity | Ед. цена / Unit price | Стойност / Amount |\n| --- | --- | --- | --- | --- | --- |\n| 1 | Центробежна помпа CPM 158 / Centrifugal pump | бр. | 12 | 245,50 | 2 946,00 |\n| 2 | Електродвигател 1,5 kW / Electric motor | бр. | 30 | 118,40 | 3 552,00 |\n| 3 | Гумен маркуч DN50 / Rubber hose DN50 | м | 250 | 7,25 | 1 812,50 |\n| Данъчна основа / Taxable base |  |  |  |  | 8 310,50 |\n| ДДС 20% / VAT 20% |  |  |  |  | 1 662,10 |\n| Общо за плащане / Total due |  |  |  |  | 9 972,60 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Центробежна помпа CPM 158 / Centrifugal pump",
+   "quantity": "12",
+   "uom": "бр.",
+   "unit_price": "245,50",
+   "line_total": "2 946,00",
+   "hs_code": ""
+  },
+  "what_is_different": "Cyrillic headers slashed with English on the SAME line (bilingual within one cell, not two header rows); Bulgarian decimal comma with a space thousands group; Cyrillic unit vocabulary (бр., м); and a decimal comma living inside a product description (\"Електродвигател 1,5 kW\") on row 2 that must not be read as a number. Three separate money rows below the goods (taxable base / ДДС / total due) mean the printed-totals gate must pick the NET row, not the last row."
+ },
+ {
+  "id": "east_med_gr_timologio_fpa",
+  "title": "Greek Timologio (Greek script, FPA column)",
+  "note": "Greece / PVC drainage and plumbing supplier",
+  "page": "| Α/Α | Περιγραφή είδους | Μ.Μ. | Ποσότητα | Τιμή μονάδας | Αξία | ΦΠΑ % | Ποσό ΦΠΑ |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Σωλήνας PVC Φ110 6m | ΜΕΤ | 600 | 4,80 | 2.880,00 | 24 | 691,20 |\n| 2 | Γωνία PVC 90° Φ110 | ΤΕΜ | 250 | 2,35 | 587,50 | 24 | 141,00 |\n| 3 | Φρεάτιο επίσκεψης 40x40 | ΤΕΜ | 40 | 36,75 | 1.470,00 | 24 | 352,80 |\n| ΣΥΝΟΛΟ ΚΑΘΑΡΗΣ ΑΞΙΑΣ |  |  |  |  | 4.937,50 |  | 1.185,00 |\n| ΓΕΝΙΚΟ ΣΥΝΟΛΟ |  |  |  |  | 6.122,50 |  |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Σωλήνας PVC Φ110 6m",
+   "quantity": "600",
+   "uom": "ΜΕΤ",
+   "unit_price": "4,80",
+   "line_total": "2.880,00",
+   "hs_code": ""
+  },
+  "what_is_different": "Monolingual Greek script with no English anywhere — \"Αξία\" is the amount column and \"Ποσότητα\" the quantity, so a Latin-only header vocabulary maps nothing. Greek numeric convention: dot thousands + decimal comma. A bare ΦΠΑ % column holds a naked integer (24) that must not be mistaken for a quantity or price, and the per-row VAT amount column sits to the RIGHT of the line total, so the rightmost money column is NOT the amount. The final ΓΕΝΙΚΟ ΣΥΝΟΛΟ prints the gross under the same Αξία column that the net rows use."
+ },
+ {
+  "id": "east_med_tr_ticari_fatura_gtip",
+  "title": "Turkish Ticari Fatura (GTIP, net weight, gross weight, origin)",
+  "note": "Turkey / fasteners, aluminium profile and woven sacks for export",
+  "page": "| Sıra | Malın Cinsi | GTİP No | Miktar | Birim | Birim Fiyat (USD) | Tutar (USD) | Net Ağırlık (kg) | Brüt Ağırlık (kg) | Menşei |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Çelik vidalı bağlantı elemanı M12 | 7318.15.90.00.00 | 25.000 | ADET | 0,42 | 10.500,00 | 380 | 410 | Türkiye |\n| 2 | Alüminyum profil 6063 T5 | 7604.21.00.00.00 | 4.200 | KG | 3,15 | 13.230,00 | 4.200 | 4.350 | Türkiye |\n| 3 | Polipropilen dokuma çuval 50 kg | 6305.33.90.00.00 | 12.000 | ADET | 0,285 | 3.420,00 | 960 | 1.020 | Türkiye |\n| TOPLAM |  |  | 41.200 |  |  | 27.150,00 | 5.540 | 5.780 |  |\n| TOPLAM FOB MERSİN (USD) |  |  |  |  |  | 27.150,00 |  |  |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Çelik vidalı bağlantı elemanı M12",
+   "quantity": "25.000",
+   "uom": "ADET",
+   "unit_price": "0,42",
+   "line_total": "10.500,00",
+   "hs_code": "7318.15.90.00.00"
+  },
+  "what_is_different": "The nastiest locale trap in the set: the QUANTITY column itself is dot-grouped (\"25.000\" = twenty-five thousand, not 25). Read as decimal-point it gives 25 x 0,42 and the arithmetic gate collapses — locale detection must be document-wide, not per-cell. Also carries a 12-digit dotted Turkish GTİP (longer than an HS6/HS8 the code column usually expects), a 3-decimal unit price (0,285) against 2-decimal totals, and net/gross weight plus origin as printed columns. Row 2 sells BY weight (Birim = KG) so quantity and net weight are the same figure, while rows 1 and 3 sell by ADET — the weight column is not derivable from quantity."
+ },
+ {
+  "id": "east_med_ru_schet_faktura_tnved",
+  "title": "Russian Schet-faktura (Cyrillic/English, HS codes, weight)",
+  "note": "Russia / sawn timber, plywood and glulam for export",
+  "page": "| № | Наименование товара / Description of goods | Код ТН ВЭД / HS code | Кол-во / Quantity | Ед. изм. / Unit | Цена, USD / Unit price | Сумма, USD / Amount | Вес нетто, кг / Net weight | Вес брутто, кг / Gross weight |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Пиломатериал хвойный обрезной / Sawn softwood timber | 4407 11 100 0 | 120 | м3 | 185,00 | 22 200,00 | 72 000 | 72 000 |\n| 2 | Фанера берёзовая 1525x1525x12 / Birch plywood | 4412 33 000 0 | 850 | лист | 24,60 | 20 910,00 | 23 800 | 24 100 |\n| 3 | Брус клеёный / Glued laminated beam | 4418 81 000 0 | 45 | м3 | 410,00 | 18 450,00 | 21 150 | 21 400 |\n| Итого / Total |  |  |  |  |  | 61 560,00 | 116 950 | 117 500 |\n| НДС 0% (экспорт) / VAT 0% (export) |  |  |  |  |  | 0,00 |  |  |\n| Всего к оплате / Total due |  |  |  |  |  | 61 560,00 |  |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Пиломатериал хвойный обрезной / Sawn softwood timber",
+   "quantity": "120",
+   "uom": "м3",
+   "unit_price": "185,00",
+   "line_total": "22 200,00",
+   "hs_code": "4407 11 100 0"
+  },
+  "what_is_different": "ТН ВЭД codes printed SPACE-GROUPED (\"4407 11 100 0\") in a document that also uses spaces as thousands separators — the same delimiter carries two meanings in two columns. Cyrillic volumetric units (м3, лист) mean quantity is not a piece count and the weight columns dwarf it by three orders of magnitude, so any quantity/weight cross-check by magnitude is wrong. VAT prints as an explicit 0,00 export row, so net and gross totals are identical and the gate must not treat the duplicate as a double-count."
+ },
+ {
+  "id": "east_med_ua_rakhunok_uktzed",
+  "title": "Ukrainian Rakhunok (HS code, net/gross weight)",
+  "note": "Ukraine / bulk agricultural oil and by-products",
+  "page": "| № | Найменування товару / Description | Код УКТЗЕД / HS code | Кількість / Qty | Од. вим. / Unit | Ціна, EUR / Unit price | Сума, EUR / Amount | Вага нетто, кг / Net weight | Вага брутто, кг / Gross weight |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Олія соняшникова нерафінована наливом / Crude sunflower oil in bulk | 1512 11 91 00 | 24 | т | 845,00 | 20 280,00 | 24 000 | 24 000 |\n| 2 | Шрот соняшниковий / Sunflower meal | 2306 30 00 00 | 60 | т | 215,00 | 12 900,00 | 60 000 | 60 300 |\n| 3 | Лушпиння соняшникове гранульоване / Sunflower husk pellets | 1213 00 00 00 | 22 | т | 96,50 | 2 123,00 | 22 000 | 22 100 |\n| Разом без ПДВ / Total excl. VAT |  |  | 106 |  |  | 35 303,00 | 106 000 | 106 400 |\n| ПДВ 0% (експорт) / VAT 0% (export) |  |  |  |  |  | 0,00 |  |  |\n| Усього до сплати / Total due |  |  |  |  |  | 35 303,00 |  |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Олія соняшникова нерафінована наливом / Crude sunflower oil in bulk",
+   "quantity": "24",
+   "uom": "т",
+   "unit_price": "845,00",
+   "line_total": "20 280,00",
+   "hs_code": "1512 11 91 00"
+  },
+  "what_is_different": "Ukrainian-specific Cyrillic (УКТЗЕД, Кількість, Вага) — near-miss of the Russian vocabulary but not identical, so a parser keyed on Russian headers alone silently fails. Bulk commodity sold in tonnes: the quantity column holds 2-digit figures (24, 60, 22) while the weight column holds the same goods in kilograms (24 000, 60 000), and the TOTALS row sums the tonnage (106) in a column most totals rows leave blank. Row 1 is a liquid in bulk so net equals gross exactly; rows 2 and 3 are bagged and differ."
+ },
+ {
+  "id": "east_med_eg_commercial_fob_cif",
+  "title": "Egyptian Commercial Invoice (Arabic/English, HS codes, FOB/CIF)",
+  "note": "Egypt / ceramic tiles, sanitaryware and marble",
+  "page": "| م | الصنف / Description | البند الجمركي / HS Code | الكمية / Quantity | الوحدة / Unit | سعر الوحدة FOB / Unit Price FOB (USD) | القيمة FOB / FOB Value (USD) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | بلاط سيراميك أرضيات 60×60 / Ceramic floor tiles 60x60 | 6907.21.00 | 4,800 | م2 / SQM | 6.25 | 30,000.00 |\n| 2 | أدوات صحية بورسلين / Sanitary ware porcelain | 6910.10.00 | 900 | قطعة / PCS | 34.50 | 31,050.00 |\n| 3 | رخام مصري مقطع / Egyptian marble slabs | 6802.91.00 | 260 | م2 / SQM | 42.00 | 10,920.00 |\n| إجمالي القيمة FOB / Total FOB Value |  |  |  |  |  | 71,970.00 |\n| الشحن / Freight |  |  |  |  |  | 3,150.00 |\n| التأمين / Insurance |  |  |  |  |  | 420.00 |\n| إجمالي القيمة CIF / Total CIF Value |  |  |  |  |  | 75,540.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "بلاط سيراميك أرضيات 60×60 / Ceramic floor tiles 60x60",
+   "quantity": "4,800",
+   "uom": "م2 / SQM",
+   "unit_price": "6.25",
+   "line_total": "30,000.00",
+   "hs_code": "6907.21.00"
+  },
+  "what_is_different": "RTL Arabic and LTR English inside the SAME cell in every column, including the unit cell (\"م2 / SQM\") — bidirectional text that OCR may reorder. Egypt keeps Western digits and the Anglo convention (comma thousands, decimal point) despite the Arabic script, so script and numeric locale disagree. Four stacked totals rows where only the FIRST (FOB) equals the sum of the lines: freight and insurance are separate charges and the last printed figure (CIF) deliberately does NOT match the rows — the customs value story depends on picking FOB. Row 1 also carries a full-width multiplication sign (60×60) in the description."
+ },
+ {
+  "id": "east_med_sa_commercial_vat15",
+  "title": "Saudi Commercial Invoice (VAT 15%, HS codes, origin, weight)",
+  "note": "Saudi Arabia / electrical cable and switchgear, ZATCA-style bilingual",
+  "page": "| # | الوصف / Description | رمز النظام المنسق / HS Code | بلد المنشأ / Origin | الكمية / Qty | الوحدة / Unit | الوزن كجم / Weight (kg) | سعر الوحدة / Unit Price (SAR) | المبلغ / Amount (SAR) | ضريبة القيمة المضافة ١٥٪ / VAT 15% (SAR) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | كابل كهربائي نحاسي ٣×٢٫٥ مم / Copper electrical cable 3x2.5mm | 8544.49.00 | السعودية / Saudi Arabia | 3,000 | متر / M | 1,650 | 12.40 | 37,200.00 | 5,580.00 |\n| 2 | لوحة توزيع كهربائية ١٢ خط / Distribution board 12-way | 8537.10.00 | السعودية / Saudi Arabia | 120 | قطعة / PCS | 480 | 285.00 | 34,200.00 | 5,130.00 |\n| 3 | قاطع دائرة مصغر ٣٢ أمبير / MCB 32A | 8536.20.00 | السعودية / Saudi Arabia | 900 | قطعة / PCS | 135 | 18.75 | 16,875.00 | 2,531.25 |\n| الإجمالي قبل الضريبة / Total before VAT |  |  |  | 4,020 |  | 2,265 |  | 88,275.00 | 13,241.25 |\n| إجمالي ضريبة القيمة المضافة / Total VAT |  |  |  |  |  |  |  |  | 13,241.25 |\n| الإجمالي شامل الضريبة / Total incl. VAT |  |  |  |  |  |  |  | 101,516.25 |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "كابل كهربائي نحاسي ٣×٢٫٥ مم / Copper electrical cable 3x2.5mm",
+   "quantity": "3,000",
+   "uom": "متر / M",
+   "unit_price": "12.40",
+   "line_total": "37,200.00",
+   "hs_code": "8544.49.00"
+  },
+  "what_is_different": "Eastern-Arabic-numeral digits (٣×٢٫٥, ١٢, ٣٢) appear INSIDE descriptions and in the VAT header (١٥٪) while every money and quantity cell uses Western digits — the same page mixes two digit sets, and the Arabic decimal separator ٫ is a distinct codepoint from a comma. A per-row 15% VAT column sits right of the amount, and the net total row also fills the quantity and weight columns, so three numeric columns carry sub-totals in one row. The gross (101,516.25) is printed one column LEFT of the VAT figures, shifting the money column between totals rows."
+ },
+ {
+  "id": "east_med_ae_tax_invoice_trn_vat5",
+  "title": "UAE Tax Invoice (TRN, VAT 5%, HS codes, FOB)",
+  "note": "UAE / aluminium extrusions, door frames and tempered glass",
+  "page": "| S/N | Description of Goods | HS Code | Country of Origin | Qty | UOM | Unit Price (AED) | FOB Value (AED) | VAT 5% (AED) | Line Total (AED) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Aluminium extruded profile, mill finish | 7604.21.00 | United Arab Emirates | 5,400 | KG | 9.80 | 52,920.00 | 2,646.00 | 55,566.00 |\n| 2 | Powder coated aluminium door frame | 7610.10.00 | United Arab Emirates | 320 | PCS | 145.50 | 46,560.00 | 2,328.00 | 48,888.00 |\n| 3 | Tempered glass panel 8mm clear | 7007.19.00 | United Arab Emirates | 210 | SQM | 118.00 | 24,780.00 | 1,239.00 | 26,019.00 |\n| Total FOB Value |  |  |  |  |  |  | 124,260.00 |  |  |\n| Total VAT @ 5% |  |  |  |  |  |  |  | 6,213.00 |  |\n| Grand Total (AED) |  |  |  |  |  |  |  |  | 130,473.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Aluminium extruded profile, mill finish",
+   "quantity": "5,400",
+   "uom": "KG",
+   "unit_price": "9.80",
+   "line_total": "52,920.00",
+   "hs_code": "7604.21.00"
+  },
+  "what_is_different": "TWO money columns per row that both look like a line total: \"FOB Value\" (qty x price, the customs value) and \"Line Total\" (FOB + VAT). Only the FOB column confirms arithmetically against quantity x unit price, so a parser that grabs the rightmost money column produces a silently 5%-inflated declaration that still balances against its own printed grand total. The three totals rows each populate a DIFFERENT column and leave the others blank, so no single totals row spans the table. Mixed UOM across rows (KG, PCS, SQM) means quantity units are not comparable line to line."
+ },
+ {
+  "id": "east_med_il_tax_invoice_vat17",
+  "title": "Israel Tax Invoice (Hebrew/English line items, VAT 17%)",
+  "note": "Israel / water treatment and irrigation equipment",
+  "page": "| מס' | תיאור המוצר / Description | כמות | יח' | מחיר יחידה | סה\"כ |\n| --- | --- | --- | --- | --- | --- |\n| 1 | מסנן מים תעשייתי 10\" / Industrial water filter 10\" | 150 | יח' | 84.00 | 12,600.00 |\n| 2 | משאבת טבילה 1.5 כ\"ס / Submersible pump 1.5HP | 40 | יח' | 612.50 | 24,500.00 |\n| 3 | צינור פוליאתילן 32 מ\"מ / Polyethylene pipe 32mm | 1,200 | מ' | 7.25 | 8,700.00 |\n| סה\"כ לפני מע\"מ |  |  |  |  | 45,800.00 |\n| מע\"מ 17% |  |  |  |  | 7,786.00 |\n| סה\"כ לתשלום ₪ |  |  |  |  | 53,586.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "מסנן מים תעשייתי 10\" / Industrial water filter 10\"",
+   "quantity": "150",
+   "uom": "יח'",
+   "unit_price": "84.00",
+   "line_total": "12,600.00",
+   "hs_code": ""
+  },
+  "what_is_different": "Hebrew RTL headers where the amount header is the abbreviation סה\"כ — punctuation-bearing (gershayim) and identical to the label used on the totals rows, so header text and totals text collide. The unit column repeats the same gershayim/geresh marks (יח', מ', כ\"ס), and inch marks inside descriptions (10\") are the same glyph again — a quote-stripping cleanup step would mangle description, unit and header alike. No HS code column at all, which is normal for a domestic Israeli tax invoice, so the tariff read must come from elsewhere rather than being hallucinated. Western digits with comma thousands despite the RTL script."
+ },
+ {
+  "id": "east_med_ma_facture_tva_dimensions",
+  "title": "Moroccan Facture Commerciale (TVA, HS codes, dimensions)",
+  "note": "Morocco / ceramic tiles, skirting and glass mosaic",
+  "page": "| N° | Désignation | Dimensions | Code SH | Qté | U | P.U. HT (MAD) | Montant HT (MAD) | TVA 20% (MAD) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Carreaux céramique émaillés grès | 30 x 60 cm | 6907.22.00 | 2 400 | M2 | 78,50 | 188 400,00 | 37 680,00 |\n| 2 | Plinthe céramique assortie | 8 x 60 cm | 6907.22.00 | 1 500 | ML | 22,40 | 33 600,00 | 6 720,00 |\n| 3 | Mosaïque de verre sur trame | 32,7 x 32,7 cm | 7016.10.00 | 380 | M2 | 145,00 | 55 100,00 | 11 020,00 |\n| TOTAL HT |  |  |  |  |  |  | 277 100,00 | 55 420,00 |\n| TOTAL TVA 20% |  |  |  |  |  |  | 55 420,00 |  |\n| TOTAL TTC |  |  |  |  |  |  | 332 520,00 |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Carreaux céramique émaillés grès",
+   "quantity": "2 400",
+   "uom": "M2",
+   "unit_price": "78,50",
+   "line_total": "188 400,00",
+   "hs_code": "6907.22.00"
+  },
+  "what_is_different": "A dedicated Dimensions column whose cells contain their own \"a x b\" numbers — and on row 3 those dimensions carry decimal commas (32,7 x 32,7 cm), the same separator the money columns use, so a naive numeric sweep finds four plausible \"numbers\" per row before reaching the price. French decimal comma with space thousands means the quantity \"2 400\" is one number, not two. Rows 1 and 2 share an identical Code SH while differing in product and unit (M2 vs ML), so HS code cannot key row identity. The TOTAL HT row fills both the amount and the TVA column, then TOTAL TVA and TOTAL TTC both print under the amount column — the net (277 100,00) and the VAT (55 420,00) appear twice each in different cells."
+ },
+ {
+  "id": "nordic_baltic_se_faktura_moms",
+  "title": "Swedish Faktura (Moms column, OCR reference)",
+  "note": "Sweden · industrial bearings & drive components wholesaler",
+  "page": "| Pos | Artikelnr | Benämning | Antal | Enhet | À-pris SEK | Moms % | Belopp SEK |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | 6205-2RS | Kullager SKF 6205-2RS spårkullager | 240 | st | 78,50 | 25 | 18 840,00 |\n| 2 | SPZ1180 | Kilrem SPZ 1180 Lw smalkilrem | 150 | st | 46,00 | 25 | 6 900,00 |\n| 3 | TS-355207 | Axeltätning 35x52x7 mm NBR | 400 | st | 22,25 | 25 | 8 900,00 |\n|  |  | Summa exkl. moms |  |  |  |  | 34 640,00 |\n|  |  | Moms 25 % |  |  |  |  | 8 660,00 |\n|  |  | Att betala SEK |  |  |  |  | 43 300,00 |\n\nBetalning via Bankgiro 5402-1156. OCR-referens 44712900335. Förfallodatum 2026-09-30.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Kullager SKF 6205-2RS spårkullager",
+   "quantity": "240",
+   "uom": "st",
+   "unit_price": "78,50",
+   "line_total": "18 840,00",
+   "hs_code": ""
+  },
+  "what_is_different": "Swedish header vocabulary (Benämning / Antal / À-pris / Belopp) with a per-line Moms % column that is a RATE, not money — the parser must not mistake the 25 for a quantity or a price. Space thousands separator with decimal comma, and a trailing OCR-referens payment line that must not be swallowed as a row."
+ },
+ {
+  "id": "nordic_baltic_no_faktura_mva_kid",
+  "title": "Norwegian Faktura (MVA breakdown, KID, NOK)",
+  "note": "Norway · marine and fishing-gear supplier",
+  "page": "| Nr | Varenr | Beskrivelse | Antall | Enhet | Enhetspris | MVA % | Beløp NOK |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | FG-6045 | Fiskegarn nylon 60 mm maskevidde | 120 | stk | 845,00 | 25 | 101 400,00 |\n| 2 | TW-1600 | Trålwire galvanisert 16 mm | 500 | m | 128,50 | 25 | 64 250,00 |\n| 3 | FK-0400 | Fenderkule Ø400 mm oppblåsbar | 60 | stk | 1 240,00 | 25 | 74 400,00 |\n|  |  | Sum eks. mva |  |  |  |  | 240 050,00 |\n|  |  | Mva 25 % |  |  |  |  | 60 012,50 |\n|  |  | Å betale NOK |  |  |  |  | 300 062,50 |\n\nKID-nummer: 0012 4478 9013 4 · Kontonr. 1503.22.44781 · Forfall 30.09.2026",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Fiskegarn nylon 60 mm maskevidde",
+   "quantity": "120",
+   "uom": "stk",
+   "unit_price": "845,00",
+   "line_total": "101 400,00",
+   "hs_code": ""
+  },
+  "what_is_different": "Norwegian headers (Antall / Enhetspris / Beløp) and a mixed unit vocabulary (stk vs m) in one table. The unit price itself carries a space thousands separator (1 240,00), so the price column and the amount column are formatted identically — the arithmetic check is the only way to tell them apart. Trailing KID payment block."
+ },
+ {
+  "id": "nordic_baltic_dk_faktura_rabat_cvr",
+  "title": "Danish Faktura (CVR, Betalingsbetingelser)",
+  "note": "Denmark · design furniture components manufacturer",
+  "page": "| Varenr. | Beskrivelse | Antal | Enhed | Stk. pris | Rabat % | Beløb DKK |\n| --- | --- | --- | --- | --- | --- | --- |\n| 10442 | Egetræsplade lamelopbygget 1800x900x25 mm | 40 | stk | 1.275,00 | 0,00 | 51.000,00 |\n| 20871 | Stålben konisk sort pulverlakeret 710 mm | 320 | stk | 89,50 | 0,00 | 28.640,00 |\n| 30119 | Filtpude selvklæbende Ø22 mm | 2.000 | stk | 1,45 | 0,00 | 2.900,00 |\n|  | Subtotal |  |  |  |  | 82.540,00 |\n|  | Moms 25 % |  |  |  |  | 20.635,00 |\n|  | I alt DKK |  |  |  |  | 103.175,00 |\n\nBetalingsbetingelser: Netto 30 dage. CVR-nr. 28 76 44 19. Bank: Danske Bank reg. 3409 konto 4471223390.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Egetræsplade lamelopbygget 1800x900x25 mm",
+   "quantity": "40",
+   "uom": "stk",
+   "unit_price": "1.275,00",
+   "line_total": "51.000,00",
+   "hs_code": ""
+  },
+  "what_is_different": "Danish uses PERIOD as the thousands separator with a decimal comma — 1.275,00 and 2.900,00 — inside the same document where a quantity is printed as 2.000 stk. A naive locale sniffer reads that quantity as 2.0 and the line stops confirming. Also carries an always-printed Rabat % column sitting between the price and the amount at 0,00."
+ },
+ {
+  "id": "nordic_baltic_fi_lasku_alv_viitenumero",
+  "title": "Finnish Lasku (alv columns, viitenumero)",
+  "note": "Finland · plywood and panel mill",
+  "page": "| Rivi | Tuotenro | Nimike | Määrä | Yks | à-hinta | Veroton | Alv % | Alv € | Yhteensä |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | KV-1825 | Koivuvaneri 18 mm 2500x1250 WG/WGE | 180 | lev | 68,40 | 12 312,00 | 25,5 | 3 139,56 | 15 451,56 |\n| 2 | HV-1225 | Havuvanerilevy 12 mm 2400x1200 | 240 | lev | 41,25 | 9 900,00 | 25,5 | 2 524,50 | 12 424,50 |\n| 3 | RL-0018 | Vanerin reunalista alumiini 18 mm | 600 | m | 3,80 | 2 280,00 | 25,5 | 581,40 | 2 861,40 |\n|  |  | Veroton yhteensä |  |  |  | 24 492,00 |  |  |  |\n|  |  | Alv 25,5 % |  |  |  |  |  | 6 245,46 |  |\n|  |  | Loppusumma EUR |  |  |  |  |  |  | 30 737,46 |\n\nViitenumero 1 2345 67890 1234 · IBAN FI21 1234 5600 0007 85 · Eräpäivä 30.09.2026",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Koivuvaneri 18 mm 2500x1250 WG/WGE",
+   "quantity": "180",
+   "uom": "lev",
+   "unit_price": "68,40",
+   "line_total": "12 312,00",
+   "hs_code": ""
+  },
+  "what_is_different": "Two money totals per line: Veroton (net, = qty × à-hinta) and Yhteensä (VAT-inclusive). The customs value is the NET one, so picking the rightmost money column — the usual heuristic — is wrong here and inflates every line by 25,5 %. Finnish alv is 25,5 % so the rate cell itself contains a decimal comma, and the unit is the domestic 'lev' (levy) rather than any ISO code."
+ },
+ {
+  "id": "nordic_baltic_pl_faktura_pkwiu_cn",
+  "title": "Polish Faktura Handlowa (stawka VAT, PKWiU code column)",
+  "note": "Poland · automotive brake and filtration parts exporter",
+  "page": "| Lp. | Nazwa towaru | PKWiU | Kod CN | Ilość | J.m. | Cena netto | Wartość netto | Stawka VAT | Kwota VAT | Wartość brutto |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Klocki hamulcowe przednie, komplet 4 szt. | 29.32.30.0 | 87083010 | 320 | kpl | 82,50 | 26 400,00 | 23% | 6 072,00 | 32 472,00 |\n| 2 | Tarcza hamulcowa wentylowana 280 mm | 29.32.30.0 | 87083090 | 240 | szt | 118,00 | 28 320,00 | 23% | 6 513,60 | 34 833,60 |\n| 3 | Filtr oleju silnikowego, wkład | 28.29.13.0 | 84212300 | 900 | szt | 14,75 | 13 275,00 | 23% | 3 053,25 | 16 328,25 |\n|  | Razem |  |  |  |  |  | 67 995,00 |  | 15 638,85 | 83 633,85 |\n|  | W tym stawka 23% |  |  |  |  |  | 67 995,00 | 23% | 15 638,85 | 83 633,85 |\n|  | Do zapłaty: 83 633,85 PLN |  |  |  |  |  |  |  |  |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Klocki hamulcowe przednie, komplet 4 szt.",
+   "quantity": "320",
+   "uom": "kpl",
+   "unit_price": "82,50",
+   "line_total": "26 400,00",
+   "hs_code": "87083010"
+  },
+  "what_is_different": "TWO code columns side by side: PKWiU (Polish statistical classification, dotted 29.32.30.0) and Kod CN (the actual 8-digit tariff code). Only the CN column may become the HS code; the dotted PKWiU must never be digit-stripped into 29323 00. The description also contains 'komplet 4 szt.' — a count word that must not be read as the quantity, which is 320 kpl."
+ },
+ {
+  "id": "nordic_baltic_cz_faktura_bilingual",
+  "title": "Czech Faktura (VAT rates, Czech/English descriptions)",
+  "note": "Czechia · brewery glassware and packaging supplier",
+  "page": "| Poř. | Označení dodávky / Description | Kód zboží | Množství | MJ | Cena za MJ | Sazba DPH | Celkem bez DPH |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Sklenice pivní 0,5 l cejchovaná / Beer glass 0.5 l | 70133700 | 1 200 | ks | 28,50 | 21 % | 34 200,00 |\n| 2 | Korunkový uzávěr 26 mm / Crown cap 26 mm | 83091000 | 50 000 | ks | 0,42 | 21 % | 21 000,00 |\n| 3 | Přepravka plastová 20x0,5 l / Plastic crate | 39231010 | 800 | ks | 96,00 | 21 % | 76 800,00 |\n|  | Celkem bez DPH / Total excl. VAT |  |  |  |  |  | 132 000,00 |\n|  | DPH 21 % |  |  |  |  |  | 27 720,00 |\n|  | Celkem s DPH / Total incl. VAT CZK |  |  |  |  |  | 159 720,00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Sklenice pivní 0,5 l cejchovaná / Beer glass 0.5 l",
+   "quantity": "1 200",
+   "uom": "ks",
+   "unit_price": "28,50",
+   "line_total": "34 200,00",
+   "hs_code": "70133700"
+  },
+  "what_is_different": "Slash-joined bilingual descriptions where the Czech half spells the volume '0,5 l' with a decimal comma and the English half spells it '0.5 l' — both numeric conventions inside one cell, plus '20x0,5 l' in row 3. Quantities carry space thousands separators (1 200, 50 000) while a unit price is sub-unit (0,42), so quantity and price formatting overlap."
+ },
+ {
+  "id": "nordic_baltic_hu_szamla_afa_weight",
+  "title": "Hungarian Számla (ÁFA, item weights)",
+  "note": "Hungary · food exporter (paprika, salami, honey)",
+  "page": "| Ssz. | Megnevezés | Vámtarifaszám | Mennyiség | Me. | Nettó egységár | Nettó érték | ÁFA % | ÁFA érték | Nettó tömeg (kg) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Fűszerpaprika őrölt csemege, 25 kg-os zsák | 09042200 | 480 | kg | 3 250,00 | 1 560 000,00 | 27 | 421 200,00 | 480,00 |\n| 2 | Téliszalámi vákuumcsomagolt rúd | 16010099 | 320 | kg | 6 480,00 | 2 073 600,00 | 27 | 559 872,00 | 320,00 |\n| 3 | Akácméz üveges 500 g | 04090000 | 1 200 | üveg | 1 850,00 | 2 220 000,00 | 27 | 599 400,00 | 660,00 |\n|  | Nettó összesen |  |  |  |  | 5 853 600,00 |  | 1 580 472,00 | 1 460,00 |\n|  | Bruttó összesen HUF |  |  |  |  | 7 434 072,00 |  |  |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Fűszerpaprika őrölt csemege, 25 kg-os zsák",
+   "quantity": "480",
+   "uom": "kg",
+   "unit_price": "3 250,00",
+   "line_total": "1 560 000,00",
+   "hs_code": "09042200"
+  },
+  "what_is_different": "A per-line net-weight column that is NOT the quantity and must not be borrowed as one — rows 1 and 2 are billed in kg so weight and quantity coincide, but row 3 is billed in üveg (jars) at 1 200 pcs weighing 660,00 kg, which is where a weight/quantity confusion finally shows. HUF figures run to seven digits with space groups (1 560 000,00), and the description embeds '25 kg' packaging text next to a kg unit column."
+ },
+ {
+  "id": "nordic_baltic_ro_factura_tva",
+  "title": "Romanian Factura (TVA rate)",
+  "note": "Romania · electrical cable and installation materials",
+  "page": "| Nr. crt. | Denumirea produselor | Cod NC | U.M. | Cantitate | Preț unitar fără TVA | Valoare | Cota TVA | Valoare TVA |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Cablu electric CYY-F 3x2,5 mmp | 85444942 | m | 4.500 | 6,25 | 28.125,00 | 21% | 5.906,25 |\n| 2 | Doză derivație IP65 100x100 mm | 85369010 | buc | 1.200 | 12,40 | 14.880,00 | 21% | 3.124,80 |\n| 3 | Tub riflat PVC Ø25 mm | 39174000 | m | 6.000 | 2,15 | 12.900,00 | 21% | 2.709,00 |\n|  | Total fără TVA |  |  |  |  | 55.905,00 |  |  |\n|  | Total TVA 21% |  |  |  |  |  |  | 11.740,05 |\n|  | Total de plată RON |  |  |  |  | 67.645,05 |  |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Cablu electric CYY-F 3x2,5 mmp",
+   "quantity": "4.500",
+   "uom": "m",
+   "unit_price": "6,25",
+   "line_total": "28.125,00",
+   "hs_code": "85444942"
+  },
+  "what_is_different": "The Romanian statutory form puts U.M. BEFORE Cantitate, so the unit column sits to the LEFT of the quantity — the opposite of nearly every other layout. Period thousands separators make every quantity look like a decimal (4.500 m, 1.200 buc, 6.000 m) while the cross-section '3x2,5 mmp' in the description carries a decimal comma of its own."
+ },
+ {
+  "id": "nordic_baltic_hr_racun_pdv_podrijetlo",
+  "title": "Croatian Racun (PDV breakdown, country of origin)",
+  "note": "Croatia · nautical chandlery / boat fittings",
+  "page": "| R.br. | Naziv robe | Tarifna oznaka | Zemlja podrijetla | Količina | JM | Cijena EUR | Iznos EUR | PDV % | Iznos PDV |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Sidro Bruce 10 kg pocinčano | 73169000 | HR | 45 | kom | 86,00 | 3.870,00 | 25 | 967,50 |\n| 2 | Uže poliestersko pleteno Ø12 mm | 56074900 | HR | 1.200 | m | 2,45 | 2.940,00 | 25 | 735,00 |\n| 3 | Nehrđajuća škopica M8 A4 | 73269098 | IT | 600 | kom | 3,15 | 1.890,00 | 25 | 472,50 |\n|  | Ukupno bez PDV-a |  |  |  |  |  | 8.700,00 |  |  |\n|  | PDV 25 % |  |  |  |  |  |  | 25 | 2.175,00 |\n|  | Za platiti EUR |  |  |  |  |  | 10.875,00 |  |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Sidro Bruce 10 kg pocinčano",
+   "quantity": "45",
+   "uom": "kom",
+   "unit_price": "86,00",
+   "line_total": "3.870,00",
+   "hs_code": "73169000"
+  },
+  "what_is_different": "A per-line Zemlja podrijetla column carrying two-letter origin codes (HR, HR, IT) — origin varies BY LINE, so a document-level country of origin is wrong for row 3. Croatia bills in EUR but keeps the period/comma convention, and 'Sidro Bruce 10 kg' puts a weight in the description of a piece-counted line."
+ },
+ {
+  "id": "nordic_baltic_si_racun_ddv_mixed",
+  "title": "Slovenian Racun (DDV rates)",
+  "note": "Slovenia · herbal products and essential oils",
+  "page": "| Zap. št. | Naziv blaga | Tarifna oznaka | Količina | EM | Cena/EM | Vrednost | DDV % | Znesek DDV |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Zdravilna zeliščna mešanica 100 g | 12119086 | 900 | kos | 4,60 | 4.140,00 | 9,5 | 393,30 |\n| 2 | Eterično olje sivke 10 ml, steklenička | 33012925 | 1.500 | kos | 6,80 | 10.200,00 | 22 | 2.244,00 |\n| 3 | Kartonska embalaža tiskana, zložljiva | 48191000 | 2.000 | kos | 0,95 | 1.900,00 | 22 | 418,00 |\n|  | Skupaj brez DDV |  |  |  |  | 16.240,00 |  |  |\n|  | Osnova DDV 9,5 % |  |  |  |  | 4.140,00 | 9,5 | 393,30 |\n|  | Osnova DDV 22 % |  |  |  |  | 12.100,00 | 22 | 2.662,00 |\n|  | Za plačilo EUR |  |  |  |  | 19.295,30 |  |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Zdravilna zeliščna mešanica 100 g",
+   "quantity": "900",
+   "uom": "kos",
+   "unit_price": "4,60",
+   "line_total": "4.140,00",
+   "hs_code": "12119086"
+  },
+  "what_is_different": "Two different DDV rates inside one table (9,5 % and 22 %) with a rate recapitulation block underneath, so the printed-total gate sees FOUR total-looking rows and only 'Skupaj brez DDV' 16.240,00 equals the sum of the goods lines — the two 'Osnova' rows are partial bases (4.140,00 and 12.100,00) that must not be mistaken for the document total. The rate cell '9,5' also carries a decimal comma."
+ },
+ {
+  "id": "customs_special_proforma_pre_shipment",
+  "title": "Proforma Invoice pre-shipment (estimated freight, validity)",
+  "note": "CN → US, industrial fasteners/power transmission, USD",
+  "page": "PROFORMA INVOICE No. PI-2026-0814 — Date: 12 Aug 2026\n\n| Item | Description of Goods | HS Code | Qty | Unit | Unit Price (USD) | Amount (USD) |\n| :-- | :-- | :-- | --: | :-- | --: | --: |\n| 1 | Stainless steel ball bearings 6204-2RS, chrome steel, sealed | 8482.10.00 | 1,200 | PCS | 3.45 | 4,140.00 |\n| 2 | Roller chain ANSI #50, 10 ft box, zinc plated | 7315.11.00 | 150 | BOX | 27.80 | 4,170.00 |\n| 3 | V-belt SPZ 1400 Lw, wrapped, rubber | 4010.32.00 | 500 | PCS | 6.15 | 3,075.00 |\n| | **Total FOB Shanghai** | | **1,850** | | | **11,385.00** |\n| | Estimated ocean freight (est., subject to booking) | | | | | 1,250.00 |\n| | **Total CFR Los Angeles (estimated)** | | | | | **12,635.00** |\n\nValidity: 30 days from date of issue. Prices firm until 11 Sep 2026.\nEstimated freight is indicative only and will be re-quoted at booking.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Stainless steel ball bearings 6204-2RS, chrome steel, sealed",
+   "quantity": "1,200",
+   "uom": "PCS",
+   "unit_price": "3.45",
+   "line_total": "4,140.00",
+   "hs_code": "8482.10.00"
+  },
+  "what_is_different": "A pre-shipment proforma: the printed grand total is a CFR figure that is NOT the sum of the goods lines — an estimated freight row sits between the FOB subtotal (which is the true sum) and the CFR total. The parser must reconcile against the FOB row and must not treat the estimated-freight line as a goods row, even though it carries money in the amount column."
+ },
+ {
+  "id": "customs_special_consular_dual_language",
+  "title": "Consular Invoice (dual language, detailed value breakdown)",
+  "note": "ES/EN consular invoice, Dominican Republic import, foodstuffs, USD",
+  "page": "FACTURA CONSULAR / CONSULAR INVOICE — No. FC-4471 — Consulado General de la República Dominicana\n\n| Marcas y Números / Marks and Numbers | Cantidad / Quantity | Unidad / Unit | Descripción de la Mercancía / Description of Goods | Partida Arancelaria / Tariff Heading | Valor Unitario / Unit Value (USD) | Valor Total / Total Value (USD) |\n| :-- | --: | :-- | :-- | :-- | --: | --: |\n| S/M 1-800 | 800 | SACO / BAG | Harina de trigo fortificada, 25 kg / Fortified wheat flour, 25 kg | 1101.00.00 | 18.75 | 15,000.00 |\n| ACE 1-240 | 240 | CAJA / CASE | Aceite vegetal comestible de soya, 12 x 1 L / Edible soybean cooking oil, 12 x 1 L | 1507.90.00 | 42.50 | 10,200.00 |\n| LEV 1-150 | 150 | CARTÓN / CARTON | Levadura seca instantánea, 20 x 500 g / Instant dry yeast, 20 x 500 g | 2102.10.00 | 33.60 | 5,040.00 |\n| | **1,190** | | **VALOR FOB / FOB VALUE** | | | **30,240.00** |\n| | | | Flete marítimo / Ocean freight | | | 2,480.00 |\n| | | | Seguro / Insurance | | | 310.00 |\n| | | | **VALOR CIF / CIF VALUE** | | | **33,030.00** |\n\nEl infrascrito Cónsul certifica que los datos consignados en esta factura son conformes a los documentos presentados.\nThe undersigned Consul certifies that the particulars in this invoice agree with the documents presented.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Harina de trigo fortificada, 25 kg / Fortified wheat flour, 25 kg",
+   "quantity": "800",
+   "uom": "SACO / BAG",
+   "unit_price": "18.75",
+   "line_total": "15,000.00",
+   "hs_code": "1101.00.00"
+  },
+  "what_is_different": "Fully bilingual ES/EN headers AND bilingual cell content with a slash inside every description and unit cell — the unit cell 'SACO / BAG' can be mistaken for two columns. Value is broken down over three separate non-goods money rows (FOB → freight → insurance → CIF), so the sum of the lines equals the FOB row, not the last printed figure."
+ },
+ {
+  "id": "customs_special_generic_customs_coo_weights",
+  "title": "Generic Customs Invoice (country of origin per item, tariff code, net/gross weight per line)",
+  "note": "EU intra-community supply, aluminium/hardware, EUR",
+  "page": "CUSTOMS INVOICE No. CI-90218 — Incoterms: DAP Rotterdam\n\n| Item No. | Description of Goods | Tariff Code (HS) | Country of Origin | Qty | Unit | Net Weight (kg) | Gross Weight (kg) | Unit Price EUR | Amount EUR |\n| :-- | :-- | :-- | :-- | --: | :-- | --: | --: | --: | --: |\n| 1 | Aluminium extruded profile, mill finish, alloy 6063-T5, 6 m | 7604.21.10 | DE | 420 | PCS | 1,890.00 | 1,974.00 | 12.40 | 5,208.00 |\n| 2 | Hinges of stainless steel AISI 304, 100 mm, butt type | 8302.10.00 | IT | 2,500 | PCS | 625.00 | 690.00 | 1.85 | 4,625.00 |\n| 3 | EPDM rubber gasket profile, black, self-adhesive | 4008.29.00 | PL | 1,800 | M | 342.00 | 366.00 | 2.15 | 3,870.00 |\n| | **TOTALS** | | | **4,720** | | **2,857.00** | **3,030.00** | | **13,703.00** |\n\nTotal packages: 46 — Total gross weight: 3,030.00 kg — Currency: EUR",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Aluminium extruded profile, mill finish, alloy 6063-T5, 6 m",
+   "quantity": "420",
+   "uom": "PCS",
+   "unit_price": "12.40",
+   "line_total": "5,208.00",
+   "hs_code": "7604.21.10"
+  },
+  "what_is_different": "Ten columns with FOUR numeric columns per line (qty, net weight, gross weight, unit price) before the amount. The weight columns are formatted exactly like money (1,890.00) and net weight sits adjacent to unit price, so a positional guess picks the wrong multiplier. Per-line country of origin varies row to row, so COO cannot be taken from a document-level header."
+ },
+ {
+  "id": "customs_special_invoice_with_packing_list",
+  "title": "Commercial Invoice with Integrated Packing List (carton numbers, dimensions, gross/net weight per carton)",
+  "note": "BD → EU, ready-made garments, USD",
+  "page": "COMMERCIAL INVOICE cum PACKING LIST — Inv. No. RMG/2026/1188 — FOB Chattogram\n\n| Carton Nos. | Description of Goods | HS Code | Ctns | Qty (PCS) | Dimensions (cm) | N.W. (kg) | G.W. (kg) | Unit Price USD | Amount USD |\n| :-- | :-- | :-- | --: | --: | :-- | --: | --: | --: | --: |\n| 1-20 | Men's T-shirt, 100% cotton single jersey 180 gsm, S/M/L/XL | 6109.10.00 | 20 | 2,400 | 60 x 40 x 35 | 240.00 | 262.00 | 3.20 | 7,680.00 |\n| 21-38 | Ladies' cardigan, knitted, 100% acrylic, full zip | 6110.30.00 | 18 | 1,080 | 60 x 40 x 40 | 259.20 | 280.80 | 8.75 | 9,450.00 |\n| 39-45 | Children's jogger pants, brushed fleece, 60% cotton 40% poly | 6104.63.00 | 7 | 700 | 55 x 40 x 35 | 98.00 | 110.60 | 5.40 | 3,780.00 |\n| **1-45** | **TOTAL** | | **45** | **4,180** | | **597.20** | **653.40** | | **20,910.00** |\n\nSay Total US Dollars Twenty Thousand Nine Hundred Ten Only.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Men's T-shirt, 100% cotton single jersey 180 gsm, S/M/L/XL",
+   "quantity": "2,400",
+   "uom": "",
+   "unit_price": "3.20",
+   "line_total": "7,680.00",
+   "hs_code": "6109.10.00"
+  },
+  "what_is_different": "Two competing quantity columns: 'Ctns' (20) and 'Qty (PCS)' (2,400) — only the second reconciles with the money, and there is no separate unit column at all (the UOM is baked into the header). The identity cell is a carton RANGE ('1-20'), not a part number, and the dimensions cell ('60 x 40 x 35') is a number-bearing cell that is not a quantity."
+ },
+ {
+  "id": "customs_special_multipage_continuation",
+  "title": "Multi-Page Continuation invoice (Page X of Y, total carried forward, brought forward line)",
+  "note": "UK → NG, hydraulic spares, GBP, page 2 of 3",
+  "page": "HYDRAULIC SUPPLIES LTD — INVOICE No. 74-118203 — Page 2 of 3\n\n| Line | Part Number | Description | Qty | UOM | Unit Price GBP | Extended GBP |\n| --: | :-- | :-- | --: | :-- | --: | --: |\n| | | Balance brought forward from page 1 | | | | 48,712.60 |\n| 14 | HYD-4471-A | Hydraulic cylinder, double acting, bore 63 mm / rod 36 mm, stroke 400 mm | 24 | EA | 186.50 | 4,476.00 |\n| 15 | SEA-0912-K | Seal kit for HYD-4471 series cylinder, NBR | 60 | SET | 22.40 | 1,344.00 |\n| 16 | HOS-2210-B | Hydraulic hose assembly 2SN DN12, 1,200 mm, BSP female both ends | 90 | EA | 17.95 | 1,615.50 |\n| 17 | FIT-7788-C | Fitting, straight male stud coupling, M18 x 1.5 | 300 | EA | 3.65 | 1,095.00 |\n| | | **Page 2 subtotal** | **474** | | | **8,530.50** |\n| | | **Total carried forward to page 3** | | | | **57,243.10** |\n\nContinued on page 3 of 3.",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Hydraulic cylinder, double acting, bore 63 mm / rod 36 mm, stroke 400 mm",
+   "quantity": "24",
+   "uom": "EA",
+   "unit_price": "186.50",
+   "line_total": "4,476.00",
+   "hs_code": ""
+  },
+  "what_is_different": "A continuation page whose FIRST table row is a brought-forward balance — a money-bearing line with no qty, no price and no part number that must never become a goods row. It also carries two totals rows with different meanings (page subtotal = sum of this page's lines; carried-forward = previous balance + subtotal), so a parser that reconciles against the last printed figure will be off by the brought-forward amount."
+ },
+ {
+  "id": "customs_special_samples_no_commercial_value",
+  "title": "Simplified Commercial Invoice for samples (no commercial value, customs value only)",
+  "note": "ES → FR, building-materials trade-fair samples, EUR",
+  "page": "INVOICE FOR SAMPLES — No. SMP-2026-031 — SAMPLES OF NO COMMERCIAL VALUE\n\n| Description of Sample | HS Code | Qty | Unit | Value for Customs Purposes Only (EUR) | Total (EUR) |\n| :-- | :-- | --: | :-- | --: | --: |\n| Fabric swatch card, woven polyester upholstery, 20 x 30 cm, perforated | 6307.90.10 | 25 | PCS | 2.00 | 50.00 |\n| Ceramic wall tile sample, glazed, 10 x 10 cm, marked SAMPLE | 6907.21.00 | 40 | PCS | 1.50 | 60.00 |\n| Paint colour chip booklet, printed, 48 shades | 4911.10.90 | 10 | PCS | 3.50 | 35.00 |\n| **TOTAL VALUE FOR CUSTOMS PURPOSES ONLY** | | **75** | | | **145.00** |\n\nNo commercial value. Goods are samples supplied free of charge; nominal value stated for customs purposes only. Amount payable by consignee: NIL.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Fabric swatch card, woven polyester upholstery, 20 x 30 cm, perforated",
+   "quantity": "25",
+   "uom": "PCS",
+   "unit_price": "2.00",
+   "line_total": "50.00",
+   "hs_code": "6307.90.10"
+  },
+  "what_is_different": "The price column is not called a price at all — it is 'Value for Customs Purposes Only (EUR)' — and the document simultaneously declares NIL payable. The parser must accept a notional customs value as the reconciling unit price rather than reading 'no commercial value' / 'NIL' as a zero-value document, and the description cells carry dimension text (20 x 30 cm) that mimics a quantity expression."
+ },
+ {
+  "id": "customs_special_repair_return_hs9801",
+  "title": "Invoice for Repair/Return (zero value, HS 9801)",
+  "note": "US returned goods, industrial automation parts, USD",
+  "page": "INVOICE — GOODS RETURNED FOR REPAIR / WARRANTY REPLACEMENT — No. RMA-55821\n\n| Qty | Unit | Description of Goods (Returned for Repair) | Original HS | Ch. 98 Provision | Value for Customs (USD) | Total (USD) |\n| --: | :-- | :-- | :-- | :-- | --: | --: |\n| 3 | EA | Industrial servo drive, model SD-750, 7.5 kW, defective — US origin, RMA 55821-1 | 8504.40.95 | 9801.00.10 | 1,850.00 | 5,550.00 |\n| 5 | EA | Rotary encoder RE-2048, incremental, returned unrepaired | 9031.80.80 | 9801.00.10 | 320.00 | 1,600.00 |\n| 2 | EA | Control panel HMI unit, 10 in colour touchscreen, warranty return | 8537.10.91 | 9801.00.10 | 940.00 | 1,880.00 |\n| **10** | | **TOTAL VALUE FOR CUSTOMS PURPOSES** | | | | **9,030.00** |\n| | | **AMOUNT PAYABLE — NO CHARGE** | | | | **0.00** |\n\nGoods of US origin returned after export without having been advanced in value or improved in condition; entered under HTSUS 9801.00.10. No sale involved; invoice raised for customs purposes only.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Industrial servo drive, model SD-750, 7.5 kW, defective — US origin, RMA 55821-1",
+   "quantity": "3",
+   "uom": "EA",
+   "unit_price": "1,850.00",
+   "line_total": "5,550.00",
+   "hs_code": "8504.40.95"
+  },
+  "what_is_different": "Two HS columns per line (the original commodity code and the Chapter 98 return provision 9801.00.10) — the parser must take the commodity code, not the special provision. It also prints TWO grand totals: a customs-value total that equals the sum of the lines and a 0.00 amount payable, so 'the last money figure on the page' is exactly the wrong reconciliation target."
+ },
+ {
+  "id": "customs_special_ata_carnet_temporary_export",
+  "title": "Temporary Export ATA Carnet invoice (no commercial value, identification description)",
+  "note": "FR temporary export, broadcast equipment, EUR, decimal comma with space thousands",
+  "page": "FACTURE PRO FORMA POUR EXPORTATION TEMPORAIRE — CARNET ATA FR/2026/0091 — Liste générale\n\n| N° d'ordre / Item No. | Désignation commerciale des marchandises et marques d'identification / Trade description of goods and marks of identification | Nombre de pièces / Number of pieces | Poids / Weight (kg) | Valeur unitaire / Unit value (EUR) | Valeur / Value (EUR) | Pays d'origine / Country of origin |\n| --: | :-- | --: | --: | --: | --: | :-- |\n| 1 | Caméra de studio Sony HDC-3500 avec objectif Canon, n° de série 21744 / 21751 — Studio camera with lens, S/N 21744 / 21751 | 2 | 34,60 | 42 500,00 | 85 000,00 | JP |\n| 2 | Pied trépied vidéo Sachtler Video 25, n° de série TR-0912 / TR-0914 / TR-0918 — Video tripod | 3 | 27,00 | 3 250,00 | 9 750,00 | DE |\n| 3 | Valise de transport rigide, marquage FR-TV-01 à FR-TV-04 — Rigid flight case | 4 | 48,00 | 615,00 | 2 460,00 | FR |\n| | **TOTAL / TOTAL** | **9** | **109,60** | | **97 210,00** | |\n\nValeur déclarée pour l'admission temporaire uniquement — marchandises sans valeur commerciale, réexportation prévue le 30/09/2026.\nValue declared for temporary admission only — goods of no commercial value, re-exportation due 30/09/2026.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Caméra de studio Sony HDC-3500 avec objectif Canon, n° de série 21744 / 21751 — Studio camera with lens, S/N 21744 / 21751",
+   "quantity": "2",
+   "uom": "",
+   "unit_price": "42 500,00",
+   "line_total": "85 000,00",
+   "hs_code": ""
+  },
+  "what_is_different": "French numeric convention with a NON-BREAKING SPACE as the thousands separator and a decimal comma (42 500,00), plus an ATA carnet general-list column set: 'Nombre de pièces' instead of a quantity/unit pair, no HS codes at all, and identification marks (serial-number runs separated by slashes) embedded in the description where they look like part numbers or extra numeric cells."
+ },
+ {
+  "id": "customs_special_dropshipping_invoice",
+  "title": "Dropshipping Commercial Invoice (supplier sender, customer sold-to)",
+  "note": "CN supplier → EU end customers, consumer electronics, USD",
+  "page": "COMMERCIAL INVOICE — Shenzhen Yuhang Trading Co., Ltd (Supplier / Shipper on behalf of NordDirect BV)\nSold-to: NordDirect BV, Utrecht NL — Ship-to: individual end customers per line below\n\n| Line | SKU | Product Description | HS Code | Qty | UOM | Unit Price (USD) | Line Total (USD) | Customer Order Ref |\n| --: | :-- | :-- | :-- | --: | :-- | --: | --: | :-- |\n| 1 | WBH-2201 | Wireless Bluetooth headphones, over-ear, ANC, black | 8518.30.20 | 12 | PCS | 24.90 | 298.80 | ORD-88214 |\n| 2 | SMW-0455 | Smart watch, 1.85 in AMOLED, silicone strap, BT 5.3 | 9102.12.80 | 8 | PCS | 31.50 | 252.00 | ORD-88231 |\n| 3 | USB-3310 | Adapter cable USB-C to HDMI, 2 m, 4K/60Hz | 8544.42.90 | 30 | PCS | 4.75 | 142.50 | ORD-88247 |\n| 4 | PWB-1120 | Power bank 10000 mAh, Li-ion, 22.5 W PD | 8507.60.00 | 15 | PCS | 11.20 | 168.00 | ORD-88250 |\n| | | **TOTAL 4 LINES** | | **65** | | | **861.30** | |\n\nGoods shipped direct from supplier to end consumers. Seller of record: NordDirect BV. Terms: DDP, IOSS declared.",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Wireless Bluetooth headphones, over-ear, ANC, black",
+   "quantity": "12",
+   "uom": "PCS",
+   "unit_price": "24.90",
+   "line_total": "298.80",
+   "hs_code": "8518.30.20"
+  },
+  "what_is_different": "A three-party dropship table: every line carries its own end-customer order reference in a trailing text column, so the row does not end in money and the last cell is an alphanumeric token that looks like a part number. Descriptions embed measurements with units (1.85 in, 2 m, 10000 mAh, 22.5 W) that read as stray quantities, and the invoice header names a supplier and a sold-to party that are different companies."
+ },
+ {
+  "id": "customs_special_intercompany_transfer_price",
+  "title": "Intercompany Commercial Invoice (transfer price column, cost-plus reference)",
+  "note": "DE parent → HU affiliate, automotive components, EUR, German numeric convention",
+  "page": "KONZERNINTERNE RECHNUNG / INTERCOMPANY INVOICE Nr. IC-2026-04417 — Verrechnungspreismethode: Kostenaufschlag (cost-plus 8 %)\n\n| Materialnummer | Warenbezeichnung | Zolltarifnummer | Menge | ME | Standardkosten (EUR) | Zuschlag % | Verrechnungspreis (EUR) | Betrag (EUR) |\n| :-- | :-- | :-- | --: | :-- | --: | --: | --: | --: |\n| MAT-4410077 | Sensorbaugruppe ABS-Raddrehzahl, passiv | 8543.70.90 | 240 | ST | 125,00 | 8,0 | 135,00 | 32.400,00 |\n| MAT-4410238 | Kabelbaum Motorraum, 12-polig, PVC-isoliert | 8544.30.00 | 600 | ST | 62,50 | 8,0 | 67,50 | 40.500,00 |\n| MAT-4410551 | Gehäuse, spritzgegossen, PA66-GF30, schwarz | 3926.90.97 | 1.200 | ST | 18,75 | 8,0 | 20,25 | 24.300,00 |\n| | **SUMME / TOTAL** | | **2.040** | | | | | **97.200,00** |\n\nLieferbedingung: FCA Ingolstadt. Steuerfreie innergemeinschaftliche Lieferung, § 4 Nr. 1b UStG.\nVerrechnungspreis gemäß konzerninterner Verrechnungspreisrichtlinie 2026, Kostenaufschlagssatz 8 % auf Standardkosten.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Sensorbaugruppe ABS-Raddrehzahl, passiv",
+   "quantity": "240",
+   "uom": "ST",
+   "unit_price": "135,00",
+   "line_total": "32.400,00",
+   "hs_code": "8543.70.90"
+  },
+  "what_is_different": "Two price columns per line — Standardkosten (the internal cost) and Verrechnungspreis (the transfer price) — separated by a mark-up percentage column; only the transfer price reconciles with the amount, and the 8,0 mark-up cell is a bare decimal-comma number sitting between them. German numeric convention throughout (dot thousands, decimal comma) applies to the quantity too (1.200 ST), which a dot-as-decimal reading turns into 1.2 pieces."
+ },
+ {
+  "id": "na_latam_us_standard_commercial_invoice",
+  "title": "US Standard Commercial Invoice",
+  "note": "United States / general industrial distribution",
+  "page": "| SKU | Description | Qty | UOM | Unit Price | Amount |\n| :-- | :-- | --: | :-- | --: | --: |\n| HD-4412 | Stainless Steel Ball Bearing 6205-2RS, 25 mm Bore | 480 | EA | 3.85 | 1,848.00 |\n| PLT-0098 | HDPE Cutting Board, 18\" x 24\" x 1/2\", White | 120 | EA | 27.50 | 3,300.00 |\n| GSK-7710 | Nitrile O-Ring Assortment Kit, AS568 Series, 382 pc | 36 | KIT | 64.25 | 2,313.00 |\n| CBL-2201 | 14 AWG THHN Copper Wire, Black, 500 ft Spool | 24 | SPL | 98.75 | 2,370.00 |\n|  |  |  |  | Subtotal | 9,831.00 |\n|  |  |  |  | Sales Tax (WA 8.9%) | 874.96 |\n|  |  |  |  | Shipping & Handling | 425.00 |\n|  |  |  |  | Total Due (USD) | 11,130.96 |\n\nTerms: Net 30 Days. FOB Origin, Tacoma WA.",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Stainless Steel Ball Bearing 6205-2RS, 25 mm Bore",
+   "quantity": "480",
+   "uom": "EA",
+   "unit_price": "3.85",
+   "line_total": "1,848.00",
+   "hs_code": ""
+  },
+  "what_is_different": "No HS codes at all, and the customs value is the SUBTOTAL, not the printed grand total: a US sales-tax line plus a freight line sit between the goods sum and 'Total Due'. Tests that the parser takes the net goods total and does not treat tax/shipping rows as goods rows."
+ },
+ {
+  "id": "na_latam_ca_customs_invoice_ci1",
+  "title": "Canadian Customs Invoice CI1",
+  "note": "Canada / CBSA form CI1, mixed-origin import consignment",
+  "page": "| No. of Pkgs / Nbre de colis | Description of Goods / Description des marchandises | Quantity / Quantité | Unit / Unité | Unit Price (CAD) / Prix unitaire | Total (CAD) / Total | Country of Origin / Pays d'origine | Tariff Classification / Classement tarifaire |\n| :-- | :-- | --: | :-- | --: | --: | :-- | :-- |\n| 14 | Prefinished maple hardwood flooring, 3-1/4 in strip | 850 | SQ FT | 4.20 | 3,570.00 | US | 4409.29.00 |\n| 6 | Cast iron pipe fitting, 90° elbow, 2 in NPT | 240 | EA | 11.65 | 2,796.00 | MX | 7307.19.90 |\n| 3 | Electric water heater, wall mount, 18 kW 240 V | 15 | EA | 386.00 | 5,790.00 | CN | 8516.10.20 |\n| 23 |  |  |  | Total / Total | 12,156.00 |  |  |\n\nField 23 — Currency of Settlement / Monnaie du règlement: CAD",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Prefinished maple hardwood flooring, 3-1/4 in strip",
+   "quantity": "850",
+   "uom": "SQ FT",
+   "unit_price": "4.20",
+   "line_total": "3,570.00",
+   "hs_code": "4409.29.00"
+  },
+  "what_is_different": "Bilingual English/French headers on every column, a per-item country of origin column (three different origins in one invoice), a leading package-count column that is NOT the goods quantity, and an area unit (SQ FT). The totals row carries a package count (23) in the first cell, which must not be read as money or as a goods row."
+ },
+ {
+  "id": "na_latam_mx_factura_comercial_export",
+  "title": "Mexico Factura Comercial (export)",
+  "note": "Mexico / automotive tier-2 supplier, Monterrey",
+  "page": "| Partida | Fracción Arancelaria / HS Code | Descripción de la Mercancía / Description of Goods | Cantidad / Quantity | Unidad / UoM | Precio Unitario USD / Unit Price | Importe USD / Amount |\n| --: | :-- | :-- | --: | :-- | --: | --: |\n| 1 | 8708.99.99 | Soporte de motor de aluminio / Aluminium engine mount bracket | 2,400 | PZA | 6.75 | 16,200.00 |\n| 2 | 3926.90.99 | Clip de sujeción de nylon / Nylon retaining clip | 18,000 | PZA | 0.42 | 7,560.00 |\n| 3 | 8544.30.99 | Arnés de cableado para tablero / Dashboard wiring harness | 650 | PZA | 23.80 | 15,470.00 |\n|  |  |  |  |  | Subtotal USD | 39,230.00 |\n|  |  |  |  |  | IVA 0% (Exportación Art. 29 LIVA) | 0.00 |\n|  |  |  |  |  | Total FCA Monterrey USD | 39,230.00 |\n\nINCOTERM 2020: FCA Monterrey, N.L., México",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Soporte de motor de aluminio / Aluminium engine mount bracket",
+   "quantity": "2,400",
+   "uom": "PZA",
+   "unit_price": "6.75",
+   "line_total": "16,200.00",
+   "hs_code": "8708.99.99"
+  },
+  "what_is_different": "Dual Spanish/English text inside a single description cell (slash-separated, not separate columns), Mexican HS 'fracción arancelaria' at 8 digits, a sub-unit unit price (0.42) against a five-figure quantity, and a zero-rated IVA line that makes subtotal == grand total."
+ },
+ {
+  "id": "na_latam_br_nota_fiscal_exportacao",
+  "title": "Brazil Nota Fiscal de Exportação (NF-e)",
+  "note": "Brazil / agri-commodity and footwear exporter, DANFE product block",
+  "page": "| CÓDIGO | DESCRIÇÃO DOS PRODUTOS / SERVIÇOS | NCM/SH | CST | CFOP | UNID | QUANT. | VALOR UNIT. | VALOR TOTAL | B. CÁLC. ICMS | VALOR ICMS | ALÍQ. ICMS |\n| :-- | :-- | :-- | :-- | :-- | :-- | --: | --: | --: | --: | --: | --: |\n| 4102 | CAFÉ VERDE ARÁBICA TIPO 6, SACA 60 KG | 0901.11.10 | 040 | 7101 | SC | 300,0000 | 1.480,0000 | 444.000,00 | 0,00 | 0,00 | 0,00 |\n| 4210 | SUCO DE LARANJA CONCENTRADO CONGELADO, TAMBOR 200 L | 2009.11.00 | 040 | 7101 | TB | 48,0000 | 2.315,5000 | 111.144,00 | 0,00 | 0,00 | 0,00 |\n| 4315 | CALÇADO FEMININO EM COURO, SOLADO DE BORRACHA | 6403.99.00 | 040 | 7101 | PR | 1.200,0000 | 89,9000 | 107.880,00 | 0,00 | 0,00 | 0,00 |\n|  | VALOR TOTAL DOS PRODUTOS |  |  |  |  |  |  | 663.024,00 |  |  |  |\n|  | VALOR TOTAL DO ICMS |  |  |  |  |  |  | 0,00 |  |  |  |\n|  | VALOR TOTAL DA NOTA |  |  |  |  |  |  | 663.024,00 |  |  |  |\n\nDADOS ADICIONAIS: ICMS isento — operação de exportação, art. 155, §2º, X, \"a\" da CF/88. CFOP 7101.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "CAFÉ VERDE ARÁBICA TIPO 6, SACA 60 KG",
+   "quantity": "300,0000",
+   "uom": "SC",
+   "unit_price": "1.480,0000",
+   "line_total": "444.000,00",
+   "hs_code": "0901.11.10"
+  },
+  "what_is_different": "Twelve columns including three ICMS tax columns that are all zero, a CST and a CFOP column of pure digits that look like codes-or-numbers, quantities and unit prices printed to FOUR decimals with decimal comma and thousands period (1.480,0000 = one thousand four hundred eighty), and NCM rather than plain HS. The 4-decimal money format is the main trap: 1.480,0000 must not be read as 1.48."
+ },
+ {
+  "id": "na_latam_ar_factura_exportacion_e",
+  "title": "Argentina Factura de Exportación E",
+  "note": "Argentina / leather, wine and soy meal exporter",
+  "page": "| Código | Posición Arancelaria NCM / HS Code | Descripción / Description | Cantidad / Quantity | U. Med. / Unit | Precio Unit. USD / Unit Price | Subtotal USD / Amount |\n| :-- | :-- | :-- | --: | :-- | --: | --: |\n| LEA-220 | 4104.11.00 | Cuero vacuno wet blue, espesor 1,8-2,0 mm / Bovine wet blue leather | 1.850,00 | M2 | 12,40 | 22.940,00 |\n| VIN-750 | 2204.21.00 | Vino Malbec 2021, botella 750 ml, caja x 12 / Malbec wine | 640,00 | CAJ | 48,50 | 31.040,00 |\n| SOJ-001 | 2304.00.10 | Pellets de harina de soja a granel / Soybean meal pellets | 25,00 | TON | 386,00 | 9.650,00 |\n|  |  |  |  |  | Subtotal / Subtotal USD | 63.630,00 |\n|  |  |  |  |  | Condición de Venta / Incoterm | FOB BUENOS AIRES |\n|  |  |  |  |  | Importe Total / Total Amount USD | 63.630,00 |\n\nFACTURA E — Operación de exportación exenta de IVA (Ley 23.349 art. 8 inc. d). Incoterms 2020.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Cuero vacuno wet blue, espesor 1,8-2,0 mm / Bovine wet blue leather",
+   "quantity": "1.850,00",
+   "uom": "M2",
+   "unit_price": "12,40",
+   "line_total": "22.940,00",
+   "hs_code": "4104.11.00"
+  },
+  "what_is_different": "USD money printed with ARGENTINE numeric convention (decimal comma, thousands period) — 1.850,00 is one thousand eight hundred fifty, not 1.85. Quantities also carry two decimals. A non-numeric 'Incoterm' totals row (FOB BUENOS AIRES) sits between the two money totals and must not be read as a value. The description also contains a decimal comma inside prose (1,8-2,0 mm)."
+ },
+ {
+  "id": "na_latam_cl_factura_exportacion",
+  "title": "Chile Factura de Exportación",
+  "note": "Chile / fruit, salmon and copper exporter, FOB + freight + insurance",
+  "page": "| Ítem | Código Arancelario | Descripción de la Mercancía | Cantidad | Unidad | Precio Unitario FOB US$ | Valor Total FOB US$ |\n| --: | :-- | :-- | --: | :-- | --: | --: |\n| 1 | 0806.10.00 | Uva de mesa fresca variedad Crimson Seedless, caja 8,2 kg | 3.400 | CJA | 14,50 | 49.300,00 |\n| 2 | 0302.14.00 | Salmón Atlántico fresco entero, con hielo, caja 25 kg | 860 | CJA | 118,75 | 102.125,00 |\n| 3 | 7403.11.00 | Cátodos de cobre refinado grado A, 99,99% Cu | 12 | TON | 8.240,00 | 98.880,00 |\n|  |  |  |  |  | TOTAL FOB US$ | 250.305,00 |\n|  |  |  |  |  | FLETE US$ | 6.450,00 |\n|  |  |  |  |  | SEGURO US$ | 1.280,00 |\n|  |  |  |  |  | TOTAL CIF US$ | 258.035,00 |\n\nCláusula de venta: CIF Rotterdam (Incoterms 2020). Modalidad de venta: A firme.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Uva de mesa fresca variedad Crimson Seedless, caja 8,2 kg",
+   "quantity": "3.400",
+   "uom": "CJA",
+   "unit_price": "14,50",
+   "line_total": "49.300,00",
+   "hs_code": "0806.10.00"
+  },
+  "what_is_different": "The goods total is the FOB line, then freight and insurance are printed as separate additive rows building to a CIF grand total — the parser must sum lines to FOB and not to CIF. Quantity '3.400' is three thousand four hundred (thousands period, no decimals) in the same table as '860' and '12', so the separator is ambiguous from a single cell."
+ },
+ {
+  "id": "na_latam_co_factura_exportacion",
+  "title": "Colombia Factura de Exportación",
+  "note": "Colombia / coffee, cut flowers and leather goods exporter",
+  "page": "| No. | Subpartida Arancelaria | Descripción de la Mercancía | Cantidad | Unidad | Peso Neto (Kg) | Valor Unitario USD | Valor Total USD |\n| --: | :-- | :-- | --: | :-- | --: | --: | --: |\n| 1 | 0901.21.10 | Café tostado en grano, origen Huila, bolsa de 1 kg | 2.500 | BOL | 2.500,00 | 9,80 | 24.500,00 |\n| 2 | 0603.11.00 | Rosas frescas cortadas, tallo 60 cm, caja x 300 unidades | 480 | CAJ | 5.760,00 | 62,50 | 30.000,00 |\n| 3 | 4202.21.00 | Bolso de cuero para dama, cuero bovino curtido | 350 | UND | 297,50 | 74,00 | 25.900,00 |\n|  |  | TOTALES |  |  | 8.557,50 |  | 80.400,00 |\n\nTérmino de Negociación: FCA Bogotá (Incoterms 2020). Peso Bruto Total: 9.140,00 Kg.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Café tostado en grano, origen Huila, bolsa de 1 kg",
+   "quantity": "2.500",
+   "uom": "BOL",
+   "unit_price": "9,80",
+   "line_total": "24.500,00",
+   "hs_code": "0901.21.10"
+  },
+  "what_is_different": "A per-item NET WEIGHT column sitting between quantity and unit price, whose first row (2.500,00 kg) is numerically identical to the quantity (2.500 bags of 1 kg) — a decoy for any parser that guesses the quantity column positionally or by value matching. Colombian decimal comma. The totals row sums weight and money but deliberately leaves quantity blank because units are mixed."
+ },
+ {
+  "id": "na_latam_pe_factura_electronica",
+  "title": "Peru Factura Electrónica (export)",
+  "note": "Peru / apparel, asparagus and quinoa exporter, SUNAT e-invoice",
+  "page": "| Ítem | Código | Partida Arancelaria | Descripción | Cantidad | U.M. | Valor Unitario US$ | Valor Venta US$ |\n| --: | :-- | :-- | :-- | --: | :-- | --: | --: |\n| 1 | TX-1180 | 6109.10.00 | Polo de algodón pima 100%, manga corta, cuello redondo | 4,800 | UND | 6.85 | 32,880.00 |\n| 2 | AG-0420 | 0709.20.00 | Espárrago verde fresco, calibre 16/22, caja de 5 kg | 1,150 | CAJ | 18.40 | 21,160.00 |\n| 3 | QU-0032 | 1008.50.90 | Quinua orgánica blanca en grano, saco de 25 kg | 640 | SAC | 47.50 | 30,400.00 |\n|  |  |  | Op. Exportación (Inafecta IGV) |  |  |  | 84,440.00 |\n|  |  |  | I.G.V. (0%) |  |  |  | 0.00 |\n|  |  |  | TOTAL VALOR FOB US$ |  |  |  | 84,440.00 |\n\nRepresentación impresa de la Factura Electrónica E001-00004417. Condición de venta: FOB Callao.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Polo de algodón pima 100%, manga corta, cuello redondo",
+   "quantity": "4,800",
+   "uom": "UND",
+   "unit_price": "6.85",
+   "line_total": "32,880.00",
+   "hs_code": "6109.10.00"
+  },
+  "what_is_different": "Peru prints PERIOD decimals with COMMA thousands while its Spanish-language neighbours in this batch print the opposite — '4,800' here is four thousand eight hundred units, and a locale rule inferred from Chile/Colombia/Argentina would read it as 4.8. Totals labels live in the DESCRIPTION column rather than beside the money column, so a totals-row detector keyed on the last text cell will miss them."
+ },
+ {
+  "id": "na_latam_ca_customs_invoice_cci_conversion",
+  "title": "Canada Customs Invoice CCI (currency conversion)",
+  "note": "Canada / US-billed import, CCI with exchange-rate column",
+  "page": "| Description of Goods / Description des marchandises | Quantity | Unit of Measure | Unit Price (USD) | Total (USD) | Rate of Exchange / Taux de change | Value in CAD / Valeur en CAD |\n| :-- | --: | :-- | --: | --: | --: | --: |\n| Polypropylene woven bag, 50 kg capacity, printed 2 colours | 12,000 | EA | 0.68 | 8,160.00 | 1.3450 | 10,975.20 |\n| Hydraulic cylinder, 2 in bore x 24 in stroke, welded | 45 | EA | 212.00 | 9,540.00 | 1.3450 | 12,831.30 |\n| Powder-coated steel shelving unit, 5 tier, 72 in high | 130 | EA | 74.20 | 9,646.00 | 1.3450 | 12,973.87 |\n| Totals / Totaux |  |  |  | 27,346.00 | 1.3450 | 36,780.37 |\n\nCurrency of settlement: USD. Bank of Canada rate on date of direct shipment.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Polypropylene woven bag, 50 kg capacity, printed 2 colours",
+   "quantity": "12,000",
+   "uom": "EA",
+   "unit_price": "0.68",
+   "line_total": "8,160.00",
+   "hs_code": ""
+  },
+  "what_is_different": "TWO money totals per row in two different currencies plus a four-decimal exchange-rate column that is neither money nor quantity. Only the USD column satisfies quantity x unit price; the CAD column equals USD x 1.3450. A parser that grabs the rightmost money column gets a value that never reconciles against unit price, and 1.3450 sitting in a numeric column is a classic false unit-price candidate."
+ },
+ {
+  "id": "na_latam_us_301_textile_invoice",
+  "title": "USA Section 301 textile customs invoice",
+  "note": "United States / textile mill import from China, Section 301 subject",
+  "page": "| HTSUS No. | Description of Merchandise | Fiber Content | Construction | Yarn Type | Fabric Weight (g/m2) | Quantity | UOM | Unit Price (USD) | Amount (USD) |\n| :-- | :-- | :-- | :-- | :-- | --: | --: | :-- | --: | --: |\n| 5209.42.0020 | Denim fabric, indigo dyed, right hand twill, unbleached weft | 100% Cotton | Woven, 3x1 twill, 68 x 44 per inch | Ring spun, 7s x 7s | 407 | 8,500 | M2 | 4.65 | 39,525.00 |\n| 6006.32.0080 | Circular knit jersey, dyed, single face, open width | 95% Polyester / 5% Spandex | Weft knit, 28 gauge jersey | Textured filament, 75D/72F | 185 | 12,400 | M2 | 2.35 | 29,140.00 |\n| 5407.61.9930 | Woven filament fabric, printed, plain weave, calendered | 100% Polyester | Woven, plain 1/1, 110 x 76 per inch | Draw textured, 150D/48F | 96 | 21,000 | M2 | 1.18 | 24,780.00 |\n|  |  |  |  |  |  |  |  | Total FOB Ningbo (USD) | 93,445.00 |\n\nSection 301 List 3: HTSUS 9903.88.03 applies to all lines. Textile declaration per 19 CFR 141.89.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Denim fabric, indigo dyed, right hand twill, unbleached weft",
+   "quantity": "8,500",
+   "uom": "M2",
+   "unit_price": "4.65",
+   "line_total": "39,525.00",
+   "hs_code": "5209.42.0020"
+  },
+  "what_is_different": "Ten columns, four of them textile-declaration text columns (fiber content, construction, yarn type) stuffed with numbers that look like quantities — '68 x 44 per inch', '75D/72F', '3x1 twill' — plus a per-item fabric-weight column in g/m2 that is a weight but NOT a shipment weight. Two HTS numbers are in play (the 10-digit line code and the 9903.88.03 Chapter 99 duty code in the footnote), and the Chapter 99 code must not be attached to any line."
+ },
+ {
+  "id": "industry_goods_textile_garment_style_carton",
+  "title": "Textile/Garment invoice (fabric composition, style numbers, carton breakdown per size/colour)",
+  "note": "Bangladesh/China garment export house · FOB knitwear & woven tops",
+  "page": "| Style No. | Description of Goods (Fabric Composition) | Colour | Size Ratio | HS Code | Ctns | Qty | Unit | Unit Price (USD) | Amount (USD) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| MW-2210 | MEN'S KNITTED POLO SHIRT 60% COTTON / 40% POLYESTER | NAVY | S-M-L-XL 1-2-2-1 | 6105.10.00 | 250 | 6,000 | PCS | 4.75 | 28,500.00 |\n| LD-4408 | LADIES' WOVEN BLOUSE 100% VISCOSE | IVORY | S-M-L 2-2-2 | 6206.40.00 | 120 | 2,880 | PCS | 6.25 | 18,000.00 |\n| KB-1150 | BOYS' FLEECE HOODIE 80% COTTON / 20% POLYESTER | GREY MELANGE | 4-6-8-10 1-1-1-1 | 6110.20.00 | 90 | 1,440 | PCS | 8.90 | 12,816.00 |\n| TOTAL |  |  |  |  | 460 | 10,320 | PCS |  | 59,316.00 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "MEN'S KNITTED POLO SHIRT 60% COTTON / 40% POLYESTER",
+   "quantity": "6000",
+   "uom": "PCS",
+   "unit_price": "4.75",
+   "line_total": "28500.00",
+   "hs_code": "6105.10.00"
+  },
+  "what_is_different": "Two competing numeric quantity columns (Ctns and Qty) plus a Size Ratio column that is nothing but digits and hyphens ('S-M-L-XL 1-2-2-1'), and a description whose fabric composition carries '%' and '/' — the carton count is the decoy a column map can grab instead of the piece count, and both totals are printed so a wrong grab is provable."
+ },
+ {
+  "id": "industry_goods_footwear_size_run_prs_dzn",
+  "title": "Footwear invoice (style, material, size run, FOB per pair, PRS/DZN units)",
+  "note": "China/Vietnam footwear exporter · FOB Shanghai",
+  "page": "| Style No. | Article Description | Upper / Sole Material | Size Run | HS Code | Ctns | Qty | Unit | FOB Unit Price (USD) | Amount (USD) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| F-2201 | MEN'S SPORTS SHOE | PU UPPER / EVA-RUBBER SOLE | 40 - 45 | 6402.99.00 | 300 | 3,600 | PRS | 9.85 | 35,460.00 |\n| L-3308 | LADIES' FASHION SANDAL | TPU UPPER / TPR SOLE | 36 - 41 | 6402.20.00 | 150 | 1,800 | PRS | 6.40 | 11,520.00 |\n| K-1145 | CHILDREN'S CANVAS SHOE | TEXTILE UPPER / RUBBER SOLE | 28 - 34 | 6404.19.00 | 200 | 500 | DZN | 27.60 | 13,800.00 |\n| TOTAL FOB SHANGHAI |  |  |  |  | 650 |  |  |  | 60,780.00 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "MEN'S SPORTS SHOE",
+   "quantity": "3600",
+   "uom": "PRS",
+   "unit_price": "9.85",
+   "line_total": "35460.00",
+   "hs_code": "6402.99.00"
+  },
+  "what_is_different": "Mixed units inside one table — pairs (PRS) on two rows and dozens (DZN) on the third, so a per-unit price of 27.60 is twelve pairs, not one — and a Size Run column ('40 - 45') that reads as a numeric range. The quantity column deliberately has NO printed total (units are not commensurable), so only the money total closes; the parser must not require a summable quantity column."
+ },
+ {
+  "id": "industry_goods_electronics_model_serial_voltage",
+  "title": "Electronics invoice (model numbers, serial numbers, voltage/frequency)",
+  "note": "Consumer white-goods / brown-goods importer · CIF Colombo",
+  "page": "| Item | Model No. | Description of Goods | Serial No. | Rating | HS Code | Qty | Unit | Unit Price (USD) | Amount (USD) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | SPL-3000X | INVERTER SPLIT AIR CONDITIONER 24,000 BTU | AC24X-0011 ~ AC24X-0020 | 220-240V / 50Hz | 8415.10.90 | 10 | SET | 385.00 | 3,850.00 |\n| 2 | LED-55U8 | 55\" 4K UHD LED TELEVISION | TV55U-2201 ~ TV55U-2230 | 100-240V / 50-60Hz | 8528.72.00 | 30 | PCS | 268.50 | 8,055.00 |\n| 3 | WM-9012F | FRONT LOAD WASHING MACHINE 9KG | WM9F-0501 ~ WM9F-0520 | 220V / 50Hz | 8450.11.00 | 20 | SET | 242.75 | 4,855.00 |\n| TOTAL CIF COLOMBO |  |  |  |  |  | 60 |  |  | 16,760.00 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "INVERTER SPLIT AIR CONDITIONER 24,000 BTU",
+   "quantity": "10",
+   "uom": "SET",
+   "unit_price": "385.00",
+   "line_total": "3850.00",
+   "hs_code": "8415.10.90"
+  },
+  "what_is_different": "A serial-number range column and a voltage/frequency rating column ('220-240V / 50Hz', '100-240V / 50-60Hz') that both look numeric, plus a description carrying its own thousands separator ('24,000 BTU') — a comma-tolerant number scanner can mistake the description for the amount. Serial ranges also mean brand/model live in a column separate from the description."
+ },
+ {
+  "id": "industry_goods_auto_parts_oe_number_hs8708",
+  "title": "Automotive spare parts invoice (OE/OEM part numbers, vehicle application, HS 8708)",
+  "note": "UAE/Japan aftermarket parts trader · Toyota applications",
+  "page": "| No. | OE Part No. | Aftermarket Ref. | Part Description | Vehicle Application | HS Code | Qty | Unit | Unit Price (USD) | Amount (USD) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | 48520-0K040 | TY-SA-1120 | SHOCK ABSORBER, FRONT RH | TOYOTA HILUX KUN25 2005-2015 | 8708.80.90 | 120 | PCS | 18.75 | 2,250.00 |\n| 2 | 04465-YZZE1 | TY-BP-3341 | BRAKE PAD SET, FRONT AXLE | TOYOTA COROLLA ZZE121 2001-2007 | 8708.30.90 | 400 | SET | 7.60 | 3,040.00 |\n| 3 | 17801-21050 | TY-AF-2210 | AIR FILTER ELEMENT | TOYOTA YARIS NCP90 2005-2013 | 8421.31.00 | 600 | PCS | 2.85 | 1,710.00 |\n| 4 | 90919-01210 | TY-SP-0121 | IGNITION SPARK PLUG, IRIDIUM | TOYOTA AVANZA F601 2004-2011 | 8511.10.00 | 1,000 | PCS | 1.45 | 1,450.00 |\n| TOTAL |  |  |  |  |  | 2,120 |  |  | 8,450.00 |\n",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "SHOCK ABSORBER, FRONT RH",
+   "quantity": "120",
+   "uom": "PCS",
+   "unit_price": "18.75",
+   "line_total": "2250.00",
+   "hs_code": "8708.80.90"
+  },
+  "what_is_different": "TWO all-numeric identifier columns before the description (OE part no. like '48520-0K040' and an aftermarket ref) and a vehicle-application column carrying a year range ('2005-2015') — four digit-dense columns competing to be read as quantity or HS. Also the HS codes are not all 8708: filter and spark plug fall to 8421/8511, so a 'guess the chapter from the industry' shortcut is wrong on two of four rows."
+ },
+ {
+  "id": "industry_goods_machinery_de_exw_serial_baujahr",
+  "title": "Machinery invoice (machine serial no., year of manufacture, HS 84/85, ex-works)",
+  "note": "Germany · used/new capital machinery, EXW Stuttgart, EUR decimal comma",
+  "page": "| Pos. | Bezeichnung der Ware | Maschinen-Nr. | Baujahr | Warennummer | Menge | Einheit | Einzelpreis EUR | Betrag EUR |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | CNC-DREHMASCHINE DMG CTX 310 ECOLINE | 1102345 | 2019 | 8458.11.41 | 1 | Stk | 68.500,00 | 68.500,00 |\n| 2 | HYDRAULISCHE ABKANTPRESSE TRUBEND 5085 | 4408871 | 2021 | 8462.29.10 | 1 | Stk | 92.750,00 | 92.750,00 |\n| 3 | INDUSTRIE-SCHWEISSROBOTER KUKA KR 16 R1610 | 7761120 | 2018 | 8515.31.00 | 2 | Stk | 24.900,00 | 49.800,00 |\n| Warenwert netto EXW Stuttgart |  |  |  |  | 4 | Stk |  | 211.050,00 |\n| Umsatzsteuer 0 % (steuerfreie Ausfuhrlieferung § 6 UStG) |  |  |  |  |  |  |  | 0,00 |\n| Gesamtbetrag EUR |  |  |  |  |  |  |  | 211.050,00 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "CNC-DREHMASCHINE DMG CTX 310 ECOLINE",
+   "quantity": "1",
+   "uom": "Stk",
+   "unit_price": "68500.00",
+   "line_total": "68500.00",
+   "hs_code": "8458.11.41"
+  },
+  "what_is_different": "German headers with decimal comma AND dot thousands ('68.500,00' — the dot is NOT a decimal point), a Baujahr column of bare four-digit years that reads exactly like a quantity, a seven-digit machine serial column, and a three-row tail (net EXW / 0 % export VAT / grand total) where the net and the grand total are the same figure because the tax is nil — the customs value is the net line, and a parser that latches onto 'Gesamtbetrag' must still land on 211.050,00."
+ },
+ {
+  "id": "industry_goods_chemical_un_cas_hazard_class",
+  "title": "Chemical product invoice (UN number, hazard class, packing group, CAS number, purity)",
+  "note": "India/Gulf bulk chemicals exporter · IMDG-declared cargo, price per KG",
+  "page": "| Item | Product Name | CAS No. | UN No. | Class | PG | Purity | HS Code | Qty | Unit | Unit Price (USD/KG) | Amount (USD) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | SODIUM HYDROXIDE FLAKES | 1310-73-2 | UN1823 | 8 | II | 99.0% min | 2815.11.00 | 20,000 | KG | 0.62 | 12,400.00 |\n| 2 | HYDROGEN PEROXIDE SOLUTION 50% | 7722-84-1 | UN2014 | 5.1 (8) | II | 50.0% w/w | 2847.00.00 | 8,000 | KG | 0.95 | 7,600.00 |\n| 3 | TOLUENE, ANHYDROUS | 108-88-3 | UN1294 | 3 | II | 99.8% min | 2902.30.00 | 12,500 | KG | 1.08 | 13,500.00 |\n| TOTAL |  |  |  |  |  |  |  | 40,500 | KG |  | 33,500.00 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "SODIUM HYDROXIDE FLAKES",
+   "quantity": "20000",
+   "uom": "KG",
+   "unit_price": "0.62",
+   "line_total": "12400.00",
+   "hs_code": "2815.11.00"
+  },
+  "what_is_different": "Five hazmat columns of pseudo-numbers between the description and the money: a hyphenated CAS number, a 'UN1823' alphanumeric, a subsidiary-risk class written as '5.1 (8)' (a decimal with a parenthesised second number), a Roman-numeral packing group, and a purity column of percentages with decimals. Unit price below 1.00 also means the amount is far smaller than the quantity — the opposite of the usual magnitude ordering."
+ },
+ {
+  "id": "industry_goods_petroleum_api_sulphur_bbls",
+  "title": "Petroleum/Oil invoice (API gravity, sulfur content, barrels/bbls)",
+  "note": "West Africa product cargo · provisional FOB invoice, no HS printed",
+  "page": "| Item | Description of Cargo | API Gravity @ 60°F | Sulphur (wt %) | Quantity (BBLS) | Unit | Price per BBL (USD) | Amount (USD) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | AUTOMOTIVE GAS OIL (AGO) | 36.2 | 0.048 | 120,000.000 | BBL | 92.7500 | 11,130,000.00 |\n| 2 | JET A-1 AVIATION TURBINE FUEL | 43.1 | 0.019 | 85,000.000 | BBL | 104.2500 | 8,861,250.00 |\n| 3 | HIGH SULPHUR FUEL OIL 380 CST | 11.4 | 3.42 | 60,000.000 | BBL | 61.8000 | 3,708,000.00 |\n| TOTAL FOB LOME |  |  |  | 265,000.000 | BBL |  | 23,699,250.00 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "AUTOMOTIVE GAS OIL (AGO)",
+   "quantity": "120000.000",
+   "uom": "BBL",
+   "unit_price": "92.7500",
+   "line_total": "11130000.00",
+   "hs_code": ""
+  },
+  "what_is_different": "No HS column at all, a four-decimal unit price ('92.7500' — oil prices carry more precision than money normally does), a three-decimal quantity in barrels, and two quality columns (API gravity, sulphur wt %) that are small decimals sitting immediately left of the quantity. Magnitudes are eight-figure, so a thousands-separator misread changes the customs value by orders of magnitude."
+ },
+ {
+  "id": "industry_goods_agri_commodity_grade_crop_year_fobst",
+  "title": "Agricultural commodity invoice (grade, crop year, bag marking, FOB stowed)",
+  "note": "West Africa / Asia soft commodities · FOB stowed, price per metric tonne",
+  "page": "| Lot No. | Commodity & Grade | Crop Year | Bag Marking | HS Code | Bags | Net Weight (MT) | Unit | Price per MT (USD) FOBST | Amount (USD) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | RAW CASHEW NUTS IN SHELL, OUTTURN 48 LBS, KOR 48 | 2025 | IVC/RCN/2025 LOT-1 | 0801.31.00 | 5,000 | 400.000 | MT | 1,150.00 | 460,000.00 |\n| 2 | HULLED SESAME SEEDS, PURITY 99.5%, WHITENESS 98% | 2025 | SUD/SES/2025 LOT-2 | 1207.40.90 | 3,000 | 150.000 | MT | 1,480.00 | 222,000.00 |\n| 3 | ROBUSTA COFFEE GRADE 2, SCREEN 13, MOISTURE 12.5% | 2024/2025 | VN/ROB2/24-25 LOT-3 | 0901.11.00 | 1,200 | 72.000 | MT | 2,325.00 | 167,400.00 |\n| TOTAL FOB STOWED ABIDJAN |  |  |  |  | 9,200 | 622.000 | MT |  | 849,400.00 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "RAW CASHEW NUTS IN SHELL, OUTTURN 48 LBS, KOR 48",
+   "quantity": "400.000",
+   "uom": "MT",
+   "unit_price": "1150.00",
+   "line_total": "460000.00",
+   "hs_code": "0801.31.00"
+  },
+  "what_is_different": "The billable quantity is a decimal WEIGHT in tonnes, not a piece count, while a package count (Bags) sits beside it and also totals — pick the bags and every line total is off by a factor of 12.5. Grade specs live inside the description as numbers ('OUTTURN 48 LBS', 'MOISTURE 12.5%'), the crop year is a bare year or a split season ('2024/2025'), and the bag marking is a slash-and-hyphen code that resembles nothing else on the page."
+ },
+ {
+  "id": "industry_goods_multi_currency_per_row",
+  "title": "Multi-currency invoice with a per-row currency column",
+  "note": "EU machinery consolidator invoicing three currencies on one document",
+  "page": "| Item | Description of Goods | HS Code | Qty | Unit | Cur. | Unit Price | Amount |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | AUTOMATIC HORIZONTAL FLOW WRAP PACKAGING MACHINE | 8422.30.00 | 2 | SET | EUR | 14,250.00 | 28,500.00 |\n| 2 | STAINLESS STEEL MODULAR CONVEYOR, 6 M | 8428.33.00 | 1 | SET | EUR | 6,800.00 | 6,800.00 |\n| 3 | THERMAL LABEL PRINT & APPLY UNIT | 8443.32.00 | 4 | PCS | USD | 1,975.00 | 7,900.00 |\n| 4 | SPARE PARTS KIT (SEALING JAWS, DRIVE BELTS) | 8422.90.90 | 3 | SET | GBP | 540.00 | 1,620.00 |\n| SUB-TOTAL EUR |  |  |  |  | EUR |  | 35,300.00 |\n| SUB-TOTAL USD |  |  |  |  | USD |  | 7,900.00 |\n| SUB-TOTAL GBP |  |  |  |  | GBP |  | 1,620.00 |\n| GRAND TOTAL (ECB 15.03.2026: EUR 1.0850 / GBP 1.2700) |  |  |  |  | USD |  | 48,257.90 |\n",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "AUTOMATIC HORIZONTAL FLOW WRAP PACKAGING MACHINE",
+   "quantity": "2",
+   "uom": "SET",
+   "unit_price": "14250.00",
+   "line_total": "28500.00",
+   "hs_code": "8422.30.00"
+  },
+  "what_is_different": "Currency is per ROW, not per document, so there is no single sum of the Amount column that means anything — the page prints THREE per-currency sub-totals (EUR 35,300.00 = 28,500 + 6,800; USD 7,900.00; GBP 1,620.00) and then a converted grand total at printed ECB rates. A printed-totals gate that expects one total equal to the column sum will reject a correct parse here; the right behaviour is to reconcile per currency and carry the row currency onto the item."
+ },
+ {
+  "id": "industry_goods_net_and_gross_weight_per_line",
+  "title": "Invoice printing BOTH a net weight and a gross weight column per line",
+  "note": "China · bilingual 中文/English houseware export invoice",
+  "page": "| 序号 Item | 品名 Description of Goods | 海关编码 HS Code | 数量 Quantity | 单位 Unit | 净重 N.W.(KGS) | 毛重 G.W.(KGS) | 单价 Unit Price (USD) | 金额 Amount (USD) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | 不锈钢保温杯 STAINLESS STEEL VACUUM FLASK 500ML | 9617.00.00 | 5,000 | PCS | 1,250.00 | 1,430.00 | 3.20 | 16,000.00 |\n| 2 | 硅胶厨房用具套装 SILICONE KITCHEN UTENSIL SET | 3924.10.00 | 2,400 | SET | 960.00 | 1,152.00 | 5.75 | 13,800.00 |\n| 3 | 竹制砧板 BAMBOO CUTTING BOARD | 4419.12.00 | 3,600 | PCS | 2,880.00 | 3,240.00 | 2.45 | 8,820.00 |\n| 合计 TOTAL |  |  | 11,000 |  | 5,090.00 | 5,822.00 |  | 38,620.00 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "不锈钢保温杯 STAINLESS STEEL VACUUM FLASK 500ML",
+   "quantity": "5000",
+   "uom": "PCS",
+   "unit_price": "3.20",
+   "line_total": "16000.00",
+   "hs_code": "9617.00.00"
+  },
+  "what_is_different": "Two weight columns per line, both in KGS, both with thousands separators and both totalling — net (5,090.00) and gross (5,822.00) — sitting directly between the quantity and the unit price. Grabbing the wrong one silently declares gross as the dutiable net weight; grabbing either as the quantity breaks the arithmetic (1,250.00 x 3.20 is not 16,000.00), which is exactly what the confirmation gate should catch. Headers are bilingual 中文/English, so the vocabulary must match on the English half of a merged cell."
+ },
+ {
+  "id": "asia_south_africa_in_gst_tax_invoice",
+  "title": "Indian GST Invoice (HSN/SAC, CGST/SGST/IGST columns, place of supply)",
+  "note": "India / industrial engineering spares (GST tax invoice)",
+  "page": "| Sr. No. | Description of Goods | HSN/SAC | Qty | UOM | Rate (₹) | Taxable Value (₹) | IGST Rate | IGST Amount (₹) | Total (₹) |\n| :-- | :-- | :-- | --: | :-- | --: | --: | --: | --: | --: |\n| 1 | Ball Bearing 6205-2RS Deep Groove | 84821019 | 500 | NOS | 148.50 | 74,250.00 | 18% | 13,365.00 | 87,615.00 |\n| 2 | V-Belt B-Section B-75 Wrapped | 40103999 | 240 | NOS | 312.75 | 75,060.00 | 18% | 13,510.80 | 88,570.80 |\n| 3 | Oil Seal TC 35x52x7 NBR | 40169390 | 1,200 | NOS | 46.25 | 55,500.00 | 18% | 9,990.00 | 65,490.00 |\n| | Total | | 1,940 | | | 2,04,810.00 | | 36,865.80 | 2,41,675.80 |\n\nPlace of Supply: 27-Maharashtra | Reverse Charge: No\nTotal Invoice Value (in words): Rupees Two Lakh Forty One Thousand Six Hundred Seventy Six Only",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Ball Bearing 6205-2RS Deep Groove",
+   "quantity": "500",
+   "uom": "NOS",
+   "unit_price": "148.50",
+   "line_total": "74,250.00",
+   "hs_code": "84821019"
+  },
+  "what_is_different": "Indian lakh/crore digit grouping in the totals row (2,04,810.00 — a 2-digit group before the last 3) that a naive thousands-separator stripper reads correctly but a locale-sniffing parser may reject; 8-digit HSN codes with no dots; a per-line tax rate column plus a per-line tax amount column, so the customs (taxable) value is the middle money column and NOT the rightmost one."
+ },
+ {
+  "id": "asia_south_africa_pk_commercial_invoice",
+  "title": "Pakistan Commercial Invoice (HS codes, FOB USD, packing details)",
+  "note": "Pakistan / Sialkot surgical instruments export",
+  "page": "| Sr. | Description of Goods | H.S. Code | No. of Ctns | Qty (Pcs) | Net Wt. (Kgs) | Gross Wt. (Kgs) | Unit Price FOB Karachi (US$) | Total Amount (US$) |\n| :-- | :-- | :-- | --: | --: | --: | --: | --: | --: |\n| 1 | Mayo Dissecting Scissors 170 mm, Straight, Stainless Steel | 9018.9000 | 25 | 5,000 | 310.00 | 355.00 | 2.85 | 14,250.00 |\n| 2 | Kelly Artery Forceps 140 mm, Curved, Stainless Steel | 9018.9000 | 18 | 3,600 | 226.80 | 262.80 | 3.40 | 12,240.00 |\n| 3 | Adson Tissue Forceps 120 mm, 1x2 Teeth, Stainless Steel | 9018.9000 | 12 | 2,400 | 132.00 | 156.00 | 2.15 | 5,160.00 |\n| | TOTAL | | 55 | 11,000 | 668.80 | 773.80 | | 31,650.00 |\n\nTotal FOB Value: US$ 31,650.00 (US Dollars Thirty One Thousand Six Hundred Fifty Only)\nPacking: 55 Cartons in 1 x 20' FCL",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Mayo Dissecting Scissors 170 mm, Straight, Stainless Steel",
+   "quantity": "5,000",
+   "uom": "PCS",
+   "unit_price": "2.85",
+   "line_total": "14,250.00",
+   "hs_code": "9018.9000"
+  },
+  "what_is_different": "Two competing numeric quantity columns (cartons and pieces) plus two weight columns; only the pieces column multiplies out to the line total, so the carton count is a decoy quantity. Every line carries the identical HS heading, which defeats de-duplication heuristics that assume distinct codes per row. The unit is only implied by the header '(Pcs)', never printed in a cell."
+ },
+ {
+  "id": "asia_south_africa_bd_commercial_invoice",
+  "title": "Bangladesh Commercial Invoice (HS codes, quantity/unit, total FOB)",
+  "note": "Bangladesh / ready-made garments export",
+  "page": "| Sl. | Style No. | Description of Goods | H.S. Code | Qty (Dzn) | Unit Price (US$) Per Dzn | Total Value (US$) FOB |\n| :-- | :-- | :-- | :-- | --: | --: | --: |\n| 1 | MS-4471 | Men's 100% Cotton Woven Long Sleeve Casual Shirt | 6205.2000 | 1,250 | 34.80 | 43,500.00 |\n| 2 | LB-2208 | Ladies' Knitted 100% Cotton Basic T-Shirt | 6109.1000 | 2,400 | 18.75 | 45,000.00 |\n| 3 | KT-1130 | Boys' Denim Long Pant, 100% Cotton | 6203.4200 | 860 | 52.50 | 45,150.00 |\n| 4 | GT-7702 | Ladies' Woven Cotton Twill Shorts | 6204.6200 | 1,140 | 41.25 | 47,025.00 |\n| | | Total | | 5,650 | | 180,675.00 |\n\nTotal FOB Chattogram Value: US$ 180,675.00\nSay: US Dollars One Hundred Eighty Thousand Six Hundred Seventy Five Only",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Men's 100% Cotton Woven Long Sleeve Casual Shirt",
+   "quantity": "1,250",
+   "uom": "DZN",
+   "unit_price": "34.80",
+   "line_total": "43,500.00",
+   "hs_code": "6205.2000"
+  },
+  "what_is_different": "Quantity is in DOZENS, not pieces — the unit lives only in the header ('Qty (Dzn)' / 'Per Dzn') and any parser that silently assumes pieces will under-declare the goods twelve-fold. A separate Style No. column sits between the serial and the description, so the description is neither the first nor the second column, and the style code must not be swallowed into the description."
+ },
+ {
+  "id": "asia_south_africa_lk_commercial_invoice",
+  "title": "Sri Lanka Commercial Invoice (HS codes, origin, packing, weight)",
+  "note": "Sri Lanka / Colombo tea auction export",
+  "page": "| Item | Description of Goods | H.S. Code | Country of Origin | No. of Packages | Net Weight (Kg) | Unit Price (US$ per Kg) | Amount (US$) |\n| :-- | :-- | :-- | :-- | --: | --: | --: | --: |\n| 1 | Ceylon Black Tea BOPF Grade, Low Grown | 0902.4000 | Sri Lanka | 200 Paper Sacks | 6,000.00 | 4.35 | 26,100.00 |\n| 2 | Ceylon Black Tea OP1 Grade, High Grown | 0902.3000 | Sri Lanka | 150 Paper Sacks | 3,750.00 | 6.80 | 25,500.00 |\n| 3 | Ceylon Green Tea Gunpowder Grade | 0902.1000 | Sri Lanka | 80 Paper Sacks | 1,600.00 | 7.25 | 11,600.00 |\n| 4 | Ceylon Black Tea Dust No.1, Low Grown | 0902.4000 | Sri Lanka | 120 Paper Sacks | 3,000.00 | 3.95 | 11,850.00 |\n| | Total | | | 550 Paper Sacks | 14,350.00 | | 75,050.00 |\n\nTotal FOB Colombo Value US$ 75,050.00\nGross Weight 14,955.00 Kg | Shipping Marks: RD/CMB/2024-118",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Ceylon Black Tea BOPF Grade, Low Grown",
+   "quantity": "6,000.00",
+   "uom": "Kg",
+   "unit_price": "4.35",
+   "line_total": "26,100.00",
+   "hs_code": "0902.4000"
+  },
+  "what_is_different": "The billed quantity IS the net weight in kilograms, priced per kg, while the 'No. of Packages' column carries a number glued to a unit word ('200 Paper Sacks') that looks far more like a quantity cell. A parser must pick the weight column as quantity by arithmetic, not by column name or position, and must not read '200' as the quantity. Country of origin is repeated per line."
+ },
+ {
+  "id": "asia_south_africa_au_tax_invoice",
+  "title": "Australian Tax Invoice (GST amount, total including GST)",
+  "note": "Australia / mining and earthmoving spare parts",
+  "page": "| Item Code | Description | Qty | Unit | Unit Price (AUD) | Amount (AUD ex GST) | GST (AUD) | Total (AUD inc GST) |\n| :-- | :-- | --: | :-- | --: | --: | --: | --: |\n| HYD-4420 | Hydraulic Cylinder 100mm Bore x 600mm Stroke | 12 | EA | 1,285.00 | 15,420.00 | 1,542.00 | 16,962.00 |\n| FLT-0918 | Air Filter Element, Primary, Radial Seal | 144 | EA | 62.50 | 9,000.00 | 900.00 | 9,900.00 |\n| HOS-2210 | Hydraulic Hose Assembly 1/2\" R2AT 2400mm | 60 | EA | 87.40 | 5,244.00 | 524.40 | 5,768.40 |\n| | Subtotal (ex GST) | | | | 29,664.00 | | |\n| | GST @ 10% | | | | | 2,966.40 | |\n| | TOTAL AUD (inc GST) | | | | | | 32,630.40 |\n\nTotal Price Includes GST of AUD 2,966.40",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Hydraulic Cylinder 100mm Bore x 600mm Stroke",
+   "quantity": "12",
+   "uom": "EA",
+   "unit_price": "1,285.00",
+   "line_total": "15,420.00",
+   "hs_code": ""
+  },
+  "what_is_different": "No HS/tariff column at all — a domestic-style tax invoice — so the parser must accept rows with no commodity code rather than treating the item code (HYD-4420) as one. Three money columns per row where the rightmost is GST-inclusive; the declarable value is the middle 'ex GST' column. A double quote inside the description (1/2\" R2AT) is an OCR/CSV escaping hazard, and the totals are split across three separate label rows, only one of which sums the line values."
+ },
+ {
+  "id": "asia_south_africa_nz_tax_invoice",
+  "title": "New Zealand Tax Invoice (GST breakdown)",
+  "note": "New Zealand / dairy ingredients wholesale",
+  "page": "| Code | Description | Qty | UOM | Unit Price NZD | Amount NZD (Excl. GST) |\n| :-- | :-- | --: | :-- | --: | --: |\n| WM-2510 | Wholemilk Powder 25kg Multiwall Bag, Instant | 480 | BAG | 118.75 | 57,000.00 |\n| AMF-2080 | Anhydrous Milk Fat, 210L Steel Drum | 36 | DRM | 1,462.50 | 52,650.00 |\n| CAS-1250 | Acid Casein 30 Mesh, 25kg Bag | 200 | BAG | 231.20 | 46,240.00 |\n| | Subtotal (Excl. GST) | | | | 155,890.00 |\n| | GST @ 15% | | | | 23,383.50 |\n| | Total (Incl. GST) NZD | | | | 179,273.50 |\n\nGST Number: 118-441-206",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Wholemilk Powder 25kg Multiwall Bag, Instant",
+   "quantity": "480",
+   "uom": "BAG",
+   "unit_price": "118.75",
+   "line_total": "57,000.00",
+   "hs_code": ""
+  },
+  "what_is_different": "Deliberately the leanest table in the set: six columns, no HS code, no per-line tax, and GST at 15% appearing ONLY in the totals block — so the goods total and the invoice total differ by a factor the rows themselves never show. Mixed unit vocabulary (BAG vs DRM) across rows, and pack size text inside the description (25kg, 210L) that must not be mistaken for quantity or weight."
+ },
+ {
+  "id": "asia_south_africa_za_tax_invoice",
+  "title": "South African Tax Invoice (tariff heading, packing/dimensions, country of origin)",
+  "note": "South Africa / mining consumables (VAT tax invoice)",
+  "page": "| Line | Description of Goods | Tariff Heading | Country of Origin | Qty | Unit | Packing / Dimensions | Unit Price (R) | Line Value (R) |\n| :-- | :-- | :-- | :-- | --: | :-- | :-- | --: | --: |\n| 1 | Conveyor Belt, 3-Ply 1000 mm x 10 m, Grade M24 | 4010.1900 | South Africa | 12 | ROL | 4 PAL / 1,10 x 1,10 x 1,05 m | 8 450,00 | 101 400,00 |\n| 2 | Forged Steel Grinding Balls 80 mm, Cr 12% | 7325.9100 | South Africa | 18 000 | KG | 18 x 1 000 kg Bulk Bags | 21,50 | 387 000,00 |\n| 3 | Rubber Screen Panel 305 x 305 mm, 12 mm Aperture | 4016.9990 | South Africa | 640 | EA | 16 CRT / 0,64 x 0,64 x 0,80 m | 176,25 | 112 800,00 |\n| | Subtotal (Excl. VAT) | | | | | | | 601 200,00 |\n| | VAT @ 15% | | | | | | | 90 180,00 |\n| | TOTAL DUE (ZAR) | | | | | | | 691 380,00 |\n\nVAT Registration No. 4820157736",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Conveyor Belt, 3-Ply 1000 mm x 10 m, Grade M24",
+   "quantity": "12",
+   "uom": "ROL",
+   "unit_price": "8 450,00",
+   "line_total": "101 400,00",
+   "hs_code": "4010.1900"
+  },
+  "what_is_different": "South African numeric convention: decimal COMMA with a non-breaking-space thousands separator (8 450,00) — the exact inverse of the Indian/Pakistani rows in this set, and the one shape where '101 400,00' must not be split into two cells. The Packing/Dimensions column is a free-text cell stuffed with numbers, commas and 'x' separators (1,10 x 1,10 x 1,05 m) that will decoy any column-typing routine that classifies by 'contains digits'. Column is headed 'Tariff Heading', not HS Code."
+ },
+ {
+  "id": "asia_south_africa_ng_commercial_invoice",
+  "title": "Nigerian Commercial Invoice (HS codes, Form M number)",
+  "note": "Nigeria / imported power generating sets (Form M / PAAR)",
+  "page": "| S/N | Description of Goods | HS Code | Qty | Unit | Unit Price (USD) | Amount (USD) |\n| :-- | :-- | :-- | --: | :-- | --: | --: |\n| 1 | Diesel Generating Set 100 KVA, 3-Phase, 415V, Open Type | 8502.1391 | 6 | SET | 12,450.00 | 74,700.00 |\n| 2 | Automatic Voltage Regulator, Type SX460 | 8504.4090 | 40 | PCS | 68.75 | 2,750.00 |\n| 3 | Radiator Assembly for 100 KVA Generating Set | 8409.9990 | 8 | PCS | 985.50 | 7,884.00 |\n| | Total CFR Apapa Lagos | | 54 | | | 85,334.00 |\n\nForm M No.: MF20240178945    BA No.: BA/2024/0093214\nTotal Amount CFR Apapa: USD 85,334.00 (Eighty Five Thousand Three Hundred Thirty Four US Dollars Only)",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Diesel Generating Set 100 KVA, 3-Phase, 415V, Open Type",
+   "quantity": "6",
+   "uom": "SET",
+   "unit_price": "12,450.00",
+   "line_total": "74,700.00",
+   "hs_code": "8502.1391"
+  },
+  "what_is_different": "The totals row sums quantities across INCOMPATIBLE units (6 SET + 40 PCS + 8 PCS = 54), which is a classic false anchor: a parser that validates the quantity column against the totals row will accept it, but a parser that trusts the total as a piece count will be wrong. Descriptions are dense with numerals and units (100 KVA, 3-Phase, 415V, SX460) competing with the real quantity, and the regulatory Form M / BA references sit as loose text below the table where they can be mis-ingested as an extra row."
+ },
+ {
+  "id": "asia_south_africa_ke_tax_invoice",
+  "title": "Kenyan Tax Invoice (HS codes, weight, country of origin)",
+  "note": "Kenya / building materials distributor (KRA TIMS tax invoice)",
+  "page": "| Item | Description of Goods | HS Code | Origin | Qty | Unit | Net Wt (Kg) | Unit Price (KES) | Taxable Amount (KES) | Tax Cd | VAT (KES) |\n| :-- | :-- | :-- | :-- | --: | :-- | --: | --: | --: | :-- | --: |\n| 1 | Galvanised Steel Roofing Sheet IT5, Gauge 30, 3.0 m | 7210.4900 | Kenya | 1,200 | PCS | 8,760.00 | 1,485.00 | 1,782,000.00 | A | 285,120.00 |\n| 2 | Portland Cement CEM II 42.5N, 50 Kg Bag | 2523.2900 | Kenya | 2,000 | BAG | 100,000.00 | 785.00 | 1,570,000.00 | A | 251,200.00 |\n| 3 | PVC Conduit Pipe 20 mm x 3 m, Heavy Duty | 3917.2300 | Kenya | 3,600 | PCS | 1,512.00 | 168.75 | 607,500.00 | A | 97,200.00 |\n| | Total | | | | | 110,272.00 | | 3,959,500.00 | | 633,520.00 |\n| | Total Incl. VAT (KES) | | | | | | | 4,593,020.00 | | |\n\nTax Cd A = 16% | PIN P051234567X | CU Invoice No. 0100004567890123",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Galvanised Steel Roofing Sheet IT5, Gauge 30, 3.0 m",
+   "quantity": "1,200",
+   "uom": "PCS",
+   "unit_price": "1,485.00",
+   "line_total": "1,782,000.00",
+   "hs_code": "7210.4900"
+  },
+  "what_is_different": "Eleven columns, including a single-letter 'Tax Cd' column whose value ('A') is a KRA tax-rate code and not a quantity, a unit or a grade — a column a parser must classify as neither text-description nor numeric. The VAT rate is never printed as a number in the table; it is only resolvable from the footnote. Per-line NET WEIGHT sits between quantity and price, and for the cement line the weight (100,000.00) dwarfs both quantity and unit price, so a 'largest number is the total' heuristic picks the wrong cell."
+ },
+ {
+  "id": "asia_south_africa_tn_facture",
+  "title": "Tunisian Facture (TVA, HS codes)",
+  "note": "Tunisia / olive oil producer (facture locale en dinars)",
+  "page": "| Réf. | Désignation | N° SH | Qté | Unité | P.U. H.T. (TND) | Montant H.T. (TND) | TVA % | Montant TVA (TND) |\n| :-- | :-- | :-- | --: | :-- | --: | --: | --: | --: |\n| HO-05B | Huile d'olive vierge extra, bidon métallique 5 L | 1509.2000 | 2 400 | BID | 42,500 | 102 000,000 | 7 | 7 140,000 |\n| HO-75V | Huile d'olive vierge extra, bouteille verre 750 ml | 1509.2000 | 6 000 | BTL | 8,750 | 52 500,000 | 7 | 3 675,000 |\n| GR-25S | Grignons d'olive épuisés, sac polypropylène 25 kg | 2306.9000 | 400 | SAC | 11,250 | 4 500,000 | 7 | 315,000 |\n| | Total H.T. | | | | | 159 000,000 | | |\n| | Total T.V.A. 7% | | | | | 11 130,000 | | |\n| | Timbre fiscal | | | | | 1,000 | | |\n| | Net à payer T.T.C. | | | | | 170 131,000 | | |\n\nArrêtée la présente facture à la somme de : cent soixante-dix mille cent trente et un dinars",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Huile d'olive vierge extra, bidon métallique 5 L",
+   "quantity": "2 400",
+   "uom": "BID",
+   "unit_price": "42,500",
+   "line_total": "102 000,000",
+   "hs_code": "1509.2000"
+  },
+  "what_is_different": "THREE-decimal currency (the Tunisian dinar is divided into 1000 millimes) with a decimal comma and a space thousands separator, so '102 000,000' is one hundred two thousand dinars exactly — a parser that assumes two decimals reads it as 102 million, and one that assumes comma-thousands reads 42,500 as forty-two thousand five hundred instead of 42.5 dinars. The quantity itself is space-grouped (2 400). French headers with diacritics ('Désignation', 'Qté', 'N° SH'), and a 1,000 TND 'Timbre fiscal' line that is a statutory stamp duty, not goods — the goods total is the Total H.T. row, and Net à payer exceeds Total H.T. + TVA by exactly that stamp."
+ },
+ {
+  "id": "western_eu_uk_vat_commercial_invoice",
+  "title": "UK VAT Commercial Invoice (net/VAT/gross columns, VAT rate, EORI)",
+  "note": "United Kingdom / industrial engineering components",
+  "page": "| Item | Description of Goods | Commodity Code | Country of Origin | Qty | Unit | Unit Price (GBP) | Net Amount (GBP) | VAT Rate | VAT Amount (GBP) | Gross Amount (GBP) |\n| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |\n| 1 | Stainless steel deep groove ball bearing 6204-2RS, sealed | 8482100000 | GB | 2,400 | PCS | 3.85 | 9,240.00 | 20% | 1,848.00 | 11,088.00 |\n| 2 | Hydraulic hose assembly 3/8\" 2-wire, 1,500 mm, JIC ends | 4009420000 | GB | 750 | PCS | 12.60 | 9,450.00 | 20% | 1,890.00 | 11,340.00 |\n| 3 | Gearbox mounting kit, cast iron, 120 mm PCD | 8483900090 | GB | 120 | SET | 47.50 | 5,700.00 | 20% | 1,140.00 | 6,840.00 |\n| | Total net goods | | | 3,270 | | | 24,390.00 | | | |\n| | VAT @ 20% (standard rate) | | | | | | | 20% | 4,878.00 | |\n| | Invoice total (GBP) | | | | | | | | | 29,268.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Stainless steel deep groove ball bearing 6204-2RS, sealed",
+   "quantity": "2,400",
+   "uom": "PCS",
+   "unit_price": "3.85",
+   "line_total": "9,240.00",
+   "hs_code": "8482100000"
+  },
+  "what_is_different": "Three money columns per line (net / VAT / gross) so the parser must pick the NET column as the line total, not the gross one; UK numeric convention (comma thousands, decimal point); 10-digit UK commodity codes; a per-row VAT rate column that is not money at all."
+ },
+ {
+  "id": "western_eu_de_handelsrechnung",
+  "title": "German Handelsrechnung (net and gross totals, Lieferdatum, packaging dimensions)",
+  "note": "Germany / valves, seals and pump motors",
+  "page": "| Pos. | Artikel-Nr. | Warenbezeichnung | Zolltarifnummer | Ursprungsland | Lieferdatum | Menge | Einheit | Einzelpreis EUR | Gesamtpreis EUR | Karton L×B×H (cm) | Gewicht (kg) |\n| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |\n| 1 | KH-5008 | Kugelhahn DN 50, Edelstahl 1.4408, PN 40 | 8481 80 81 | DE | 28.07.2026 | 480 | Stk | 14,75 | 7.080,00 | 60 × 40 × 32 | 384,00 |\n| 2 | DR-1220 | Dichtungsring PTFE 20 × 30 × 2 mm | 3926 90 97 | DE | 28.07.2026 | 1.200 | Stk | 2,35 | 2.820,00 | 40 × 30 × 20 | 18,60 |\n| 3 | PM-0895 | Pumpenmotor 1,5 kW, 400 V, IP55, Bauform B3 | 8501 52 20 | DE | 28.07.2026 | 60 | Stk | 189,50 | 11.370,00 | 50 × 45 × 40 | 1.020,00 |\n| | | Warenwert netto | | | | 1.740 | | | 21.270,00 | | 1.422,60 |\n| | | zzgl. 19 % MwSt | | | | | | | 4.041,30 | | |\n| | | Rechnungsbetrag brutto | | | | | | | 25.311,30 | | |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Kugelhahn DN 50, Edelstahl 1.4408, PN 40",
+   "quantity": "480",
+   "uom": "Stk",
+   "unit_price": "14,75",
+   "line_total": "7.080,00",
+   "hs_code": "8481 80 81"
+  },
+  "what_is_different": "German numeric convention inverted from UK (dot thousands, decimal comma) plus a dimension column '60 × 40 × 32' that looks numeric and must not be mistaken for money or quantity; a per-line Lieferdatum date column; article number column ahead of the description; net and gross totals both printed so the parser must anchor on Warenwert netto."
+ },
+ {
+  "id": "western_eu_fr_facture_commerciale",
+  "title": "French Facture Commerciale (TVA rates, Remise discount column)",
+  "note": "France / cosmetics and soap manufacture",
+  "page": "| Réf. | Désignation | Code NC | Origine | Qté | Unité | P.U. brut EUR | Remise % | P.U. net EUR | Montant HT EUR | TVA % |\n| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |\n| CR-050 | Crème hydratante visage, flacon 50 ml | 3304 99 00 | FR | 900 | Pce | 6,50 | 10 % | 5,85 | 5.265,00 | 20 % |\n| SR-030 | Sérum anti-âge concentré, flacon 30 ml | 3304 99 00 | FR | 250 | Pce | 42,00 | 5 % | 39,90 | 9.975,00 | 20 % |\n| SV-100 | Savon surgras saponifié à froid, pain 100 g | 3401 11 00 | FR | 1.500 | Pce | 3,20 | 15 % | 2,72 | 4.080,00 | 20 % |\n| | Total HT | | | 2.650 | | | | | 19.320,00 | |\n| | TVA 20 % | | | | | | | | 3.864,00 | |\n| | Total TTC | | | | | | | | 23.184,00 | |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Crème hydratante visage, flacon 50 ml",
+   "quantity": "900",
+   "uom": "Pce",
+   "unit_price": "5,85",
+   "line_total": "5.265,00",
+   "hs_code": "3304 99 00"
+  },
+  "what_is_different": "TWO unit-price columns — P.U. brut and P.U. net — separated by a Remise % discount column: only the net price reconciles with Montant HT (900 × 5,85 = 5.265,00), so a parser that grabs the first price column it sees fails every row. Accented French headers and decimal comma."
+ },
+ {
+  "id": "western_eu_it_fattura_commerciale",
+  "title": "Italian Fattura Commerciale (Partita IVA, stamp duty)",
+  "note": "Italy / speciality food exporter, non-imponibile art. 8",
+  "page": "| Rif. | Descrizione | Voce doganale | Origine | Q.tà | U.M. | Prezzo unitario € | Importo € | Aliq. IVA |\n| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |\n| A-1509 | Olio extra vergine di oliva DOP Toscano, bott. 500 ml | 1509 20 00 | IT | 960 | PZ | 8,75 | 8.400,00 | 0 % (N3.1) |\n| A-2209 | Aceto balsamico di Modena IGP, bott. 250 ml | 2209 00 91 | IT | 480 | PZ | 6,40 | 3.072,00 | 0 % (N3.1) |\n| A-1902 | Pasta di semola di grano duro trafilata al bronzo, conf. 500 g | 1902 19 10 | IT | 2.400 | PZ | 1,15 | 2.760,00 | 0 % (N3.1) |\n| | Imposta di bollo assolta in modo virtuale — aut. Agenzia delle Entrate n. 12345/2019 | | | 1 | N. | 2,00 | 2,00 | Escl. art. 15 |\n| | Totale imponibile merce | | | 3.840 | | | 14.232,00 | |\n| | IVA — Operazione non imponibile art. 8 c. 1 lett. a) DPR 633/72 | | | | | | 0,00 | 0 % |\n| | Totale fattura | | | | | | 14.234,00 | |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Olio extra vergine di oliva DOP Toscano, bott. 500 ml",
+   "quantity": "960",
+   "uom": "PZ",
+   "unit_price": "8,75",
+   "line_total": "8.400,00",
+   "hs_code": "1509 20 00"
+  },
+  "what_is_different": "A fully-formed, arithmetically valid NON-GOODS row (imposta di bollo, qty 1 × 2,00 = 2,00) sits inside the table between the goods and the totals — it confirms arithmetically yet must be excluded, and the invoice grand total (14.234,00) deliberately does NOT equal the goods total (14.232,00) that customs needs. Zero-rated export with a natura code in the VAT column instead of a rate."
+ },
+ {
+  "id": "western_eu_es_factura_intracomunitaria_irpf",
+  "title": "Spanish Factura Intracommunity (IRPF withholding column)",
+  "note": "Spain / leather goods, entrega intracomunitaria exenta",
+  "page": "| Ref. | Descripción | Partida arancelaria | Origen | Cant. | Ud. | Precio unit. € | Importe € | IVA % | Ret. IRPF % |\n| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |\n| CAL-3641 | Calzado de piel de vacuno, señora, tallas 36-41 | 6403 99 96 | ES | 640 | PAR | 18,90 | 12.096,00 | 0 % | 15 % |\n| BOL-2210 | Bolso de mano en piel curtida vegetal, 30 × 22 cm | 4202 21 00 | ES | 180 | UD | 64,50 | 11.610,00 | 0 % | 15 % |\n| CIN-3530 | Cinturón de piel 35 mm, hebilla de latón | 4203 30 00 | ES | 2.500 | UD | 1,44 | 3.600,00 | 0 % | 15 % |\n| | Base imponible | | | 3.320 | | | 27.306,00 | | |\n| | IVA 0 % — Entrega intracomunitaria exenta art. 25 Ley 37/1992 | | | | | | 0,00 | 0 % | |\n| | Retención IRPF 15 % | | | | | | -4.095,90 | | 15 % |\n| | Total factura | | | | | | 23.210,10 | | |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Calzado de piel de vacuno, señora, tallas 36-41",
+   "quantity": "640",
+   "uom": "PAR",
+   "unit_price": "18,90",
+   "line_total": "12.096,00",
+   "hs_code": "6403 99 96"
+  },
+  "what_is_different": "A NEGATIVE totals line (retención IRPF -4.095,90) drags the invoice total BELOW the goods total, so any parser that trusts the largest or the last money figure gets the customs value wrong; two percentage columns (IVA and Ret. IRPF) carrying no money; unit vocabulary PAR vs UD in the same table."
+ },
+ {
+  "id": "western_eu_nl_commercial_invoice_korting",
+  "title": "Dutch Commercial Invoice (BTW, item discount percentage, net/gross)",
+  "note": "Netherlands / horticultural supplies",
+  "page": "| Art.nr. | Omschrijving | GN-code | Oorsprong | Aantal | Eenh. | Stukprijs EUR | Bruto bedrag EUR | Korting % | Korting EUR | Netto bedrag EUR | BTW % |\n| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |\n| TB-1225 | Tulpenbollen 'Strong Gold', maat 12/+, per 100 st | 0601 10 10 | NL | 1.250 | zak | 3,60 | 4.500,00 | 10,0 | 450,00 | 4.050,00 | 21 |\n| KM-1002 | Kokossubstraatmat 100 × 20 × 10 cm | 5305 00 00 | NL | 300 | st | 22,50 | 6.750,00 | 0,0 | 0,00 | 6.750,00 | 21 |\n| NH-0900 | Nitrilhandschoen maat 9, doos à 100 st | 4015 19 00 | NL | 96 | doos | 41,25 | 3.960,00 | 5,0 | 198,00 | 3.762,00 | 21 |\n| | Totaal bruto | | | 1.646 | | | 15.210,00 | | 648,00 | 14.562,00 | |\n| | BTW 21 % | | | | | | | | | 3.058,02 | |\n| | Totaal incl. BTW | | | | | | | | | 17.620,02 | |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Tulpenbollen 'Strong Gold', maat 12/+, per 100 st",
+   "quantity": "1.250",
+   "uom": "zak",
+   "unit_price": "3,60",
+   "line_total": "4.500,00",
+   "hs_code": "0601 10 10"
+  },
+  "what_is_different": "Four money columns per line where only Bruto bedrag reconciles with aantal × stukprijs; a discount AMOUNT column that is 0,00 on one row and non-zero on others, plus a Korting % column using a decimal comma on a percentage (10,0). The btw-grondslag is the netto column, so the goods total and the confirmable line total legitimately differ."
+ },
+ {
+  "id": "western_eu_be_bilingual_factuur_facture",
+  "title": "Belgian bilingual Factuur/Facture",
+  "note": "Belgium / chocolate, glassware and abbey beer",
+  "page": "| Nr. | Omschrijving / Désignation | GN-code / Code NC | Oorsprong / Origine | Aantal / Quantité | Eenh. / Unité | Eenheidsprijs / Prix unitaire EUR | Bedrag / Montant EUR | BTW / TVA % |\n| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |\n| 1 | Praline-assortiment melkchocolade 250 g / Assortiment de pralines chocolat au lait 250 g | 1806 90 11 | BE | 2.400 | doos / boîte | 4,75 | 11.400,00 | 21 |\n| 2 | Bierglas 33 cl, gegraveerd / Verre à bière 33 cl, gravé | 7013 37 99 | BE | 3.600 | st / pce | 1,85 | 6.660,00 | 21 |\n| 3 | Abdijbier blond 6,5 % vol., fles 33 cl / Bière d'abbaye blonde 6,5 % vol., bouteille 33 cl | 2203 00 01 | BE | 8.640 | fles / bout. | 0,95 | 8.208,00 | 21 |\n| | Totaal excl. BTW / Total hors TVA | | | 14.640 | | | 26.268,00 | |\n| | BTW / TVA 21 % | | | | | | 5.516,28 | |\n| | Te betalen / À payer | | | | | | 31.784,28 | |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Praline-assortiment melkchocolade 250 g / Assortiment de pralines chocolat au lait 250 g",
+   "quantity": "2.400",
+   "uom": "doos / boîte",
+   "unit_price": "4,75",
+   "line_total": "11.400,00",
+   "hs_code": "1806 90 11"
+  },
+  "what_is_different": "Every header, every unit and every description is doubled in two languages separated by a slash — the header matcher must not treat 'Omschrijving / Désignation' as two columns, and the unit cell 'doos / boîte' is one UoM, not two. Descriptions also carry an internal '6,5 % vol.' that looks like a percentage column value."
+ },
+ {
+  "id": "western_eu_ch_commercial_invoice_mwst",
+  "title": "Swiss Commercial Invoice (MWST, 8-digit tariff numbers, CHF)",
+  "note": "Switzerland / watch industry",
+  "page": "| Pos. | Warenbezeichnung | Zolltarif-Nr. | Ursprung | Menge | Einheit | Eigenmasse kg | Preis/Einheit CHF | Betrag CHF |\n| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |\n| 1 | Armbanduhr Herren, Automatikwerk, Gehäuse Edelstahl | 9102.2100 | CH | 240 | Stk | 22.800 | 185.50 | 44'520.00 |\n| 2 | Uhrenarmband Kalbsleder 20 mm, mit Dornschliesse | 9113.9000 | CH | 1'200 | Stk | 14.400 | 12.75 | 15'300.00 |\n| 3 | Uhrwerk mechanisch mit automatischem Aufzug, 11½''' | 9108.2000 | CH | 75 | Stk | 0.600 | 640.00 | 48'000.00 |\n| | Total Warenwert netto | | | 1'515 | | 37.800 | | 107'820.00 |\n| | MWST 8.1 % | | | | | | | 8'733.42 |\n| | Rechnungsbetrag | | | | | | | 116'553.42 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Armbanduhr Herren, Automatikwerk, Gehäuse Edelstahl",
+   "quantity": "240",
+   "uom": "Stk",
+   "unit_price": "185.50",
+   "line_total": "44'520.00",
+   "hs_code": "9102.2100"
+  },
+  "what_is_different": "Swiss apostrophe thousands separator with a decimal POINT (1'200, 44'520.00) — German-language headers but NOT German numerics, which is the classic trap; 8-digit dotted Swiss tariff numbers (9102.2100) rather than CN codes; a per-line Eigenmasse kg column whose values (22.800, 0.600) read like money; a non-standard VAT rate of 8.1 %."
+ },
+ {
+  "id": "western_eu_at_rechnung_versandkosten",
+  "title": "Austrian Rechnung (Versandkosten line, 20% MwSt)",
+  "note": "Austria / alpine ski equipment",
+  "page": "| Pos. | Bezeichnung | Warennummer | Ursprungsland | Menge | ME | Einzelpreis netto EUR | Betrag netto EUR | USt % |\n| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |\n| 1 | Skischuh Alpin Herren, Gr. 42-46, Flex 100 | 6402 12 10 | AT | 150 | Paar | 88,90 | 13.335,00 | 20 |\n| 2 | Ski Alpin Race Carver 165 cm inkl. Bindung | 9506 11 10 | AT | 40 | Paar | 245,00 | 9.800,00 | 20 |\n| 3 | Skiwachs fluorfrei, Block 500 g | 3404 90 00 | AT | 600 | Stk | 7,45 | 4.470,00 | 20 |\n| 4 | Versandkosten Spedition (Frachtpauschale) | | | 1 | Psch. | 480,00 | 480,00 | 20 |\n| | Warenwert netto | | | 790 | | | 27.605,00 | |\n| | Nettobetrag gesamt inkl. Versand | | | | | | 28.085,00 | |\n| | 20 % MwSt | | | | | | 5.617,00 | |\n| | Bruttobetrag | | | | | | 33.702,00 | |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Skischuh Alpin Herren, Gr. 42-46, Flex 100",
+   "quantity": "150",
+   "uom": "Paar",
+   "unit_price": "88,90",
+   "line_total": "13.335,00",
+   "hs_code": "6402 12 10"
+  },
+  "what_is_different": "A freight charge carries its own position NUMBER (Pos. 4) and arithmetically valid line (1 × 480,00), so it is indistinguishable from goods on structure alone — only the missing Warennummer/Ursprungsland and the wording flag it; it must be excluded from the goods rows yet it is the difference between Warenwert netto and Nettobetrag gesamt, both of which are printed."
+ },
+ {
+  "id": "western_eu_intracommunity_reverse_charge_0pct",
+  "title": "EU Intracommunity Supply 0% VAT (reverse charge, no VAT column)",
+  "note": "EU cross-border / packaging materials, English-language invoice from a euro-zone seller",
+  "page": "| Pos | Description of goods | CN code | Country of origin | Quantity | Unit | Unit price EUR | Amount EUR |\n| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |\n| 1 | Polyethylene bags 400 × 600 mm, 50 µm, transparent | 3923 21 00 | DE | 3.200 | PCS | 1,85 | 5.920,00 |\n| 2 | Corrugated carton box 600 × 400 × 400 mm, double wall | 4819 10 00 | DE | 640 | PCS | 23,40 | 14.976,00 |\n| 3 | LDPE stretch film 500 mm × 300 m, 23 µm, core 76 mm | 3920 10 24 | DE | 96 | ROL | 128,75 | 12.360,00 |\n| | Total goods value | | | 3.936 | | | 33.256,00 |\n| | VAT — Intra-Community supply, Art. 138 Directive 2006/112/EC — reverse charge | | | | | | 0,00 |\n| | Total invoice amount EUR | | | | | | 33.256,00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Polyethylene bags 400 × 600 mm, 50 µm, transparent",
+   "quantity": "3.200",
+   "uom": "PCS",
+   "unit_price": "1,85",
+   "line_total": "5.920,00",
+   "hs_code": "3923 21 00"
+  },
+  "what_is_different": "No VAT column and no VAT rate anywhere on the line — the reverse-charge wording sits in a totals row instead, so goods total and invoice total are identical (33.256,00) and a parser cannot use a VAT delta to identify the net. English headers combined with continental decimal-comma numerics, and descriptions stuffed with dimension figures (400 × 600 mm, 50 µm, 500 mm × 300 m) that must not be read as quantities."
+ },
+ {
+  "id": "asia_east_cn_bilingual_fob_cif",
+  "title": "Chinese Export Commercial Invoice (bilingual, HS codes, FOB/CIF)",
+  "note": "China · consumer electronics export, Shenzhen to Los Angeles",
+  "page": "| 序号 No. | 品名及规格 Description of Goods | 海关编码 H.S. Code | 数量 Quantity | 单位 Unit | 单价 Unit Price FOB (USD) | 金额 Amount FOB (USD) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | 锂离子电池组 Lithium-ion Battery Pack 18650 3.7V 2600mAh | 8507600090 | 2,000 | PCS | 3.85 | 7,700.00 |\n| 2 | 电源适配器 Power Adapter 65W USB-C PD | 8504403000 | 1,500 | PCS | 5.20 | 7,800.00 |\n| 3 | 数据线 USB-C Data Cable 1.5M Braided | 8544422900 | 5,000 | PCS | 0.62 | 3,100.00 |\n| 合计 TOTAL FOB SHENZHEN |  |  | 8,500 | PCS |  | 18,600.00 |\n| 海运费 OCEAN FREIGHT |  |  |  |  |  | 1,250.00 |\n| 保险费 INSURANCE |  |  |  |  |  | 186.00 |\n| 总计 TOTAL CIF LOS ANGELES |  |  |  |  |  | 20,036.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "锂离子电池组 Lithium-ion Battery Pack 18650 3.7V 2600mAh",
+   "quantity": "2,000",
+   "uom": "PCS",
+   "unit_price": "3.85",
+   "line_total": "7,700.00",
+   "hs_code": "8507600090"
+  },
+  "what_is_different": "Bilingual CJK headers where the Chinese label precedes the English one, 10-digit China customs codes, and a footer that continues past the goods total into freight and insurance charge rows before restating a CIF grand total — the parser must own the three goods rows, take 18,600.00 (not 20,036.00) as the goods sum, and refuse to treat 海运费/保险费 as line items."
+ },
+ {
+  "id": "asia_east_jp_seikyusho_consumption_tax",
+  "title": "Japanese Commercial Invoice (Invoice and 請求書, consumption tax 10%)",
+  "note": "Japan · precision machine parts supplier, JPY",
+  "page": "| 品番 Item Code | 品名 Description | 数量 Quantity | 単位 Unit | 単価 Unit Price (JPY) | 金額 Amount (JPY) |\n| --- | --- | --- | --- | --- | --- |\n| NC-4420 | 精密ボールベアリング Precision Ball Bearing 6204ZZ | 1,200 | 個 | 480 | 576,000 |\n| NC-5510 | オイルシール Oil Seal TC 35x52x8 NBR | 800 | 個 | 265 | 212,000 |\n| NC-6100 | ステンレスボルト Stainless Hex Bolt M8x40 SUS304 | 5,000 | 本 | 36 | 180,000 |\n| 小計 Sub-total |  |  |  |  | 968,000 |\n| 消費税 Consumption Tax (10%) |  |  |  |  | 96,800 |\n| 合計 Total Amount |  |  |  |  | 1,064,800 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "精密ボールベアリング Precision Ball Bearing 6204ZZ",
+   "quantity": "1,200",
+   "uom": "個",
+   "unit_price": "480",
+   "line_total": "576,000",
+   "hs_code": ""
+  },
+  "what_is_different": "Zero-decimal currency: every money figure is a bare integer with thousands commas and no cents at all, so any rule that expects a decimal point in the price or amount column collapses. The unit column carries Japanese counters (個, 本) rather than PCS/EA, and the net goods figure is printed as 小計 above a 10% consumption-tax row — the customs value is the 968,000 sub-total, not the 1,064,800 合計."
+ },
+ {
+  "id": "asia_east_kr_hsk_incoterm_krw",
+  "title": "South Korean Commercial Invoice (HSK codes, Incoterms, USD/KRW)",
+  "note": "South Korea · automotive aftermarket parts, FOB Busan",
+  "page": "| No. | 품명 Description of Goods | HSK CODE | 수량 Q'ty | 단위 Unit | 단가 Unit Price (USD) | 금액 Amount (USD) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | 승용차용 브레이크 패드 Brake Pad Set for Passenger Car | 8708.30-1000 | 3,000 | SET | 12.40 | 37,200.00 |\n| 2 | 에어 필터 엘리먼트 Air Filter Element | 8421.23-1000 | 4,500 | EA | 3.75 | 16,875.00 |\n| 3 | 이리듐 점화플러그 Iridium Spark Plug | 8511.10-0000 | 6,000 | EA | 2.10 | 12,600.00 |\n| 합계 TOTAL (FOB BUSAN) |  |  | 13,500 |  |  | 66,675.00 |\n| 원화환산 KRW EQUIVALENT @ 1,352.50 |  |  |  |  |  | 90,177,937.50 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "승용차용 브레이크 패드 Brake Pad Set for Passenger Car",
+   "quantity": "3,000",
+   "uom": "SET",
+   "unit_price": "12.40",
+   "line_total": "37,200.00",
+   "hs_code": "8708.30-1000"
+  },
+  "what_is_different": "A second money figure in the same Amount column that is not money of the same kind: the KRW conversion row sits directly under the USD total at 1,352× the magnitude, so a totals gate that grabs the last numeric row in the column reads 90,177,937.50 as the invoice value. HSK codes are printed 4-2-4 with a dot and a hyphen (8708.30-1000), and the Incoterm is folded into the totals label rather than carried in its own field."
+ },
+ {
+  "id": "asia_east_th_11digit_net_gross",
+  "title": "Thai Commercial Invoice (Thai/English, 11-digit HS codes, net/gross weight)",
+  "note": "Thailand · rice exporter, Bangkok to Jeddah",
+  "page": "| ลำดับ No. | รายการสินค้า Description of Goods | พิกัดอัตราศุลกากร H.S. Code | จำนวน Quantity | หน่วย Unit | น้ำหนักสุทธิ N.W. (KGM) | น้ำหนักรวม G.W. (KGM) | ราคาต่อหน่วย Unit Price (USD) | จำนวนเงิน Amount (USD) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | ข้าวหอมมะลิไทย 100% ชั้น 1 Thai Hom Mali Rice 100% Grade A, 25 KG/BAG | 1006.30.40.000 | 500 | BAG | 12,500.00 | 12,750.00 | 42.50 | 21,250.00 |\n| 2 | ข้าวเหนียวขาว White Glutinous Rice 10%, 25 KG/BAG | 1006.30.99.000 | 300 | BAG | 7,500.00 | 7,650.00 | 33.00 | 9,900.00 |\n| 3 | ข้าวกล้องหอมมะลิ Hom Mali Brown Rice, 25 KG/BAG | 1006.20.90.000 | 200 | BAG | 5,000.00 | 5,100.00 | 39.75 | 7,950.00 |\n| รวมทั้งสิ้น TOTAL |  |  | 1,000 | BAG | 25,000.00 | 25,500.00 |  | 39,100.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "ข้าวหอมมะลิไทย 100% ชั้น 1 Thai Hom Mali Rice 100% Grade A, 25 KG/BAG",
+   "quantity": "500",
+   "uom": "BAG",
+   "unit_price": "42.50",
+   "line_total": "21,250.00",
+   "hs_code": "1006.30.40.000"
+  },
+  "what_is_different": "Two decimal-bearing weight columns (net 12,500.00 and gross 12,750.00) stand between the unit column and the price column, both far larger than the real unit price — a column map that hunts for 'the numeric column just before the amount' picks up gross weight and multiplies 500 × 12,750.00. Thai 11-digit statistical codes print as four dotted groups, and the quantity unit is BAG while the weights are KGM, so quantity × unit price is the only arithmetic that closes."
+ },
+ {
+  "id": "asia_east_vn_hoa_don_co_form",
+  "title": "Vietnamese Hoa don thuong mai (bilingual, HS codes, C/O form reference)",
+  "note": "Vietnam · garment maker, FOB Hai Phong",
+  "page": "| STT No. | Mô tả hàng hóa Description of Goods | Mã HS HS Code | Số lượng Quantity | ĐVT Unit | Đơn giá Unit Price (USD) | Thành tiền Amount (USD) | Mẫu C/O C/O Form |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Áo sơ mi nam dài tay, 100% cotton Men's Long-sleeve Shirt | 6205.20.00 | 4,800 | CÁI/PCS | 6.85 | 32,880.00 | Form B |\n| 2 | Quần âu nam, vải pha polyester Men's Trousers, polyester blend | 6203.43.00 | 2,500 | CÁI/PCS | 9.40 | 23,500.00 | Form B |\n| 3 | Áo khoác gió nữ Ladies' Windbreaker Jacket, shell 100% nylon | 6202.40.00 | 1,200 | CHIẾC/PCS | 14.75 | 17,700.00 | Form A |\n| Tổng cộng TOTAL |  |  | 8,500 |  |  | 74,080.00 |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Áo sơ mi nam dài tay, 100% cotton Men's Long-sleeve Shirt",
+   "quantity": "4,800",
+   "uom": "CÁI/PCS",
+   "unit_price": "6.85",
+   "line_total": "32,880.00",
+   "hs_code": "6205.20.00"
+  },
+  "what_is_different": "A trailing non-numeric column after the money column: the C/O form reference sits to the right of Thành tiền, so 'the last column is the amount' is wrong here, and the totals row leaves that trailing cell blank. Vietnamese vocabulary is the only label for three fields (STT, ĐVT, Thành tiền), the unit cell fuses the Vietnamese counter with the English one (CÁI/PCS, CHIẾC/PCS), and heavy tonal diacritics ride through the OCR."
+ },
+ {
+  "id": "asia_east_my_9digit_tariff",
+  "title": "Malaysian Commercial Invoice (9-digit HS codes)",
+  "note": "Malaysia · medical glove manufacturer, FOB Port Klang",
+  "page": "| Bil. | Keterangan Barang / Description of Goods | Kod Tarif / Tariff Code | Kuantiti / Quantity | Unit | Harga Seunit / Unit Price (USD) | Jumlah / Amount (USD) |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | Sarung Tangan Nitril Pemeriksaan, Tanpa Serbuk, Saiz M / Nitrile Examination Gloves, Powder-Free, Size M, 100 pcs per box | 4015.12 000 | 3,200 | BOX | 4.85 | 15,520.00 |\n| 2 | Sarung Tangan Latex Pemeriksaan, Tanpa Serbuk, Saiz L / Latex Examination Gloves, Powder-Free, Size L, 100 pcs per box | 4015.12 000 | 1,800 | BOX | 5.30 | 9,540.00 |\n| 3 | Kotak Luar Bercetak / Printed Outer Carton, 10 boxes per carton | 4819.10 000 | 500 | CTN | 1.45 | 725.00 |\n| JUMLAH / TOTAL FOB PORT KLANG |  |  | 5,500 |  |  | 25,785.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Sarung Tangan Nitril Pemeriksaan, Tanpa Serbuk, Saiz M / Nitrile Examination Gloves, Powder-Free, Size M, 100 pcs per box",
+   "quantity": "3,200",
+   "uom": "BOX",
+   "unit_price": "4.85",
+   "line_total": "15,520.00",
+   "hs_code": "4015.12 000"
+  },
+  "what_is_different": "The 9-digit Malaysian tariff code prints with an internal SPACE before the 3-digit national suffix (4015.12 000), so a code-shaped token can be split into what looks like two values, and the same code legitimately repeats on two different rows. Headers are slash-joined Malay/English pairs and the long two-language descriptions carry their own slash — the description column contains the same separator used to join the headers."
+ },
+ {
+  "id": "asia_east_sg_tax_invoice_gst",
+  "title": "Singapore Tax Invoice (GST breakdown)",
+  "note": "Singapore · industrial equipment supplier, local supply in SGD",
+  "page": "| S/N | Description | Qty | UOM | Unit Price (S$) | Amount (S$) | Tax Code |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | Rotary Screw Air Compressor 7.5kW, 8 bar | 6 | UNIT | 2,450.00 | 14,700.00 | SR |\n| 2 | Compressed Air Filter Element, Grade X | 40 | PCS | 86.50 | 3,460.00 | SR |\n| 3 | On-site Installation & Commissioning | 1 | LOT | 1,840.00 | 1,840.00 | SR |\n| Total (Excluding GST) |  |  |  |  | 20,000.00 |  |\n| GST @ 9% |  |  |  |  | 1,800.00 |  |\n| Total Payable (SGD) |  |  |  |  | 21,800.00 |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Rotary Screw Air Compressor 7.5kW, 8 bar",
+   "quantity": "6",
+   "uom": "UNIT",
+   "unit_price": "2,450.00",
+   "line_total": "14,700.00",
+   "hs_code": ""
+  },
+  "what_is_different": "Three stacked totals rows where only the first equals the sum of the lines — the printed-totals gate must match 20,000.00 and not the 21,800.00 sitting two rows lower in the same column. A GST tax-code column (SR) of pure letters trails the money, one line is a service with Qty 1 / UOM LOT and no HS code, and the suspiciously round 20,000.00 net makes an off-by-one row selection look plausible."
+ },
+ {
+  "id": "asia_east_ph_sales_invoice_vat_split",
+  "title": "Philippine Sales Invoice (VATable/non-VAT breakdown)",
+  "note": "Philippines · pharmaceutical distributor, BIR sales invoice in PHP",
+  "page": "| QTY | UNIT | ARTICLE / DESCRIPTION | UNIT PRICE | AMOUNT | VAT STATUS |\n| --- | --- | --- | --- | --- | --- |\n| 200 | BOX | Amoxicillin 500mg Capsule, 100's per box | 685.00 | 137,000.00 | VATable |\n| 120 | BOX | Ascorbic Acid 500mg Tablet, 100's per box | 425.00 | 51,000.00 | VATable |\n| 80 | BOX | Metformin HCl 500mg Tablet, 100's per box | 540.00 | 43,200.00 | VAT-Exempt |\n|  |  | VATable Sales |  | 188,000.00 |  |\n|  |  | VAT-Exempt Sales |  | 43,200.00 |  |\n|  |  | Total Sales (Net of VAT) |  | 231,200.00 |  |\n|  |  | Add: VAT (12%) |  | 22,560.00 |  |\n|  |  | TOTAL AMOUNT DUE |  | 253,760.00 |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Amoxicillin 500mg Capsule, 100's per box",
+   "quantity": "200",
+   "uom": "BOX",
+   "unit_price": "685.00",
+   "line_total": "137,000.00",
+   "hs_code": ""
+  },
+  "what_is_different": "Quantity and unit come FIRST, before the description — the opposite of every other layout — so a positional assumption that column 1 is a line number and column 2 is the description reads '200' as the item name. There is no serial-number column at all, and the BIR footer is a five-row cascade in which the sum of the goods lines (231,200.00) is the THIRD figure printed, sandwiched between two partial subtotals above it and a VAT-inclusive amount due below it."
+ },
+ {
+  "id": "asia_east_hk_dual_currency_no_vat",
+  "title": "Hong Kong Commercial Invoice (no VAT, HKD/USD)",
+  "note": "Hong Kong · watch and accessory trader, FOB Hong Kong",
+  "page": "| Item | Description of Goods | Country of Origin | Qty | Unit | Unit Price (USD) | Amount (USD) | Amount (HKD) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Quartz Analogue Wrist Watch, Stainless Steel Case, 38mm | CHINA | 2,000 | PCS | 8.60 | 17,200.00 | 134,160.00 |\n| 2 | Watch Strap, Genuine Cowhide Leather, 20mm | CHINA | 5,000 | PCS | 1.35 | 6,750.00 | 52,650.00 |\n| 3 | Gift Box, Printed Paperboard with Foam Insert | HONG KONG | 2,000 | PCS | 0.48 | 960.00 | 7,488.00 |\n| TOTAL FOB HONG KONG |  |  | 9,000 | PCS |  | 24,910.00 | 194,298.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Quartz Analogue Wrist Watch, Stainless Steel Case, 38mm",
+   "quantity": "2,000",
+   "uom": "PCS",
+   "unit_price": "8.60",
+   "line_total": "17,200.00",
+   "hs_code": ""
+  },
+  "what_is_different": "Two money columns that are BOTH internally consistent totals of the same goods, converted at the 7.80 peg — qty × unit price closes against the USD column only, yet the HKD column is the rightmost and also sums correctly to its own printed total, so 'the last money column wins' silently inflates the customs value 7.8×. No HS codes anywhere (Hong Kong is a free port and traders routinely omit them), no tax rows of any kind, and a per-row country of origin where one line originates in HK and two in China."
+ },
+ {
+  "id": "asia_east_id_faktur_packing_columns",
+  "title": "Indonesian Faktur Komersial (HS codes, integrated packing list columns)",
+  "note": "Indonesia · green coffee exporter, FOB Tanjung Priok",
+  "page": "| No. | Uraian Barang / Description of Goods | Kode HS | Jumlah Koli | Jenis Kemasan | Kuantitas | Satuan | Berat Bersih (KGM) | Berat Kotor (KGM) | Harga Satuan (USD) | Jumlah (USD) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Kopi Arabika Gayo, Green Bean, Grade 1 | 0901.11.10 | 300 | KARUNG/BAG | 18.000 | KGM | 18.000,00 | 18.240,00 | 5,85 | 105.300,00 |\n| 2 | Kopi Robusta Lampung, Green Bean, Grade 4 | 0901.11.90 | 200 | KARUNG/BAG | 12.000 | KGM | 12.000,00 | 12.160,00 | 2,95 | 35.400,00 |\n| 3 | Kopi Luwak Arabika Sangrai, kemasan 250 gram | 0901.21.10 | 40 | KARTON/CTN | 960 | PAK | 240,00 | 288,00 | 12,50 | 12.000,00 |\n| TOTAL |  |  | 540 |  |  |  | 30.240,00 | 30.688,00 |  | 152.700,00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Kopi Arabika Gayo, Green Bean, Grade 1",
+   "quantity": "18.000",
+   "uom": "KGM",
+   "unit_price": "5,85",
+   "line_total": "105.300,00",
+   "hs_code": "0901.11.10"
+  },
+  "what_is_different": "Full Indonesian numeric convention on an export invoice denominated in USD: dot for thousands, comma for decimals, so quantity 18.000 means eighteen thousand and price 5,85 means five point eight five — read with a point-decimal locale the line becomes 18 × 585 and the arithmetic gate agrees with nothing. Eleven columns because the packing list is fused into the invoice (package count, package type, quantity, unit, net weight, gross weight all sitting before the price), and row 3 switches both package type and unit mid-table while the weight columns stay KGM."
+ },
+ {
+  "id": "nordic_baltic_no_faktura_mva",
+  "title": "Norwegian Faktura (MVA breakdown, KID, NOK)",
+  "note": "Norway · seafood exporter, salmon and whitefish",
+  "page": "| Varenr. | Varebeskrivelse | Tolltariffnr. | Antall | Enhet | Enhetspris NOK | MVA % | Beløp NOK |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 10045 | FERSK LAKS SLØYD SUPERIOR 4-5 KG | 03021400 | 2 500 | KG | 89,50 | 15 | 223 750,00 |\n| 10220 | RØYKT LAKSEFILET SKIVET 1 KG | 03054100 | 800 | KG | 152,00 | 15 | 121 600,00 |\n| 10410 | FRYST TORSKEFILET 400 G | 03044400 | 1 200 | KG | 74,00 | 15 | 88 800,00 |\n| Sum eks. mva |  |  |  |  |  |  | 434 150,00 |\n| Herav MVA 15 % |  |  |  |  |  |  | 65 122,50 |\n| Sum å betale |  |  |  |  |  |  | 499 272,50 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "FERSK LAKS SLØYD SUPERIOR 4-5 KG",
+   "quantity": "2 500",
+   "uom": "KG",
+   "unit_price": "89,50",
+   "line_total": "223 750,00",
+   "hs_code": "03021400"
+  },
+  "what_is_different": "Norwegian is close enough to Swedish and Danish to be mis-mapped by a lookalike: \"Antall\" (not Antal), \"Enhetspris\", \"Beløp\" with the slashed ø, and \"Tolltariffnr.\" as the tariff column. Unlike every other case in this set the VAT rate is the 15 % Norwegian food rate rather than a standard rate, so a parser that hard-codes 20–25 % to sanity-check a VAT row gets it wrong. Numeric goods (fresh fish) are priced per KG with a space-thousands quantity (2 500), so the quantity column and the money column look alike — 2 500 x 89,50 = 223 750,00 is the only thing that tells them apart. HS codes lead with a zero (03021400), which a numeric coercion would silently eat."
+ },
+ {
+  "id": "nordic_baltic_dk_faktura_cvr",
+  "title": "Danish Faktura (CVR, Betalingsbetingelser)",
+  "note": "Denmark · pump and pump-spares manufacturer",
+  "page": "| Varenr. | Varebeskrivelse | Toldtarifnr. | Antal | Enhed | Stk. pris DKK | Beløb DKK |\n| --- | --- | --- | --- | --- | --- | --- |\n| UPS2540-180 | CIRKULATIONSPUMPE UPS 25-40 180 MM | 84137030 | 45 | STK | 1.240,00 | 55.800,00 |\n| IMP-DN50-SS | PUMPEHJUL RUSTFRIT STÅL DN50 | 84139100 | 120 | STK | 385,50 | 46.260,00 |\n| SEAL-BQQE-12 | AKSELTÆTNING BQQE 12 MM | 84842000 | 300 | STK | 92,75 | 27.825,00 |\n| I alt ekskl. moms |  |  |  |  |  | 129.885,00 |\n| Moms 25 % |  |  |  |  |  | 32.471,25 |\n| Total DKK |  |  |  |  |  | 162.356,25 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "CIRKULATIONSPUMPE UPS 25-40 180 MM",
+   "quantity": "45",
+   "uom": "STK",
+   "unit_price": "1.240,00",
+   "line_total": "55.800,00",
+   "hs_code": "84137030"
+  },
+  "what_is_different": "Danish uses DOT thousands with a decimal comma (1.240,00 / 55.800,00) — the exact string a naive US-locale read turns into 1.24 and 55.8, which is the whole reason the locale detector exists. \"Stk. pris\" as the unit-price header contains a period mid-header, \"Enhed\" is the unit column and \"STK\" the unit value, and the net-total label is the multi-word \"I alt ekskl. moms\" rather than a single Totals token. Part numbers here deliberately contain digits and hyphens (UPS2540-180) so the model column is real, but 'UPS 25-40' also appears inside the description — the model must not be chopped off the goods text."
+ },
+ {
+  "id": "nordic_baltic_fi_lasku_alv",
+  "title": "Finnish Lasku (alv columns, viitenumero)",
+  "note": "Finland · plywood and sawn-timber mill",
+  "page": "| Tuotenro | Nimike | Tullinimike | Määrä | Yks. | À-hinta € | Alv % | Veroton yhteensä € |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| VAN-1825 | KOIVUVANERI 18 MM 1250X2500 | 44123300 | 640 | LEVY | 47,25 | 25,5 | 30 240,00 |\n| SAH-50150 | HAVUSAHATAVARA 50X150 MM SIVULAUTA | 44071110 | 85 | M3 | 218,00 | 25,5 | 18 530,00 |\n| LIP-GL30 | LIIMAPUUPALKKI GL30C 90X225 | 44188100 | 120 | JM | 36,50 | 25,5 | 4 380,00 |\n| Veroton yhteensä |  |  |  |  |  |  | 53 150,00 |\n| Alv 25,5 % |  |  |  |  |  |  | 13 553,25 |\n| Maksettava yhteensä |  |  |  |  |  |  | 66 703,25 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "KOIVUVANERI 18 MM 1250X2500",
+   "quantity": "640",
+   "uom": "LEVY",
+   "unit_price": "47,25",
+   "line_total": "30 240,00",
+   "hs_code": "44123300"
+  },
+  "what_is_different": "Finnish shares no roots with the Germanic vocabulary: \"Nimike\" is the description, \"Määrä\" the quantity, \"Yks.\" the unit, \"Tullinimike\" the tariff code, and the line total is the four-word \"Veroton yhteensä\" (VAT-exclusive total) whose head word repeats verbatim as the net-totals row label — so the column header and the totals label collide. The VAT rate is the post-2024 Finnish 25,5 %, i.e. a FRACTIONAL percentage written with a decimal comma sitting in its own column right next to the money, which is exactly the shape a money-column lookahead grabs by mistake. Units are Finnish trade words (LEVY = sheet, M3, JM = running metre), none of them in an English UOM list."
+ },
+ {
+  "id": "nordic_baltic_pl_faktura_pkwiu",
+  "title": "Polish Faktura Handlowa (stawka VAT, PKWiU code column)",
+  "note": "Poland · office furniture manufacturer",
+  "page": "| Lp. | Nazwa towaru | PKWiU | Kod CN | J.m. | Ilość | Cena netto PLN | Wartość netto PLN | Stawka VAT | Kwota VAT PLN | Wartość brutto PLN |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | KRZESŁO BIUROWE OBROTOWE ERGO | 31.01.12.0 | 94013000 | szt | 250 | 189,00 | 47 250,00 | 23% | 10 867,50 | 58 117,50 |\n| 2 | BIURKO PRACOWNICZE 160X80 DĄB | 31.01.12.0 | 94033010 | szt | 120 | 415,50 | 49 860,00 | 23% | 11 467,80 | 61 327,80 |\n| 3 | SZAFA AKTOWA METALOWA 4 PÓŁKI | 25.99.11.0 | 94032090 | szt | 60 | 622,00 | 37 320,00 | 23% | 8 583,60 | 45 903,60 |\n| Razem |  |  |  |  |  |  | 134 430,00 |  | 30 918,90 | 165 348,90 |\n| W tym 23% |  |  |  |  |  |  | 134 430,00 |  | 30 918,90 | 165 348,90 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "KRZESŁO BIUROWE OBROTOWE ERGO",
+   "quantity": "250",
+   "uom": "szt",
+   "unit_price": "189,00",
+   "line_total": "47 250,00",
+   "hs_code": "94013000"
+  },
+  "what_is_different": "TWO code columns side by side and only one of them is the tariff code: PKWiU (31.01.12.0) is the Polish statistical classification and is dotted like a version number, while \"Kod CN\" (94013000) is the customs code — picking PKWiU as the HS code is a silent, plausible, wrong answer. Three money columns compete for the line-total slot (Cena netto, Wartość netto, Wartość brutto) and only the NET one is the customs value, even though brutto is larger and the totals row prints both. The rate cell is \"23%\" with the sign attached, \"J.m.\" is the unit header abbreviated with periods, \"Ilość\" is quantity, and two consecutive totals rows (\"Razem\" and \"W tym 23%\") print the identical figures."
+ },
+ {
+  "id": "nordic_baltic_cz_faktura_dph",
+  "title": "Czech Faktura (VAT rates, Czech/English descriptions)",
+  "note": "Czechia · Bohemian glassware exporter",
+  "page": "| Poř. č. | Označení dodávky / Description | Kód KN / HS code | Množství / Qty | MJ / Unit | Cena za MJ / Unit price | Sazba DPH | Celkem bez DPH / Amount |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | SKLENIČKA NA VÍNO 350 ML / WINE GLASS 350 ML | 70133700 | 4 800 | ks | 68,50 | 21 % | 328 800,00 |\n| 2 | KARAFA KŘIŠŤÁLOVÁ 1,2 L / CRYSTAL DECANTER | 70139100 | 600 | ks | 412,00 | 21 % | 247 200,00 |\n| 3 | VÁZA BROUŠENÁ 25 CM / CUT GLASS VASE 25 CM | 70139900 | 350 | ks | 536,00 | 21 % | 187 600,00 |\n| Celkem bez DPH / Total excl. VAT |  |  |  |  |  |  | 763 600,00 |\n| DPH 21 % |  |  |  |  |  |  | 160 356,00 |\n| Celkem k úhradě CZK / Total |  |  |  |  |  |  | 923 956,00 |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "SKLENIČKA NA VÍNO 350 ML / WINE GLASS 350 ML",
+   "quantity": "4 800",
+   "uom": "ks",
+   "unit_price": "68,50",
+   "line_total": "328 800,00",
+   "hs_code": "70133700"
+  },
+  "what_is_different": "Slash-separated BILINGUAL headers (Czech / English in one cell) — the first half is the unknown token and the English half is buried after a slash, so a header matcher that takes the whole cell or only its leading word fails. The bilingual convention repeats INSIDE the description cells, so every goods text carries a slash and an English restatement that must not be split into a second row or mined for a model number. Row 2's description contains a decimal comma (\"KARAFA KŘIŠŤÁLOVÁ 1,2 L\") in a comma-decimal locale, right next to the numeric columns. The rate is printed \"21 %\" with a space, and the net-total row label repeats the line-total column header word for word."
+ },
+ {
+  "id": "nordic_baltic_hu_szamla_afa",
+  "title": "Hungarian Szamla (AFA, item weights)",
+  "note": "Hungary · food exporter, paprika, salami and honey",
+  "page": "| Tétel | Megnevezés | VTSZ | Mennyiség | Me.e. | Nettó egységár HUF | Nettó érték HUF | Tömeg kg | ÁFA % | ÁFA összeg HUF |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | FŰSZERPAPRIKA ŐRLEMÉNY CSÍPŐS 500 G | 09042200 | 3 000 | db | 1 250 | 3 750 000 | 1 530,00 | 27 | 1 012 500 |\n| 2 | TÉLI SZALÁMI SZELETELT 100 G | 16010099 | 5 000 | db | 890 | 4 450 000 | 560,00 | 27 | 1 201 500 |\n| 3 | AKÁCMÉZ ÜVEGES 950 G | 04090000 | 1 800 | db | 2 340 | 4 212 000 | 1 890,00 | 27 | 1 137 240 |\n| Összesen |  |  |  |  |  | 12 412 000 | 3 980,00 |  | 3 351 240 |\n| Bruttó végösszeg HUF |  |  |  |  |  | 15 763 240 |  |  |  |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "FŰSZERPAPRIKA ŐRLEMÉNY CSÍPŐS 500 G",
+   "quantity": "3 000",
+   "uom": "db",
+   "unit_price": "1 250",
+   "line_total": "3 750 000",
+   "hs_code": "09042200"
+  },
+  "what_is_different": "HUF prints money with NO decimal places at all, so the money columns are bare space-grouped integers (1 250, 3 750 000) that are structurally indistinguishable from the space-grouped quantity (3 000) — the arithmetic is the only signal. The ONLY cells on the page carrying a decimal comma are the per-row net weights (1 530,00 kg), which inverts the usual assumption that the comma cells are the money. \"VTSZ\" is the Hungarian tariff-number header (nothing like HS/CN/KN), \"Me.e.\" is the unit and \"db\" the unit value, and the totals row carries a summed WEIGHT alongside the summed money so a totals-row detector keyed on a single numeric cell sees two. The final row is a VAT-inclusive gross printed under the net-value column."
+ },
+ {
+  "id": "nordic_baltic_hr_racun_pdv",
+  "title": "Croatian Racun (PDV breakdown, country of origin)",
+  "note": "Croatia · olive oil, wine and canned fish exporter",
+  "page": "| R. br. | Naziv robe | Tarifna oznaka | Zemlja podrijetla | Količina | JM | Jedinična cijena EUR | Iznos EUR | PDV % | Iznos PDV-a EUR |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | MASLINOVO ULJE EKSTRA DJEVIČANSKO 0,75 L | 15091000 | HR | 2400 | kom | 8,60 | 20.640,00 | 25 | 5.160,00 |\n| 2 | VINO GRAŠEVINA KVALITETNO 0,75 L | 22042184 | HR | 3600 | kom | 4,25 | 15.300,00 | 25 | 3.825,00 |\n| 3 | TUNA U MASLINOVOM ULJU 160 G | 16041431 | HR | 9000 | kom | 1,95 | 17.550,00 | 25 | 4.387,50 |\n| Ukupno bez PDV-a |  |  |  |  |  |  | 53.490,00 |  | 13.372,50 |\n| Za platiti EUR |  |  |  |  |  |  | 66.862,50 |  |  |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "MASLINOVO ULJE EKSTRA DJEVIČANSKO 0,75 L",
+   "quantity": "2400",
+   "uom": "kom",
+   "unit_price": "8,60",
+   "line_total": "20.640,00",
+   "hs_code": "15091000"
+  },
+  "what_is_different": "A per-row country of origin printed under the Croatian \"Zemlja podrijetla\" — a two-letter code column wedged between the tariff code and the quantity, exactly where a positional fallback expects a number. \"Tarifna oznaka\" is the tariff header, \"JM\" (jedinica mjere) the unit and \"kom\" the unit value, and the line total is \"Iznos\" — whose full string is also the prefix of \"Iznos PDV-a\" three columns later, so a first-match-wins money header lands on the wrong one if the columns are scanned right to left. Money uses dot thousands with a decimal comma while the quantities are plain integers, and every description ends in a decimal-comma volume (0,75 L) that must not be read as a numeric cell."
+ },
+ {
+  "id": "nordic_baltic_si_racun_ddv",
+  "title": "Slovenian Racun (DDV rates)",
+  "note": "Slovenia · pharmaceutical goods with packaging",
+  "page": "| Zap. št. | Naziv blaga | Tarifna oznaka | Količina | EM | Cena/EM EUR | Vrednost EUR | DDV % | Znesek DDV EUR |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | TABLETE PERINDOPRIL 5 MG, 30 TABLET | 30049000 | 4.000 | kos | 3,85 | 15.400,00 | 9,5 | 1.463,00 |\n| 2 | SIRUP ZA OTROKE 100 ML | 30049000 | 2.500 | kos | 2,60 | 6.500,00 | 9,5 | 617,50 |\n| 3 | KARTONSKA EMBALAŽA ZA ZDRAVILA | 48191000 | 12.000 | kos | 0,45 | 5.400,00 | 22 | 1.188,00 |\n| Skupaj brez DDV |  |  |  |  |  | 27.300,00 |  | 3.268,50 |\n| DDV 9,5 % (osnova 21.900,00) |  |  |  |  |  |  |  | 2.080,50 |\n| DDV 22 % (osnova 5.400,00) |  |  |  |  |  |  |  | 1.188,00 |\n| Za plačilo EUR |  |  |  |  |  | 30.568,50 |  |  |\n",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "TABLETE PERINDOPRIL 5 MG, 30 TABLET",
+   "quantity": "4.000",
+   "uom": "kos",
+   "unit_price": "3,85",
+   "line_total": "15.400,00",
+   "hs_code": "30049000"
+  },
+  "what_is_different": "MIXED VAT rates within one table — 9,5 % on the medicines and 22 % on the carton packaging — so the invoice prints a per-rate breakdown block of THREE extra totals rows, two of which carry a VAT-base figure (osnova 21.900,00) inside the row LABEL rather than in a column. A totals gate that treats every trailing money figure as a candidate invoice total sees five different numbers and only 27.300,00 is the sum of the goods lines. The rate cell itself is a decimal-comma number (9,5), quantities carry dot thousands (12.000 kos), \"Cena/EM\" packs a slash into the unit-price header, \"EM\" is the unit and \"Zap. št.\" the line counter. Rows 1 and 2 repeat the same tariff code, and row 1's description contains a comma-separated pack count that is not money."
+ },
+ {
+  "id": "east_med_ru_invoice_tnved",
+  "title": "Russian Schet-faktura (Cyrillic/English, HS codes, weight)",
+  "note": "Russia / birch plywood and glulam timber exporter",
+  "page": "| № п/п | Наименование товара / Description of goods | Код ТН ВЭД / HS code | Кол-во / Qty | Ед. изм. / Unit | Вес нетто, кг / Net wt | Вес брутто, кг / Gross wt | Цена за ед., USD / Unit price | Сумма, USD / Amount |\n| :-- | :-- | :-- | --: | :-- | --: | --: | --: | --: |\n| 1 | Фанера берёзовая ФК, шлифованная, 1525х1525х12 мм / Birch plywood FK, sanded | 4412 33 100 0 | 320 | лист / sheet | 5 440,00 | 5 600,00 | 21,50 | 6 880,00 |\n| 2 | Фанера берёзовая ФК, шлифованная, 1525х1525х18 мм / Birch plywood FK, sanded | 4412 33 100 0 | 180 | лист / sheet | 4 590,00 | 4 710,00 | 31,80 | 5 724,00 |\n| 3 | Брус клеёный сосновый 90х90х3000 мм / Glued laminated pine beam | 4418 81 000 0 | 150 | шт / pcs | 3 645,00 | 3 720,00 | 27,40 | 4 110,00 |\n| | ИТОГО / TOTAL | | 650 | | 13 675,00 | 14 030,00 | | 16 714,00 |\n| | НДС 0% (экспорт) / VAT 0% (export) | | | | | | | 0,00 |\n| | ВСЕГО К ОПЛАТЕ / TOTAL DUE, USD | | | | | | | 16 714,00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Фанера берёзовая ФК, шлифованная, 1525х1525х12 мм / Birch plywood FK, sanded",
+   "quantity": "320",
+   "uom": "лист / sheet",
+   "unit_price": "21,50",
+   "line_total": "6 880,00",
+   "hs_code": "4412 33 100 0"
+  },
+  "what_is_different": "ТН ВЭД codes written as SPACE-separated digit groups (\"4412 33 100 0\") that look like a number and can be mistaken for a quantity; abbreviated Cyrillic headers full of periods (\"№ п/п\", \"Ед. изм.\", \"Кол-во\") that fold to punctuation-only fragments unless the Latin half is kept; bilingual unit cells (\"лист / sheet\"); Cyrillic х used as the dimension separator inside the description; two identical HS codes on different rows."
+ },
+ {
+  "id": "east_med_sa_tax_invoice_vat15",
+  "title": "Saudi Commercial Invoice (VAT 15%, HS codes, origin, weight)",
+  "note": "Saudi Arabia / petrochemical polymer resin producer",
+  "page": "| # | الوصف / Description | رمز النظام المنسق / HS Code | بلد المنشأ / Country of Origin | الكمية / Qty | الوحدة / UOM | الوزن الصافي كجم / Net Wt (kg) | سعر الوحدة / Unit Price (SAR) | الإجمالي قبل الضريبة / Amount excl. VAT (SAR) | ضريبة القيمة المضافة 15% / VAT 15% (SAR) | الإجمالي شامل الضريبة / Amount incl. VAT (SAR) |\n| :-- | :-- | :-- | :-- | --: | :-- | --: | --: | --: | --: | --: |\n| 1 | بولي إيثيلين عالي الكثافة HDPE حبيبات درجة أفلام / HDPE granules, film grade | 3901.20.00 | السعودية / SA | 800 | كيس ٢٥ كجم / BAG | 20,000.00 | 118.75 | 95,000.00 | 14,250.00 | 109,250.00 |\n| 2 | بولي بروبيلين PP حبيبات درجة حقن / PP granules, injection grade | 3902.10.00 | السعودية / SA | 600 | كيس ٢٥ كجم / BAG | 15,000.00 | 131.25 | 78,750.00 | 11,812.50 | 90,562.50 |\n| 3 | بولي إيثيلين خطي منخفض الكثافة LLDPE حبيبات / LLDPE granules | 3901.40.00 | السعودية / SA | 400 | كيس ٢٥ كجم / BAG | 10,000.00 | 125.00 | 50,000.00 | 7,500.00 | 57,500.00 |\n| | الإجمالي الخاضع للضريبة / Total Taxable Amount | | | 1,800 | | 45,000.00 | | 223,750.00 | | |\n| | إجمالي ضريبة القيمة المضافة ١٥٪ / Total VAT 15% | | | | | | | | 33,562.50 | |\n| | الإجمالي المستحق / Total Amount Due (SAR) | | | | | | | | | 257,312.50 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "بولي إيثيلين عالي الكثافة HDPE حبيبات درجة أفلام / HDPE granules, film grade",
+   "quantity": "800",
+   "uom": "كيس ٢٥ كجم / BAG",
+   "unit_price": "118.75",
+   "line_total": "95,000.00",
+   "hs_code": "3901.20.00"
+  },
+  "what_is_different": "Eleven columns with THREE money columns per row (excl. VAT, VAT, incl. VAT) — the customs value is the middle-left one, and the incl.-VAT column also happens to be a clean multiple of the quantity, so a greedy \"last money column\" rule picks the wrong total; a unit cell that embeds Eastern-Arabic numerals (\"كيس ٢٥ كجم\") which can be misread as a quantity; a stair-stepped totals block where each of the three totals lands in a DIFFERENT column."
+ },
+ {
+  "id": "east_med_ae_tax_invoice_vat5",
+  "title": "UAE Tax Invoice (TRN, VAT 5%, HS codes, FOB)",
+  "note": "UAE / Jebel Ali automotive spare-parts re-exporter",
+  "page": "| S/N | الوصف / Description of Goods | HS Code | Country of Origin | Qty | UOM | Unit Price (AED) | Amount (AED) | VAT 5% (AED) | Total (AED) |\n| :-- | :-- | :-- | :-- | --: | :-- | --: | --: | --: | --: |\n| 1 | Brake Pad Set, Front - Toyota Land Cruiser 4.5L / طقم تيل فرامل أمامي | 8708.30.00 | Japan | 240 | SET | 165.00 | 39,600.00 | 1,980.00 | 41,580.00 |\n| 2 | Oil Filter Element, spin-on type / فلتر زيت | 8421.23.00 | Japan | 1,500 | PCS | 12.50 | 18,750.00 | 937.50 | 19,687.50 |\n| 3 | Shock Absorber, Rear, gas-filled / مساعد خلفي | 8708.80.00 | Japan | 180 | PCS | 210.00 | 37,800.00 | 1,890.00 | 39,690.00 |\n| 4 | Air Filter Element, panel type / فلتر هواء | 8421.31.00 | Korea | 900 | PCS | 21.75 | 19,575.00 | 978.75 | 20,553.75 |\n| | Subtotal (Taxable Amount) - FOB Jebel Ali | | | 2,820 | | | 115,725.00 | | |\n| | VAT @ 5% | | | | | | | 5,786.25 | |\n| | Invoice Total (AED) | | | | | | | | 121,511.25 |",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Brake Pad Set, Front - Toyota Land Cruiser 4.5L / طقم تيل فرامل أمامي",
+   "quantity": "240",
+   "uom": "SET",
+   "unit_price": "165.00",
+   "line_total": "39,600.00",
+   "hs_code": "8708.30.00"
+  },
+  "what_is_different": "Predominantly-English UAE layout where only the description cells are bilingual (Arabic tail after the English), so RTL text appears mid-row rather than in the header; mixed origins across rows (Japan/Korea) on a re-export invoice; a description containing an engine size (\"4.5L\") and a comma-heavy part name that can be mistaken for numeric cells; four goods rows with two different UOMs (SET vs PCS) and a low 5% VAT whose per-line amounts (937.50, 978.75) carry half-cents-looking precision."
+ },
+ {
+  "id": "east_med_ma_facture_tva",
+  "title": "Moroccan Facture Commerciale (TVA, HS codes, dimensions)",
+  "note": "Morocco / zellige, marble and tadelakt building-finishes exporter",
+  "page": "| N° | Désignation des marchandises | Code SH | Dimensions | Quantité | Unité | P.U. HT (MAD) | Montant HT (MAD) | TVA 20% (MAD) | Montant TTC (MAD) |\n| :-- | :-- | :-- | :-- | --: | :-- | --: | --: | --: | --: |\n| 1 | Carreaux de zellige émaillé blanc, pose à la main | 6907.21.00 | 10 x 10 x 1,2 cm | 420 | m² | 145,00 | 60 900,00 | 12 180,00 | 73 080,00 |\n| 2 | Dalles de marbre poli beige « Zahra », bords adoucis | 6802.91.00 | 60 x 60 x 2 cm | 260 | m² | 210,00 | 54 600,00 | 10 920,00 | 65 520,00 |\n| 3 | Vasque en tadelakt, finition savon noir | 6810.99.00 | Ø 40 x 15 cm | 120 | pce | 320,00 | 38 400,00 | 7 680,00 | 46 080,00 |\n| | TOTAL HT | | | | | | 153 900,00 | | |\n| | TOTAL TVA 20% | | | | | | | 30 780,00 | |\n| | TOTAL TTC (MAD) | | | | | | | | 184 680,00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Carreaux de zellige émaillé blanc, pose à la main",
+   "quantity": "420",
+   "uom": "m²",
+   "unit_price": "145,00",
+   "line_total": "60 900,00",
+   "hs_code": "6907.21.00"
+  },
+  "what_is_different": "A dedicated Dimensions column whose cells are themselves numeric-with-separators (\"10 x 10 x 1,2 cm\", \"Ø 40 x 15 cm\") sitting BETWEEN the HS code and the quantity — three decoy numbers per row, one carrying a decimal comma, and a diameter symbol; French decimal comma with space thousands (60 900,00); m² superscript as the unit; French guillemets inside a description; and TVA/TTC totals each printed in their own column."
+ },
+ {
+  "id": "manual_services_np_handwritten_bill",
+  "title": "Scanned handwritten commercial invoice, local language only, no ruled columns",
+  "note": "Nepal / small trading house — handwritten bill book, Devanagari only",
+  "page": "चलानी बिल / बीजक\nमिति : २०८२।०४।१२\nश्री : रामकुमार किराना पसल, वीरगञ्ज, पर्सा\n\nचिनी बोरा ५ थान — दर १४५०/— जम्मा ७२५०/—\nभटमास तेल कार्टुन ३ — दर २१००/— ६३००/—\nचामल बोरा २५ के.जी. ८ थान दर ११५० = ९२००/—\n\nजम्मा रु. २२,७५०/—\n(अक्षरुपी : बाइस हजार सात सय पचास मात्र)\n\nबुझिलिने : ..................\nबुझाउने : ..................",
+  "expected_rows": 0,
+  "should_parse": false,
+  "expected_first_row": {
+   "description": "",
+   "quantity": "",
+   "uom": "",
+   "unit_price": "",
+   "line_total": "",
+   "hs_code": ""
+  },
+  "what_is_different": "REFUSAL: no pipe table at all — a handwritten bill-book page has no ruled column grid, so Mistral OCR returns free-flowing Devanagari prose lines with quantity, rate and amount run together on one line and separated only by dashes and the /— rupee mark. There is no header row, therefore no column map, therefore the parser must stand down instead of guessing which trailing number is the price and which the total (the amounts are internally consistent — 7250+6300+9200 = 22,750 — precisely so that a wrong parse cannot be excused as 'the source was garbage')."
+ },
+ {
+  "id": "manual_services_eg_preprinted_stamped",
+  "title": "Rubber-stamped pre-printed template, typewriter-filled boxes",
+  "note": "Egypt / office-supply wholesaler — pre-printed ruled invoice pad, values typed into boxes",
+  "page": "مؤسسة النيل للتوريدات العمومية — القاهرة\nفاتورة مبيعات رقم ٤٨٢٧ / INVOICE No. 4827\n\n| مسلسل Item | بيان الصنف Description of Goods | الكمية Qty | الوحدة Unit | سعر الوحدة Unit Price | القيمة Amount |\n| --- | --- | --- | --- | --- | --- |\n| ١ | ورق تصوير مقاس A4 وزن ٨٠ جم / COPY PAPER A4 80 GSM | 120 | رزمة REAM | 96.50 | 11,580.00 |\n| ٢ | مسحوق حبر لطابعة ليزر / LASER TONER CARTRIDGE | 15 | عبوة UNIT | 1,250.00 | 18,750.00 |\n| ٣ | دباسة مكتبية معدنية / METAL OFFICE STAPLER | 200 | قطعة PCS | 47.25 | 9,450.00 |\n| الإجمالي TOTAL EGP |  |  |  |  | 39,780.00 |\n\nختم الشركة / COMPANY STAMP\nتحريراً في ٢٠٢٦/٠٣/١٨ — التوقيع ..................",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "ورق تصوير مقاس A4 وزن ٨٠ جم / COPY PAPER A4 80 GSM",
+   "quantity": "120",
+   "uom": "رزمة REAM",
+   "unit_price": "96.50",
+   "line_total": "11,580.00",
+   "hs_code": ""
+  },
+  "what_is_different": "Right-to-left bilingual Arabic/English headers on a pre-printed grid, with the SERIAL column typed in Arabic-Indic digits (١ ٢ ٣) while every money and quantity box is typed in Western digits — the identity cell is unreadable as a number and the quantity cell is not. The unit vocabulary is Arabic-led ('رزمة REAM', 'عبوة UNIT', 'قطعة PCS'), and the rubber-stamp / signature block sits below the totals row as loose text, so the parser must not treat the stamp lines as trailing goods rows."
+ },
+ {
+  "id": "manual_services_us_fms_milstrip",
+  "title": "Foreign Military Sales invoice (case identifier, MILSTRIP line items)",
+  "note": "USA / DSCA Foreign Military Sales billing statement (DD Form 645 style)",
+  "page": "DEPARTMENT OF DEFENSE — FOREIGN MILITARY SALES BILLING STATEMENT\nCOUNTRY: THAILAND    CASE: TH-B-UGL    IMPLEMENTING AGENCY: USA    BILLING PERIOD: 01APR26-30JUN26\n\n| Case Designator | Line Item | Document Number (MILSTRIP) | NSN / Part Number | Nomenclature | Qty | U/I | Unit Price | Total Cost |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| TH-B-UGL | 001 | TH289541840012 | 1005-01-231-0973 | MAGAZINE, CARTRIDGE, 5.56MM, 30 RD | 500 | EA | 32.40 | 16,200.00 |\n| TH-B-UGL | 002 | TH289541840013 | 2540-01-108-8641 | KIT, VEHICLE SPARE PARTS, HMMWV | 12 | KT | 1,845.75 | 22,149.00 |\n| TH-B-UGL | 003 | TH289541840014 | 5855-01-534-2263 | MONOCULAR, NIGHT VISION, AN/PVS-14 | 40 | EA | 3,262.50 | 130,500.00 |\n| SUBTOTAL - MATERIEL |  |  |  |  |  |  |  | 168,849.00 |\n| ACCESSORIAL - TRANSPORTATION (T2) |  |  |  |  |  |  |  | 8,442.45 |\n| ACCESSORIAL - ADMINISTRATIVE SURCHARGE 3.2% |  |  |  |  |  |  |  | 5,403.17 |\n| TOTAL CASE VALUE (USD) |  |  |  |  |  |  |  | 182,694.62 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "MAGAZINE, CARTRIDGE, 5.56MM, 30 RD",
+   "quantity": "500",
+   "uom": "EA",
+   "unit_price": "32.40",
+   "line_total": "16,200.00",
+   "hs_code": ""
+  },
+  "what_is_different": "Military identity vocabulary instead of commercial: 'Nomenclature' is the description column, 'U/I' (unit of issue) is the UOM, and the row carries TWO long digit strings that are not a tariff code — a 14-character MILSTRIP document number and a 13-digit hyphenated NSN — either of which a naive HS-code heuristic would grab. Three accessorial rows (transportation, administrative surcharge) sit between the materiel subtotal and the grand total, so only the materiel subtotal (168,849.00) equals the sum of the goods rows; the printed grand total does not."
+ },
+ {
+  "id": "manual_services_us_sf1034_voucher",
+  "title": "US Government SF1034 (contract number, delivery order, line items)",
+  "note": "USA / federal public voucher for purchases and services other than personal",
+  "page": "STANDARD FORM 1034 — PUBLIC VOUCHER FOR PURCHASES AND SERVICES OTHER THAN PERSONAL\nCONTRACT NUMBER: GS-35F-0119Y    DELIVERY ORDER: 47QTCA23F0087    VOUCHER NO. 14\nPAYEE: MERIDIAN TECHNICAL SERVICES LLC, DUNS 07-448-9921, CAGE 4L8W2\n\n| NUMBER AND DATE OF ORDER | DATE OF DELIVERY OR SERVICE | ARTICLES OR SERVICES | QUANTITY | COST | PER | AMOUNT |\n| --- | --- | --- | --- | --- | --- | --- |\n| 47QTCA23F0087 / 15 JAN 2026 | 01-31 MAR 2026 | CLIN 0001 SENIOR SYSTEMS ENGINEER - DIRECT LABOR | 480 | 142.50 | HR | 68,400.00 |\n| 47QTCA23F0087 / 15 JAN 2026 | 01-31 MAR 2026 | CLIN 0002 PROGRAM MANAGER - DIRECT LABOR | 96 | 187.25 | HR | 17,976.00 |\n| 47QTCA23F0087 / 15 JAN 2026 | 01-31 MAR 2026 | CLIN 0003 OTHER DIRECT COSTS - TRAVEL (NO FEE) | 1 | 4,318.62 | LO | 4,318.62 |\n| TOTAL |  |  |  |  |  | 90,694.62 |\n\nI certify that the above bill is correct and just, and that payment therefor has not been received.",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "CLIN 0001 SENIOR SYSTEMS ENGINEER - DIRECT LABOR",
+   "quantity": "480",
+   "uom": "HR",
+   "unit_price": "142.50",
+   "line_total": "68,400.00",
+   "hs_code": ""
+  },
+  "what_is_different": "The unit price is SPLIT ACROSS TWO PRINTED COLUMNS — the SF1034 box is 'UNIT PRICE (COST) (PER)', so the money lands under COST and the unit of measure under PER, i.e. the UOM column sits to the RIGHT of the price instead of the usual left. The description column is called 'ARTICLES OR SERVICES' and the leading columns are two date/order columns whose cells contain the same repeated contract string on every row, which is exactly the pattern a duplicate-row detector mistakes for page furniture."
+ },
+ {
+  "id": "manual_services_us_aia_g703_progress",
+  "title": "Construction progress payment invoice (schedule of values, work completed, retention, previous billing)",
+  "note": "USA / AIA G703 continuation sheet to a G702 application for payment",
+  "page": "APPLICATION AND CERTIFICATE FOR PAYMENT — CONTINUATION SHEET (AIA G703)\nAPPLICATION NO: 7    PERIOD TO: 31 MAR 2026    PROJECT: NORTHGATE LOGISTICS HUB, PHASE II\n\n| ITEM NO. | DESCRIPTION OF WORK | SCHEDULED VALUE | FROM PREVIOUS APPLICATION (D+E) | THIS PERIOD | MATERIALS PRESENTLY STORED (NOT IN D OR E) | TOTAL COMPLETED AND STORED TO DATE (D+E+F) | % (G/C) | BALANCE TO FINISH (C-G) | RETAINAGE (5%) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 01 | Site work, clearing and bulk excavation | 185,000.00 | 148,000.00 | 22,200.00 | 0.00 | 170,200.00 | 92.0% | 14,800.00 | 8,510.00 |\n| 02 | Concrete foundations and slab on grade | 420,000.00 | 252,000.00 | 84,000.00 | 21,000.00 | 357,000.00 | 85.0% | 63,000.00 | 17,850.00 |\n| 03 | Structural steel supply and erection | 640,000.00 | 320,000.00 | 96,000.00 | 0.00 | 416,000.00 | 65.0% | 224,000.00 | 20,800.00 |\n| 04 | Roofing, membrane and waterproofing | 155,000.00 | 0.00 | 31,000.00 | 0.00 | 31,000.00 | 20.0% | 124,000.00 | 1,550.00 |\n| GRAND TOTALS |  | 1,400,000.00 | 720,000.00 | 233,200.00 | 21,000.00 | 974,200.00 | 69.6% | 425,800.00 | 48,710.00 |\n\nLESS PREVIOUS CERTIFICATES FOR PAYMENT: 684,000.00    CURRENT PAYMENT DUE: 241,490.00",
+  "expected_rows": 0,
+  "should_parse": false,
+  "expected_first_row": {
+   "description": "",
+   "quantity": "",
+   "uom": "",
+   "unit_price": "",
+   "line_total": "",
+   "hs_code": ""
+  },
+  "what_is_different": "REFUSAL despite a perfectly ruled ten-column table: there is NO quantity column and NO unit price anywhere on a lump-sum G703 — every column is a currency amount (scheduled value, previous billing, this period, stored materials, to date, balance, retainage) plus one percentage. The row identity verifies by a completely different equation (previous + this period + stored = to date, and scheduled - to date = balance, retainage = 5% of to date), so the qty x price gate can never fire. A parser that latches onto 'SCHEDULED VALUE' as a price and 'THIS PERIOD' as a total would emit four fabricated goods lines worth 1.4 million; standing down is the only correct answer."
+ },
+ {
+  "id": "manual_services_us_ae_phase_fee",
+  "title": "Architect/Engineering invoice (fee by phase, hourly rates, reimbursables)",
+  "note": "USA / architecture-engineering practice, hourly billing against phase task codes",
+  "page": "HALLORAN + REYES ARCHITECTS PC — INVOICE 2026-0417\nPROJECT: RIVERSIDE CIVIC CENTER RENOVATION    AGREEMENT: AIA B101-2017    PERIOD: 01-31 MAR 2026\n\nFEE SUMMARY BY PHASE (hourly, not-to-exceed)\nPhase 100 Schematic Design — NTE 48,000.00 — earned to date 40,800.00 — previously billed 26,037.50\nPhase 200 Structural Engineering — NTE 62,000.00 — earned to date 31,900.00 — previously billed 25,172.50\nPhase 300 Construction Documents — NTE 96,000.00 — earned to date 18,400.00 — previously billed 10,952.00\n\n| Task No. | Description of Services | Rate/Hour | Hours | Amount (USD) |\n| --- | --- | --- | --- | --- |\n| 100 | Schematic Design - Principal Architect | 245.00 | 18.5 | 4,532.50 |\n| 100 | Schematic Design - Project Architect | 165.00 | 62.0 | 10,230.00 |\n| 200 | Structural Engineering - Senior Engineer, P.E. | 195.00 | 34.5 | 6,727.50 |\n| 300 | Construction Documents - CAD Technician II | 98.00 | 76.0 | 7,448.00 |\n| SUBTOTAL - PROFESSIONAL SERVICES |  |  | 191.0 | 28,938.00 |\n| REIMBURSABLE EXPENSES (Schedule B, 1.10 multiplier) |  |  |  | 1,119.24 |\n| TOTAL AMOUNT DUE THIS INVOICE |  |  |  | 30,057.24 |",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Schematic Design - Principal Architect",
+   "quantity": "18.5",
+   "uom": "",
+   "unit_price": "245.00",
+   "line_total": "4,532.50",
+   "hs_code": ""
+  },
+  "what_is_different": "The quantity is FRACTIONAL HOURS ('Hours' 18.5, 62.0, 34.5) with no unit column at all, and the price column is called 'Rate/Hour' — a rate, not a unit price. Above the table sits a free-text phase-fee summary carrying NTE amounts and previously-billed figures that look like money rows but belong to no column, and below the rows a reimbursables line has an amount with no hours and no rate, so it must not be confirmed as a fifth line. The subtotal row prints a summed HOURS figure (191.0) in the quantity column as well as the money."
+ },
+ {
+  "id": "manual_services_uk_legal_time_entries",
+  "title": "Legal services invoice (time entries, rate, hours, disbursements)",
+  "note": "UK / City law firm bill of costs on a corporate transaction",
+  "page": "HARLEY WESTBROOK LLP — BILL No. 91442    MATTER: 24188.0003 SALE OF ORCHID FOODS LTD\nVAT REG. NO. GB 412 6633 09    PERIOD: 01 - 31 MARCH 2026\n\n| Date | Tkpr | Professional Services Rendered | Hours | Rate (GBP) | Amount (GBP) |\n| --- | --- | --- | --- | --- | --- |\n| 04/03/2026 | JF | Review and revise share purchase agreement; correspondence with counsel to Purchaser | 3.40 | 585.00 | 1,989.00 |\n| 05/03/2026 | AN | Draft disclosure schedules; research change-of-control consents under supply agreements | 6.20 | 395.00 | 2,449.00 |\n| 09/03/2026 | MS | Attend completion call; prepare and circulate signature pages | 2.80 | 310.00 | 868.00 |\n| 11/03/2026 | RO | Compile completion bible; attend to Companies House filings | 5.50 | 145.00 | 797.50 |\n| TOTAL PROFESSIONAL FEES |  |  | 17.90 |  | 6,103.50 |\n| Disbursement - Companies House filing fees |  |  |  |  | 250.00 |\n| Disbursement - international courier (DX) |  |  |  |  | 68.40 |\n| Disbursement - Land Registry and company searches |  |  |  |  | 112.00 |\n| TOTAL DISBURSEMENTS |  |  |  |  | 430.40 |\n| NET TOTAL |  |  |  |  | 6,533.90 |\n| VAT @ 20% |  |  |  |  | 1,306.78 |\n| TOTAL DUE |  |  |  |  | 7,840.68 |",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Review and revise share purchase agreement; correspondence with counsel to Purchaser",
+   "quantity": "3.40",
+   "uom": "",
+   "unit_price": "585.00",
+   "line_total": "1,989.00",
+   "hs_code": ""
+  },
+  "what_is_different": "Time-entry shape: the description cell is a long free-text narrative containing semicolons and its own commas, the quantity is decimal hours to two places, and there is no unit column. Disbursement rows share the same table but carry ONLY an amount — no hours, no rate — so they are structurally indistinguishable from goods rows except arithmetically, which is exactly the discrimination the confirmation gate exists for. Three different money totals are printed (fees 6,103.50, disbursements 430.40, VAT-inclusive 7,840.68) and only the FIRST one equals the sum of the confirmed rows."
+ },
+ {
+  "id": "manual_services_us_hospital_cpt",
+  "title": "Medical/Hospital invoice (CPT codes, units, charges)",
+  "note": "USA / hospital itemised statement, UB-04 revenue codes plus CPT/HCPCS",
+  "page": "ST. AUGUSTINE REGIONAL MEDICAL CENTER — ITEMIZED STATEMENT\nACCOUNT 4471-9920    MRN 0088341    ADMIT 12/03/2026    DISCHARGE 13/03/2026    NPI 1417398265\n\n| Svc Date | Rev Code | CPT/HCPCS | Mod | Description | Units | Unit Charge | Total Charges |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 12/03/2026 | 0450 | 99285 |  | EMERGENCY DEPT VISIT, HIGH COMPLEXITY | 1 | 2,145.00 | 2,145.00 |\n| 12/03/2026 | 0350 | 71260 | 26 | CT THORAX W/ CONTRAST - PROF COMPONENT | 1 | 486.00 | 486.00 |\n| 12/03/2026 | 0301 | 80053 |  | COMPREHENSIVE METABOLIC PANEL | 2 | 78.50 | 157.00 |\n| 13/03/2026 | 0636 | J1885 |  | INJ KETOROLAC TROMETHAMINE, 15 MG | 4 | 12.25 | 49.00 |\n| TOTAL CHARGES |  |  |  |  |  |  | 2,837.00 |\n| CONTRACTUAL ADJUSTMENT - PAYER |  |  |  |  |  |  | -1,412.60 |\n| PATIENT RESPONSIBILITY |  |  |  |  |  |  | 1,424.40 |",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "EMERGENCY DEPT VISIT, HIGH COMPLEXITY",
+   "quantity": "1",
+   "uom": "",
+   "unit_price": "2,145.00",
+   "line_total": "2,145.00",
+   "hs_code": ""
+  },
+  "what_is_different": "Two separate code columns that are NOT tariff codes (a four-digit UB-04 revenue code and a five-character CPT/HCPCS code, one of them alphanumeric 'J1885'), plus an almost-always-empty modifier column that OCR frequently collapses, shifting every cell one place left. The quantity column is called 'Units' and is 1 on most rows, so unit charge and total charge are IDENTICAL on those rows — a column map that swapped price and total would still verify arithmetically on rows 1 and 2 and only break on the qty-2 and qty-4 rows. A negative amount (the contractual adjustment) appears below the total."
+ },
+ {
+  "id": "manual_services_in_pharma_batch_expiry",
+  "title": "Pharmaceutical Commercial Invoice (batch numbers, expiry dates, storage conditions)",
+  "note": "India / formulations exporter, FOB Nhava Sheva, cold-chain line included",
+  "page": "SHRIVARDHAN PHARMACEUTICALS PVT. LTD. — COMMERCIAL INVOICE No. SVP/EXP/2026/0417\nBUYER: MEDILINE DISTRIBUTION FZE, JEBEL ALI    TERMS: FOB NHAVA SHEVA    IEC 0398021764\n\n| Sl. No. | Description of Goods | HS Code | Batch No. | Mfg. Date | Exp. Date | Storage Condition | Pack | Qty (Packs) | Unit Price (USD) | Amount (USD) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | AMOXICILLIN TRIHYDRATE CAPSULES IP 500 MG | 30041020 | AMX-24118 | 03/2026 | 02/2029 | Store below 25 C in a dry place | 10 x 10 Blister | 2,500 | 3.85 | 9,625.00 |\n| 2 | HUMAN INSULIN INJECTION 100 IU/ML 10 ML VIAL | 30043110 | INS-9042 | 01/2026 | 12/2027 | +2 C to +8 C COLD CHAIN - DO NOT FREEZE | 1 x 10 ML Vial | 1,200 | 6.40 | 7,680.00 |\n| 3 | PARACETAMOL ORAL SUSPENSION 125 MG/5 ML | 30049099 | PCM-24507 | 02/2026 | 01/2028 | Below 30 C, protect from light | 60 ML Bottle | 5,000 | 0.92 | 4,600.00 |\n| TOTAL FOB NHAVA SHEVA (USD) |  |  |  |  |  |  |  | 8,700 |  | 21,905.00 |\n\nAMOUNT IN WORDS: US DOLLARS TWENTY ONE THOUSAND NINE HUNDRED FIVE ONLY\nDRUG LICENCE NOS. 20B/21B-MH-4471 — GMP CERTIFIED — WHO-GMP",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "AMOXICILLIN TRIHYDRATE CAPSULES IP 500 MG",
+   "quantity": "2,500",
+   "uom": "10 x 10 Blister",
+   "unit_price": "3.85",
+   "line_total": "9,625.00",
+   "hs_code": "30041020"
+  },
+  "what_is_different": "Eleven columns, four of which are per-item regulatory metadata (batch, manufacture date, expiry date, storage condition) that no commercial invoice outside pharma carries. Two traps: the 'Pack' column is the real unit of measure but reads as free text with an embedded multiplication ('10 x 10 Blister', '1 x 10 ML Vial') that a qty-x-UOM merged-cell rule would try to arithmetise; and the description itself carries strengths ('500 MG', '100 IU/ML', '125 MG/5 ML') so nearly every cell in the row contains digits. The storage cell holds signed temperatures ('+2 C to +8 C'). The totals row sums the QUANTITY column (8,700 packs) as well as the money."
+ },
+ {
+  "id": "manual_services_it_food_lotto_tmc",
+  "title": "Food & Beverage invoice (lot numbers, production date, best-before)",
+  "note": "Italy / food wholesaler, decimal comma and thousands point, CN tariff column",
+  "page": "CASA DELLE PUGLIE S.R.L. — FATTURA DI VENDITA N. 1184/2026 DEL 18/03/2026\nP.IVA IT02998741006    DESTINAZIONE: LJUBLJANA (SI)    RESA: DAP\n\n| Cod. Art. | Descrizione della merce | Lotto | Data Prod. | T.M.C. | Voce Doganale | Q.tà | U.M. | Prezzo Unit. (EUR) | Importo (EUR) |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| OL-EXV-075 | Olio Extra Vergine di Oliva 0,75 L bottiglia vetro | L2026-0312 | 12/03/2026 | 11/03/2028 | 15092000 | 1.440 | BT | 6,85 | 9.864,00 |\n| PST-SPG-500 | Pasta di semola di grano duro Spaghetti n.5 500 g | L26-0455 | 22/02/2026 | 22/02/2029 | 19021910 | 3.600 | CF | 0,78 | 2.808,00 |\n| PMD-PEL-2500 | Pomodori pelati in succo di pomodoro latta 2.500 g | L26-0129 | 05/01/2026 | 05/01/2030 | 20021090 | 960 | PZ | 2,45 | 2.352,00 |\n| TOTALE IMPONIBILE |  |  |  |  |  | 6.000 |  |  | 15.024,00 |\n| IVA 4% |  |  |  |  |  |  |  |  | 600,96 |\n| TOTALE FATTURA (EUR) |  |  |  |  |  |  |  |  | 15.624,96 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Olio Extra Vergine di Oliva 0,75 L bottiglia vetro",
+   "quantity": "1.440",
+   "uom": "BT",
+   "unit_price": "6,85",
+   "line_total": "9.864,00",
+   "hs_code": "15092000"
+  },
+  "what_is_different": "Full Italian numeric convention — decimal COMMA and thousands POINT — where the quantity '1.440' means one thousand four hundred forty, not 1.44, and the descriptions deliberately contain their own comma-decimals and point-thousands ('0,75 L', '2.500 g') so a locale detector that samples the wrong column flips the whole page. Traceability columns are Italian food-law specific: 'Lotto', 'Data Prod.' and 'T.M.C.' (termine minimo di conservazione = best-before), and 'Voce Doganale' is the tariff column rather than 'HS Code'. The unit abbreviations are Italian trade codes (BT bottiglie, CF confezioni, PZ pezzi), and the printed net (TOTALE IMPONIBILE 15.024,00) is the customs value while the grand total carries 4% IVA."
+ },
+ {
+  "id": "logistics_digital_ff_house_bill",
+  "title": "Freight Forwarder House Bill invoice (ocean freight, BAF, CAF, handling broken down)",
+  "note": "International freight forwarding / NVOCC — house B/L charge invoice, USD",
+  "page": "| Charge Code | Description of Charges | Basis | Qty | Rate (USD) | Amount (USD) |\n| --- | --- | --- | --- | --- | --- |\n| OFR | OCEAN FREIGHT FCL SHANGHAI - COLOMBO 40'HC | PER CONTAINER | 2 | 1,850.00 | 3,700.00 |\n| BAF | BUNKER ADJUSTMENT FACTOR | PER CONTAINER | 2 | 245.00 | 490.00 |\n| CAF | CURRENCY ADJUSTMENT FACTOR | PER CONTAINER | 2 | 78.50 | 157.00 |\n| THC | TERMINAL HANDLING CHARGE - DESTINATION | PER CONTAINER | 2 | 135.00 | 270.00 |\n| TOTAL AMOUNT DUE USD |  |  |  |  | 4,617.00 |",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "OCEAN FREIGHT FCL SHANGHAI - COLOMBO 40'HC",
+   "quantity": "2",
+   "uom": "PER CONTAINER",
+   "unit_price": "1,850.00",
+   "line_total": "3,700.00",
+   "hs_code": ""
+  },
+  "what_is_different": "A charges table, not a goods table: the identity column is an IATA/FIATA-style charge CODE (OFR/BAF/CAF/THC) rather than a part number, and the unit column prints a BASIS phrase (\"PER CONTAINER\") instead of a unit symbol. Every surcharge acronym in the description column is also a word the banner/charge-label filters key on (FREIGHT, HANDLING, SURCHARGE) — these are real rows that must NOT be swallowed as charge lines, which is the inverse of the usual risk."
+ },
+ {
+  "id": "logistics_digital_shipping_line",
+  "title": "Shipping Line invoice (container number, vessel/voyage, freight charges)",
+  "note": "Ocean carrier (liner) freight invoice — per-container billing, USD",
+  "page": "| Container No. | Size/Type | Vessel / Voyage | Charge Description | Basis | Qty | Rate USD | Amount USD |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| MSKU4567891 | 40HC | MAERSK KOTKA / 512W | OCEAN FREIGHT PRE-PAID | CNTR | 1 | 2,340.00 | 2,340.00 |\n| MSKU4567902 | 40HC | MAERSK KOTKA / 512W | OCEAN FREIGHT PRE-PAID | CNTR | 1 | 2,340.00 | 2,340.00 |\n| MSKU4567891/902 | 40HC | MAERSK KOTKA / 512W | DESTINATION TERMINAL HANDLING | CNTR | 2 | 185.00 | 370.00 |\n| MSKU4567891/902 | 40HC | MAERSK KOTKA / 512W | ISPS SECURITY SURCHARGE | B/L | 1 | 65.00 | 65.00 |\n| TOTAL DUE USD |  |  |  |  |  |  | 5,115.00 |",
+  "expected_rows": 4,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "OCEAN FREIGHT PRE-PAID",
+   "quantity": "1",
+   "uom": "CNTR",
+   "unit_price": "2,340.00",
+   "line_total": "2,340.00",
+   "hs_code": ""
+  },
+  "what_is_different": "The identity column holds an ISO 6346 container number (four letters + seven digits) that looks exactly like a part number/GTIN token, and the SAME container identity repeats across rows — so identity-based dedupe would collapse four legitimate lines into two. Two rows carry qty 1, the weakest possible arithmetic confirmation, and the basis column mixes CNTR with B/L in one column."
+ },
+ {
+  "id": "logistics_digital_awb_aligned",
+  "title": "Air Waybill-aligned invoice (MAWB/HAWB, chargeable weight, volumetric weight)",
+  "note": "Air freight consolidator — invoice aligned line-for-line to house air waybills, USD",
+  "page": "| HAWB No. | MAWB No. | Nature and Quantity of Goods | Pieces | Gross Wt KG | Volumetric Wt KG | Chargeable Wt | Unit | Rate per KG USD | Amount USD |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| HAWB 4711-0091 | 176-88123456 | CONSOLIDATED GENERAL CARGO - ELECTRONICS | 12 | 285.0 | 342.5 | 342.5 | KG | 3.20 | 1,096.00 |\n| HAWB 4711-0092 | 176-88123456 | PHARMACEUTICALS COOL CHAIN +2/+8 C | 4 | 96.0 | 118.0 | 118.0 | KG | 5.75 | 678.50 |\n| HAWB 4711-0093 | 176-88123456 | MACHINERY SPARE PARTS | 6 | 154.0 | 154.0 | 154.0 | KG | 3.20 | 492.80 |\n| TOTAL AMOUNT DUE USD |  |  | 22 | 535.0 | 614.5 | 614.5 | KG |  | 2,267.30 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "CONSOLIDATED GENERAL CARGO - ELECTRONICS",
+   "quantity": "342.5",
+   "uom": "KG",
+   "unit_price": "3.20",
+   "line_total": "1,096.00",
+   "hs_code": ""
+  },
+  "what_is_different": "FOUR competing quantity candidates on every row — Pieces, Gross Wt, Volumetric Wt, Chargeable Wt — and only the chargeable weight satisfies qty x rate = amount. Row 3 is the trap: gross, volumetric and chargeable are all 154.0, so a parser that latched onto the wrong weight column would still confirm arithmetically there while silently failing rows 1-2. The billed quantity is a fractional weight, not an integer piece count, so the \"clean positive integer\" quantity-repair path must not fire."
+ },
+ {
+  "id": "logistics_digital_courier_dhl",
+  "title": "Courier invoice DHL/UPS/FedEx (itemised description, HS codes, value)",
+  "note": "Express courier pro-forma / commercial invoice completed by the shipper, USD",
+  "page": "| No. | Full Description of Goods | Commodity Code (HS) | Country of Origin | Qty | Unit | Net Weight KG | Unit Value USD | Sub Total Value USD |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | LITHIUM-ION BATTERY PACK 3.7V 2000MAH (UN3481, PI967) | 85076000 | CN | 40 | PCS | 8.40 | 12.50 | 500.00 |\n| 2 | BLUETOOTH WIRELESS HEADSET, OVER-EAR | 85183000 | CN | 25 | PCS | 3.75 | 18.40 | 460.00 |\n| 3 | USB-C TO USB-A CHARGING CABLE 1.0M | 85444290 | VN | 100 | PCS | 4.50 | 1.35 | 135.00 |\n| TOTAL |  |  |  | 165 | PCS | 16.65 |  | 1,095.00 |\n| TOTAL DECLARED VALUE FOR CUSTOMS |  |  |  |  |  |  |  | USD 1,095.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "LITHIUM-ION BATTERY PACK 3.7V 2000MAH (UN3481, PI967)",
+   "quantity": "40",
+   "uom": "PCS",
+   "unit_price": "12.50",
+   "line_total": "500.00",
+   "hs_code": "85076000"
+  },
+  "what_is_different": "The courier layout prints a per-line NET WEIGHT beside the money columns, so the row carries two decimal numeric columns that are not price or amount. The first description embeds a UN dangerous-goods number and a packing instruction (UN3481, PI967) — digit-heavy tokens inside the description that must not be mistaken for the HS code or a quantity. Two totals rows follow, the second carrying a currency-prefixed money figure (\"USD 1,095.00\") in a different column from the first."
+ },
+ {
+  "id": "logistics_digital_amazon_marketplace",
+  "title": "Amazon marketplace invoice (order ID, tax collected by marketplace, tax column)",
+  "note": "Amazon.co.uk marketplace order invoice — GBP, 20% UK VAT, currency symbols in every money cell",
+  "page": "| Description | Qty | Unit Price (excl. VAT) | VAT Rate | Unit Price (incl. VAT) | Item Subtotal (excl. VAT) | VAT | Item Total (incl. VAT) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| Kingston NV2 1TB M.2 NVMe SSD (ASIN: B0BBHCLR7X) | 2 | £45.00 | 20% | £54.00 | £90.00 | £18.00 | £108.00 |\n| Logitech MX Master 3S Wireless Mouse, Graphite (ASIN: B09HM94VDS) | 1 | £82.50 | 20% | £99.00 | £82.50 | £16.50 | £99.00 |\n| Amazon Basics USB-C to USB-A Cable 2 m, 2-Pack (ASIN: B01GGKYQ02) | 3 | £7.50 | 20% | £9.00 | £22.50 | £4.50 | £27.00 |\n| Subtotal (excl. VAT) |  |  |  |  | £195.00 |  |  |\n| VAT collected and remitted by Amazon Services Europe S.a r.l. as marketplace facilitator |  |  |  |  |  | £39.00 |  |\n| TOTAL incl. VAT |  |  |  |  |  |  | £234.00 |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Kingston NV2 1TB M.2 NVMe SSD (ASIN: B0BBHCLR7X)",
+   "quantity": "2",
+   "uom": "",
+   "unit_price": "£45.00",
+   "line_total": "£90.00",
+   "hs_code": ""
+  },
+  "what_is_different": "TWO unit-price columns (excl. and incl. VAT) and TWO line-total columns (item subtotal excl. VAT, item total incl. VAT) — picking the incl.-VAT pair also balances arithmetically (£54.00 x 2 = £108.00), so arithmetic alone cannot disambiguate and the customs value would come out 20% too high. There is NO unit-of-measure column at all, a £ symbol sits inside every money cell, and the marketplace-facilitator VAT disclosure is printed as a full-width row inside the table rather than as prose."
+ },
+ {
+  "id": "logistics_digital_zugferd_facturx",
+  "title": "ZUGFeRD/Factur-X e-invoice visual layout",
+  "note": "Germany · ZUGFeRD 2.2 / Factur-X 1.0 (EN 16931 profile) hybrid PDF/A-3 — the human-readable page beside the embedded XML",
+  "page": "| Pos. | Artikel-Nr. | Bezeichnung | Menge | Einheit | Einzelpreis EUR | Nettobetrag EUR | USt-Satz |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | ART-10023 | Rillenkugellager 6204-2RS, Stahl verzinkt | 250 | Stk | 3,80 | 950,00 | 19 % |\n| 2 | ART-10088 | Dichtungssatz NBR 70, Shore A | 120 | Stk | 12,50 | 1.500,00 | 19 % |\n| 3 | ART-20114 | Antriebsriemen Schmalkeilriemen SPZ 1180 | 40 | Stk | 27,45 | 1.098,00 | 19 % |\n| Summe netto EUR |  |  |  |  |  | 3.548,00 |  |\n| MwSt. 19 % |  |  |  |  |  | 674,12 |  |\n| Gesamtbetrag EUR |  |  |  |  |  | 4.222,12 |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Rillenkugellager 6204-2RS, Stahl verzinkt",
+   "quantity": "250",
+   "uom": "Stk",
+   "unit_price": "3,80",
+   "line_total": "950,00",
+   "hs_code": ""
+  },
+  "what_is_different": "German numeric convention throughout — decimal COMMA, dot as thousands separator — so \"1.500,00\" must read as one thousand five hundred, not as 1.50. German column vocabulary (Menge / Einheit / Einzelpreis / Nettobetrag / USt-Satz), the unit abbreviation \"Stk\", and a three-row totals block where the net goods total (\"Summe netto\") is printed separately from the gross. Descriptions carry DIN-style designations (6204-2RS, SPZ 1180, NBR 70) that look like part numbers inside the description cell."
+ },
+ {
+  "id": "logistics_digital_xrechnung_bt",
+  "title": "XRechnung visual representation (Leitweg-ID, BT- numbers)",
+  "note": "Germany · XRechnung 3.0 rendered by the KoSIT visualisation XSLT — public-sector B2G, Leitweg-ID 04011000-12345-06",
+  "page": "| Pos. (BT-126) | Artikelname (BT-153) | Artikelnr. des Verkäufers (BT-155) | Menge (BT-129) | Einheit (BT-130) | Nettopreis (BT-146) | Positionsbetrag netto (BT-131) | USt-Satz % (BT-152) |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Bürodrehstuhl ergonomisch, Synchronmechanik, schwarz | ART-4471 | 15 | H87 | 189,00 | 2.835,00 | 19,00 |\n| 2 | Schreibtisch 160 x 80 cm, Melamin weiß | ART-4482 | 15 | H87 | 250,00 | 3.750,00 | 19,00 |\n| 3 | Rollcontainer 3 Schübe, abschließbar | ART-4490 | 30 | H87 | 96,20 | 2.886,00 | 19,00 |\n| Summe der Nettobeträge (BT-106) |  |  |  |  |  | 9.471,00 |  |\n| Umsatzsteuer gesamt (BT-110) |  |  |  |  |  | 1.799,49 |  |\n| Gesamtbetrag (BT-112) |  |  |  |  |  | 11.270,49 |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Bürodrehstuhl ergonomisch, Synchronmechanik, schwarz",
+   "quantity": "15",
+   "uom": "H87",
+   "unit_price": "189,00",
+   "line_total": "2.835,00",
+   "hs_code": ""
+  },
+  "what_is_different": "Every column header is SUFFIXED with an EN 16931 business-term code in parentheses — \"Menge (BT-129)\", \"Nettopreis (BT-146)\" — so the header cell contains a digit-bearing token that a header matcher anchored on the word alone will miss and that a numeric sniffer may mistake for data. The unit column holds the raw UN/ECE Rec 20 code \"H87\" (piece) rather than a human abbreviation, and the totals labels are the long KoSIT phrasings (\"Summe der Nettobeträge\"), not \"Gesamt\". German decimal comma, and the VAT rate is written 19,00 — a comma decimal in a percentage column sitting right next to the money columns. Leitweg-ID (BT-10) is printed in the header block above the table, not inside it."
+ },
+ {
+  "id": "logistics_digital_peppol_bis",
+  "title": "Peppol BIS Billing invoice PDF",
+  "note": "Norway · Peppol BIS Billing 3.0 rendered PDF (EHF), NOK, seller on the Peppol network",
+  "page": "| Linje | Varenavn | Varenr. | Antall | Enhet | Enhetspris | Rabatt | Nettobeløp | MVA-kode | MVA % |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | Kontorstol Ergo 500, sort stoff | ART-990112 | 24 | stk | 1 450,00 | 0,00 | 34 800,00 | S | 25,00 |\n| 2 | Skrivebord elektrisk hev/senk 180 x 80 cm | ART-990220 | 12 | stk | 4 250,00 | 0,00 | 51 000,00 | S | 25,00 |\n| 3 | Monitorarm dobbel, bordklemme | ART-990318 | 30 | stk | 690,00 | 0,00 | 20 700,00 | S | 25,00 |\n| Sum eks. mva NOK |  |  |  |  |  |  | 106 500,00 |  |  |\n| Merverdiavgift 25 % |  |  |  |  |  |  | 26 625,00 |  |  |\n| Totalbeløp NOK |  |  |  |  |  |  | 133 125,00 |  |  |",
+  "expected_rows": 3,
+  "should_parse": true,
+  "expected_first_row": {
+   "description": "Kontorstol Ergo 500, sort stoff",
+   "quantity": "24",
+   "uom": "stk",
+   "unit_price": "1 450,00",
+   "line_total": "34 800,00",
+   "hs_code": ""
+  },
+  "what_is_different": "Norwegian numeric convention: decimal comma with a SPACE as the thousands separator, so \"1 450,00\" and \"34 800,00\" will be split into two cells by any whitespace-based tokeniser and read as 1 and 450. Nordic header vocabulary (Antall / Enhet / Enhetspris / Nettobeløp) with the Peppol-specific extras: a per-line Rabatt (BT-136 allowance) column printed as 0,00 on every row, and a VAT category code column holding the bare letter \"S\". Totals labels are Norwegian (\"Sum eks. mva\", \"Totalbeløp\"), not Total/Gesamt."
+ },
+ {
+  "id": "logistics_digital_edi_810_x12",
+  "title": "EDI 810 ANSI X12 printed flat segments (BIG, N1, ITD, IT1) — REFUSAL case",
+  "note": "USA · ANSI X12 004010 810 Invoice transaction set, printed to paper as raw segments",
+  "page": "ISA*00*          *00*          *ZZ*ACMEDIST       *ZZ*BUYERCORP      *260721*1432*U*00401*000000917*0*P*>~\nGS*IN*ACMEDIST*BUYERCORP*20260721*1432*917*X*004010~\nST*810*0001~\nBIG*20260721*INV-88214*20260714*PO-4471203~\nCUR*SE*USD~\nREF*DP*0038~\nN1*ST*BUYERCORP DISTRIBUTION CENTER 04*92*DC04~\nN3*1420 INDUSTRIAL PARKWAY~\nN4*MEMPHIS*TN*38118*US~\nN1*RE*ACME DISTRIBUTION INC*92*ACMEDIST~\nITD*01*3*2**10**30~\nDTM*011*20260718~\nIT1*1*480*CA*14.25**VP*RX-4410-B*UP*00812345600017~\nPID*F****BEARING ASSEMBLY 6204-2RS STEEL~\nIT1*2*150*EA*32.50**VP*RX-9920*UP*00812345600024~\nPID*F****SEAL KIT NBR 70~\nIT1*3*900*PC*3.60**VP*RX-1180*UP*00812345600031~\nPID*F****DRIVE BELT SPZ 1180~\nTDS*1495500~\nCAD*M***SCAC*****BM*BOL-77219~\nCTT*3*1530~\nSE*20*0001~\nGE*1*917~\nIEA*1*000000917~",
+  "expected_rows": 0,
+  "should_parse": false,
+  "expected_first_row": {
+   "description": "",
+   "quantity": "",
+   "uom": "",
+   "unit_price": "",
+   "line_total": "",
+   "hs_code": ""
+  },
+  "what_is_different": "REFUSAL. There is no table of any kind — no header row, no pipes, no column alignment. The goods data lives in positional IT1 segments delimited by asterisks, where the quantity, UOM and unit price are positions 2/3/4 of the segment and the description is on a SEPARATE following PID segment. Nothing here can yield a header-derived column map, so the parser must stand down entirely rather than guess positions. Two extra traps if it ever tried: consecutive `**` are EMPTY elements (not a separator run), and the TDS money total is in implied-decimal cents — TDS*1495500 is $14,955.00, which matches the IT1 lines (480x14.25 + 150x32.50 + 900x3.60), while CTT*3*1530 is a hash total of quantities, not money."
+ },
+ {
+  "id": "logistics_digital_thermal_pos_roll",
+  "title": "Thermal POS-style tax invoice on roll paper, no ruled columns — REFUSAL case",
+  "note": "Sri Lanka · supermarket thermal receipt, 80 mm roll, 18% VAT, LKR",
+  "page": "          FRESH MART SUPERMARKET\n        No. 42, Galle Road, Colombo 03\n           VAT Reg. No. 114938271-7000\n              TAX INVOICE\n   POS 03 / CSH 07        Bill No. 0038412\n   2026-07-21 18:42\n--------------------------------\nBASMATI RICE 5KG\n   2 x  1,850.00           3,700.00\nSUNFLOWER OIL 1L\n   3 x    690.00           2,070.00\nDETERGENT POWDER 2KG\n   1 x  1,240.00           1,240.00\n--------------------------------\nSUBTOTAL                   7,010.00\nVAT 18%                    1,261.80\nTOTAL                      8,271.80\nCASH                      10,000.00\nCHANGE                     1,728.20\n--------------------------------\n  *** THANK YOU - COME AGAIN ***\n     Goods once sold are not\n        returnable\n",
+  "expected_rows": 0,
+  "should_parse": false,
+  "expected_first_row": {
+   "description": "",
+   "quantity": "",
+   "uom": "",
+   "unit_price": "",
+   "line_total": "",
+   "hs_code": ""
+  },
+  "what_is_different": "REFUSAL. Space-aligned roll paper: no header row, no pipes, no rules, and OCR collapses the alignment so column positions are not recoverable. Each item is split across TWO lines — the description alone on one, then an indented \"qty x unit price   amount\" on the next — so there is no line that is a complete row, and no line carrying a description together with its money. The arithmetic all balances (3,700 + 2,070 + 1,240 = 7,010; 18% VAT = 1,261.80; total 8,271.80; cash 10,000.00 less total = change 1,728.20), which is exactly the danger: a positional guesser could confirm rows against numbers it never located a description for. The tender lines (CASH/CHANGE) are also money figures that are not goods."
+ }
+]

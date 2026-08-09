@@ -1,0 +1,52 @@
+# Easy Customs extraction worker — systemd unit (EC2 / any Linux box).
+#
+# Install:
+#   sudo cp backend/deploy/easycustoms-worker.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now easycustoms-worker
+# Watch:
+#   journalctl -u easycustoms-worker -f
+#
+# Prerequisites on the box:
+#   * the repo at /opt/easycustoms (git clone — never a folder copy),
+#     backend/.venv created and `pip install -r requirements.txt` done;
+#   * backend/.env with EASYCUSTOMS_QUEUE_PROVIDER=sqs, SQS_QUEUE_URL,
+#     AWS_REGION, EASYCUSTOMS_DATABASE_URL (Postgres — SQLite only if the API
+#     runs on this same machine), and the OCR/LLM keys;
+#   * AWS credentials from the EC2 INSTANCE ROLE (sqs:ReceiveMessage,
+#     sqs:DeleteMessage, sqs:ChangeMessageVisibility on the queue) — no
+#     long-lived keys in .env on a server.
+#
+# Scale-out is running MORE of these (on more boxes, or as
+# easycustoms-worker@N template units): every worker long-polls the same
+# queue and the document claim keeps them off each other's work.
+
+[Unit]
+Description=Easy Customs extraction worker (SQS consumer)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=easycustoms
+Group=easycustoms
+WorkingDirectory=/opt/easycustoms/backend
+ExecStart=/opt/easycustoms/backend/.venv/bin/python worker.py
+Restart=always
+RestartSec=5
+
+# SIGTERM starts a drain: no new receives, in-flight extractions finish,
+# undeleted messages simply re-deliver.  Give a slow packing list time to
+# land before systemd escalates to SIGKILL.
+TimeoutStopSec=900
+KillSignal=SIGTERM
+
+# The worker writes nothing outside storage/ (shared uploads) and /tmp.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/easycustoms/backend/storage
+
+[Install]
+WantedBy=multi-user.target

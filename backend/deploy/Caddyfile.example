@@ -1,0 +1,82 @@
+# Easy Customs — TLS terminator in front of easycustoms-api.service.
+#
+# Install:
+#   sudo cp backend/deploy/Caddyfile.example /etc/caddy/Caddyfile
+#   sudo $EDITOR /etc/caddy/Caddyfile      # set the domain and the email
+#   sudo systemctl reload caddy
+#
+# Caddy gets and renews a Let's Encrypt certificate by itself. That needs a
+# REAL domain whose A/AAAA record points at this box, and inbound 80 + 443 open
+# in the security group — 80 is not optional, the ACME HTTP challenge uses it.
+#
+# The API listens on 127.0.0.1:8000 and is not reachable any other way, so this
+# file is the entire public surface of the deployment.
+
+{
+	# Certificate expiry and renewal-failure notices land here. Set it: a
+	# silently expired certificate takes the whole app offline.
+	email you@example.com
+}
+
+customs.example.com {
+	# ---- Uploads -----------------------------------------------------------
+	# The app enforces its own whole-body ceiling at the ASGI boundary
+	# (config.py::request_body_limit_bytes — 64 MB at default settings, derived
+	# as max(64, EASYCUSTOMS_MAX_UPLOAD_MB * 2)). This cap sits deliberately
+	# ABOVE it so an oversized upload is refused by the APP, which answers with
+	# a message naming the real limit, rather than by the proxy, which answers
+	# with a bare 413 the SPA cannot explain. Keep the two in step: if you raise
+	# EASYCUSTOMS_MAX_UPLOAD_MB, raise this with it.
+	request_body {
+		max_size 80MB
+	}
+
+	# ---- Security headers --------------------------------------------------
+	header {
+		# The app is HTTPS-only in this deployment and its session cookie is
+		# Secure (EASYCUSTOMS_SESSION_COOKIE_SECURE=always). Tell browsers to
+		# never try http again. Add `preload` only if you intend to submit the
+		# domain to the HSTS preload list — it is hard to undo.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		# The app already pins nosniff on document responses; make it global.
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# The evidence viewer frames the app's OWN document route, so deny
+		# framing by anyone else rather than blanket DENY.
+		X-Frame-Options "SAMEORIGIN"
+		-Server
+	}
+
+	# ---- Proxy -------------------------------------------------------------
+	reverse_proxy 127.0.0.1:8000 {
+		# Extraction can hold a request for minutes when the queue is OFF
+		# (OCR + LLM run inside the request). With EASYCUSTOMS_QUEUE_PROVIDER=sqs
+		# every request is short and this is just slack.
+		transport http {
+			response_header_timeout 10m
+			read_timeout 10m
+		}
+	}
+
+	encode zstd gzip
+	log {
+		output file /var/log/caddy/easycustoms.log
+		# Do NOT raise this to DEBUG on a live box: request bodies carry
+		# commercial invoice contents and the login form carries the password.
+		level INFO
+	}
+}
+
+# ---- Rate limiting: NOT configured above, on purpose -----------------------
+# Caddy has no built-in rate limiter. `rate_limit` needs a third-party module
+# and a custom binary:
+#
+#   xcaddy build --with github.com/mholt/caddy-ratelimit
+#
+# It matters more here than in a typical app because the API deliberately does
+# not trust X-Forwarded-For (app/main.py::_client_id), so behind this proxy its
+# own login throttle collapses into a single global bucket — 10 failed logins
+# in 5 minutes locks everyone out, and an unauthenticated attacker can do that
+# on purpose. Until either the module is installed or _client_id learns to read
+# a trusted proxy header, the cheap mitigation is fail2ban on the Caddy access
+# log matching POST /api/auth/login responses with status 401.

@@ -1,0 +1,79 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 481 >>
+stream
+BT /F1 9 Tf 40 800 Td 12 TL
+(MASTER AIR WAYBILL) Tj T*
+() Tj T*
+(AWB No: 555-12345678) Tj T*
+(MAWB No: 555-12345678) Tj T*
+(HAWB No: -) Tj T*
+(Carrier: Demo Air Cargo Airways) Tj T*
+(Issued by: Demo Air Cargo) Tj T*
+(Shipper: -) Tj T*
+(Consignee: -) Tj T*
+() Tj T*
+(Gross Weight: 330.0 KG) Tj T*
+(Chargeable Weight: 443.0 KG) Tj T*
+(Pieces/Packages: 24 PCS) Tj T*
+(Freight: - ) Tj T*
+(Freight Payment: PREPAID) Tj T*
+() Tj T*
+(SYNTHETIC DEMO DOCUMENT, NOT A REAL SHIPMENT) Tj T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 532 >>
+stream
+BT /F1 9 Tf 40 800 Td 12 TL
+(HOUSE AIR WAYBILL) Tj T*
+() Tj T*
+(AWB No: DEMOHAWB0057) Tj T*
+(MAWB No: 555-12345678) Tj T*
+(HAWB No: DEMOHAWB0057) Tj T*
+(Carrier: -) Tj T*
+(Issued by: Example Cargo Logistics) Tj T*
+(Shipper: NORTHWIND TRADING LTD.) Tj T*
+(Consignee: DEMO IMPORTERS PVT. LTD.) Tj T*
+() Tj T*
+(Gross Weight: 199.0 KG) Tj T*
+(Chargeable Weight: 199.0 KG) Tj T*
+(Pieces/Packages: 12 PKG) Tj T*
+(Freight: 1135.55 USD) Tj T*
+(Freight Payment: PREPAID) Tj T*
+() Tj T*
+(SYNTHETIC DEMO DOCUMENT, NOT A REAL SHIPMENT) Tj T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000191 00000 n 
+0000000723 00000 n 
+0000000849 00000 n 
+0000001432 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+1558
+%%EOF

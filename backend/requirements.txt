@@ -1,0 +1,52 @@
+# Flexible version ranges so it installs on Python 3.10 - 3.14.
+# (Exact pins are avoided because very new Python versions may lack wheels for
+#  older releases.)
+
+# ---- Core web stack ----
+fastapi>=0.111,<1.0
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+pydantic>=2.7,<3
+pydantic-settings>=2.3,<3
+
+# ---- Persistence ----
+SQLAlchemy>=2.0,<3
+# Schema migrations. The SQLite default still builds itself from the models at
+# startup (create_all + the additive step in app/database.py), so a dev machine
+# never has to run alembic. Postgres does: app/database.py refuses to serve a
+# Postgres database whose schema is not at head, because create_all cannot ALTER
+# an existing table and would leave a column silently missing.
+alembic>=1.13
+# Postgres driver. Only loaded when EASYCUSTOMS_DATABASE_URL points at Postgres
+# (SQLAlchemy imports the dialect's driver on demand); harmless otherwise.
+psycopg[binary]>=3.2
+
+# ---- Reference data / documents ----
+openpyxl>=3.1
+xlwt>=1.3            # legacy .xls writer for the brand/model/size export
+xlrd>=2.0            # .xls READER — tests/test_bms_endpoint.py and
+                     # tests/test_brand_model_size.py import it to verify that
+                     # export. Without it pytest aborts at COLLECTION, so
+                     # `pytest -q` runs zero tests and reports success-shaped
+                     # output for a suite it never executed.
+pypdf>=4.2
+lxml>=5.2
+# Photo uploads: JPEG/PNG are converted to PDF at the upload boundary so
+# everything downstream (OCR, viewer, #page deep links) stays PDF-only.
+img2pdf>=0.5     # lossless JPEG/PNG → PDF (no recompression)
+Pillow>=10.0     # decode/verify images, flatten alpha, read dimensions
+
+# ---- Live extraction (Mistral OCR + OpenAI) ----
+# Imported lazily, so the app still boots offline if these are absent.
+openai>=1.40
+mistralai>=1.2,<2
+# langroid>=0.30   # optional (set EASYCUSTOMS_EXTRACTION_PROVIDER=langroid)
+
+# ---- Queue mode (async extraction over AWS SQS) ----
+# Only loaded when EASYCUSTOMS_QUEUE_PROVIDER=sqs (producer app/queueing.py
+# and consumer worker.py import it lazily); harmless to install otherwise.
+boto3>=1.34
+
+# ---- Tests ----
+pytest>=8.2
+httpx>=0.27

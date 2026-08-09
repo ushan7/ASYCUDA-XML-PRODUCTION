@@ -1,0 +1,35 @@
+{
+ "role_validation": {
+  "expected_role": "BANKING",
+  "matches_expected_role": true
+ },
+ "document_kind_raw": "Documentary Credit",
+ "swift_message_type_raw": "700",
+ "sender_bic_raw": "CTZNNPKAXXX",
+ "bank_swift_raw": "CTZNNPKAXXX",
+ "issuing_or_applicant_bank_name_raw": "Example Bank International",
+ "reference_number_raw": "LCDEMO0000000001",
+ "issue_or_value_date_raw": "260224",
+ "amount": {
+  "amount_raw": "7023.17",
+  "currency_raw": "USD",
+  "evidence": {
+   "page_no": 1,
+   "label": "Amount",
+   "quote": "7,023.17"
+  }
+ },
+ "payment_terms_raw": "Under Letter of Credit",
+ "draft_tenor_raw": "75 DAYS FROM AWB DATE",
+ "invoice_references_raw": [
+  "DEMO-209-1",
+  "DEMO-209-2"
+ ],
+ "freight_mentions": [
+  {
+   "amount_raw": "1135.55",
+   "currency_raw": "USD"
+  }
+ ],
+ "warnings": []
+}

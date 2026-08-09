@@ -1,0 +1,114 @@
+{
+ "role_validation": {
+  "expected_role": "AIR_WAYBILL",
+  "matches_expected_role": true
+ },
+ "forms": [
+  {
+   "logical_form_id": "mawb-form",
+   "source_pages": [
+    1
+   ],
+   "document_title_raw": "Master Air Waybill",
+   "primary_awb_number_raw": "555-12345678",
+   "mawb_number_raw": "555-12345678",
+   "carrier_raw": "Demo Air Cargo Airways",
+   "issuer_raw": "Demo Air Cargo",
+   "gross_weight": {
+    "value_raw": "330.0",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "330.0 K"
+    }
+   },
+   "chargeable_weight": {
+    "value_raw": "443.0",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Chargeable Weight",
+     "quote": "443.0"
+    }
+   },
+   "pieces_or_packages": {
+    "value_raw": "24",
+    "unit_raw": "PCS",
+    "evidence": {
+     "page_no": 1,
+     "label": "RCP",
+     "quote": "24"
+    }
+   },
+   "freight_payment_status_raw": "PREPAID",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Demo Air Cargo 555-12345678"
+    }
+   ]
+  },
+  {
+   "logical_form_id": "hawb-form",
+   "source_pages": [
+    2
+   ],
+   "document_title_raw": "House Air Waybill",
+   "primary_awb_number_raw": "DEMOHAWB0057",
+   "hawb_number_raw": "DEMOHAWB0057",
+   "mawb_number_raw": "555-12345678",
+   "issuer_raw": "Example Cargo Logistics",
+   "shipper": {
+    "name_raw": "NORTHWIND TRADING LTD."
+   },
+   "consignee": {
+    "name_raw": "DEMO IMPORTERS PVT. LTD."
+   },
+   "gross_weight": {
+    "value_raw": "199.0",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 2,
+     "label": "Gross Weight",
+     "quote": "199.0"
+    }
+   },
+   "chargeable_weight": {
+    "value_raw": "199.0",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 2,
+     "label": "Chargeable Weight",
+     "quote": "199.0"
+    }
+   },
+   "pieces_or_packages": {
+    "value_raw": "12",
+    "unit_raw": "PKG",
+    "evidence": {
+     "page_no": 2,
+     "label": "Packages",
+     "quote": "12 packages"
+    }
+   },
+   "freight_amount": {
+    "amount_raw": "1135.55",
+    "currency_raw": "USD",
+    "evidence": {
+     "page_no": 2,
+     "label": "Freight",
+     "quote": "1135.55"
+    }
+   },
+   "freight_payment_status_raw": "PREPAID",
+   "evidence": [
+    {
+     "page_no": 2,
+     "quote": "House Air Waybill DEMOHAWB0057"
+    }
+   ]
+  }
+ ],
+ "warnings": []
+}

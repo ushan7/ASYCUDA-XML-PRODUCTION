@@ -1,0 +1,2541 @@
+{
+ "role_validation": {
+  "expected_role": "INVOICE",
+  "matches_expected_role": true,
+  "detected_title_raw": "Summary Invoice"
+ },
+ "page_numbers": [
+  1,
+  2,
+  3,
+  4
+ ],
+ "header": {
+  "document_title_raw": "Summary Invoice",
+  "invoice_kind_raw": "FINAL",
+  "invoice_number_raw": "DEMO-209-1",
+  "invoice_date_raw": "24/02/2026",
+  "exporter": {
+   "name_raw": "NORTHWIND TRADING LTD., \nUNIT 12 EXAMPLE INDUSTRIAL PARK, CHINA",
+   "country_raw": "China"
+  },
+  "consignee": {
+   "name_raw": "Demo Importers Pvt.Ltd\nLalitpur\nLalitpur",
+   "country_raw": "Nepal",
+   "exim_code_raw": "1000000000001NP"
+  },
+  "currency_raw": "USD",
+  "incoterm_raw": "C&F",
+  "incoterm_place_raw": "KATHMANDU",
+  "payment_terms_raw": "Under Letter of Credit",
+  "lc_reference_raw": "LCDEMO0000000001"
+ },
+ "rows": [
+  {
+   "source_page_no": 1,
+   "source_row_index": 1,
+   "line_no_raw": "1",
+   "description_raw": "Adaptar",
+   "quantity_raw": "11",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "26.05",
+   "currency_raw": "USD",
+   "hs_code_raw": "85044090900",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Adaptar 11 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 2,
+   "line_no_raw": "2",
+   "description_raw": "Air Freshener",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "6.46",
+   "currency_raw": "USD",
+   "hs_code_raw": "33074900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Air Freshener 3 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 3,
+   "line_no_raw": "3",
+   "description_raw": "Alarm Clock",
+   "quantity_raw": "5",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "7.05",
+   "currency_raw": "USD",
+   "hs_code_raw": "91051100000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Alarm Clock 5 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 4,
+   "line_no_raw": "4",
+   "description_raw": "Aquarium Supplies",
+   "quantity_raw": "13",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "26.88",
+   "currency_raw": "USD",
+   "hs_code_raw": "70200000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Aquarium Supplies 13 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 5,
+   "line_no_raw": "5",
+   "description_raw": "Arm Sleeve",
+   "quantity_raw": "12",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "23.39",
+   "currency_raw": "USD",
+   "hs_code_raw": "61169200000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Arm Sleeve 12 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 6,
+   "line_no_raw": "6",
+   "description_raw": "Artificial Eye Lashes",
+   "quantity_raw": "124",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "15.93",
+   "currency_raw": "USD",
+   "hs_code_raw": "67049000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Artificial Eye Lashes 124 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 7,
+   "line_no_raw": "7",
+   "description_raw": "Audio Adaptar Converter",
+   "quantity_raw": "10",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "23.06",
+   "currency_raw": "USD",
+   "hs_code_raw": "85044090900",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Audio Adaptar Converter 10 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 8,
+   "line_no_raw": "8",
+   "description_raw": "Audio Mixer",
+   "quantity_raw": "2",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "6.68",
+   "currency_raw": "USD",
+   "hs_code_raw": "85184000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Audio Mixer 2 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 9,
+   "line_no_raw": "9",
+   "description_raw": "Accessories Case",
+   "quantity_raw": "22",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "37.77",
+   "currency_raw": "USD",
+   "hs_code_raw": "42029200000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Accessories Case 22 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 10,
+   "line_no_raw": "10",
+   "description_raw": "Baby cloth",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "3.64",
+   "currency_raw": "USD",
+   "hs_code_raw": "61112000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Baby cloth 4 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 11,
+   "line_no_raw": "11",
+   "description_raw": "Baby Shoes",
+   "quantity_raw": "2",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "8.73",
+   "currency_raw": "USD",
+   "hs_code_raw": "64039900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Baby Shoes 2 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 12,
+   "line_no_raw": "12",
+   "description_raw": "Bag accessories",
+   "quantity_raw": "12",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "6.16",
+   "currency_raw": "USD",
+   "hs_code_raw": "83089000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Bag accessories 12 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 13,
+   "line_no_raw": "13",
+   "description_raw": "Barcode Scanner",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "3.28",
+   "currency_raw": "USD",
+   "hs_code_raw": "84716020000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Barcode Scanner 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 14,
+   "line_no_raw": "14",
+   "description_raw": "Bathroom Supplies",
+   "quantity_raw": "23",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "8.85",
+   "currency_raw": "USD",
+   "hs_code_raw": "74182000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Bathroom Supplies 23 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 15,
+   "line_no_raw": "15",
+   "description_raw": "Bearings",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "1.43",
+   "currency_raw": "USD",
+   "hs_code_raw": "84829900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Bearings 3 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 16,
+   "line_no_raw": "16",
+   "description_raw": "Belt",
+   "quantity_raw": "35",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "85.24",
+   "currency_raw": "USD",
+   "hs_code_raw": "42033000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Belt 35 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 17,
+   "line_no_raw": "17",
+   "description_raw": "Bicycle Accessories",
+   "quantity_raw": "18",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "21.83",
+   "currency_raw": "USD",
+   "hs_code_raw": "87149910000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Bicycle Accessories 18 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 18,
+   "line_no_raw": "18",
+   "description_raw": "Binoculars",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "2.87",
+   "currency_raw": "USD",
+   "hs_code_raw": "90051000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Binoculars 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 19,
+   "line_no_raw": "19",
+   "description_raw": "Blower Fan",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "2.76",
+   "currency_raw": "USD",
+   "hs_code_raw": "84145900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Blower Fan 3 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 20,
+   "line_no_raw": "20",
+   "description_raw": "Body Scrubber",
+   "quantity_raw": "7",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "5.97",
+   "currency_raw": "USD",
+   "hs_code_raw": "39269099900",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Body Scrubber 7 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 21,
+   "line_no_raw": "21",
+   "description_raw": "Bookmark",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "1.42",
+   "currency_raw": "USD",
+   "hs_code_raw": "48201000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Bookmark 4 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 22,
+   "line_no_raw": "22",
+   "description_raw": "Bottle",
+   "quantity_raw": "21",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "6.42",
+   "currency_raw": "USD",
+   "hs_code_raw": "39233090000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Bottle 21 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 23,
+   "line_no_raw": "23",
+   "description_raw": "Bottle stopper",
+   "quantity_raw": "10",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "4.97",
+   "currency_raw": "USD",
+   "hs_code_raw": "39235000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Bottle stopper 10 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 24,
+   "line_no_raw": "24",
+   "description_raw": "BRA",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "4.76",
+   "currency_raw": "USD",
+   "hs_code_raw": "62121000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "BRA 4 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 25,
+   "line_no_raw": "25",
+   "description_raw": "Cable Connector",
+   "quantity_raw": "23",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "8.98",
+   "currency_raw": "USD",
+   "hs_code_raw": "85444200000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cable Connector 23 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 26,
+   "line_no_raw": "26",
+   "description_raw": "Cable Organizer",
+   "quantity_raw": "2",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "5.18",
+   "currency_raw": "USD",
+   "hs_code_raw": "39269099900",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cable Organizer 2 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 27,
+   "line_no_raw": "27",
+   "description_raw": "Cable Protector",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "0.51",
+   "currency_raw": "USD",
+   "hs_code_raw": "39269099900",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cable Protector 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 28,
+   "line_no_raw": "28",
+   "description_raw": "Cake Decorating Tools",
+   "quantity_raw": "6",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "5.74",
+   "currency_raw": "USD",
+   "hs_code_raw": "39269099900",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cake Decorating Tools 6 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 29,
+   "line_no_raw": "29",
+   "description_raw": "Camera Accessories",
+   "quantity_raw": "8",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "11.19",
+   "currency_raw": "USD",
+   "hs_code_raw": "90069100000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Camera Accessories 8 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 30,
+   "line_no_raw": "30",
+   "description_raw": "Candle holder",
+   "quantity_raw": "15",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "3.56",
+   "currency_raw": "USD",
+   "hs_code_raw": "39241090000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Candle holder 15 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 31,
+   "line_no_raw": "31",
+   "description_raw": "Cap",
+   "quantity_raw": "42",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "60.89",
+   "currency_raw": "USD",
+   "hs_code_raw": "65050090000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cap 42 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 32,
+   "line_no_raw": "32",
+   "description_raw": "Car Accessories",
+   "quantity_raw": "61",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "179.47",
+   "currency_raw": "USD",
+   "hs_code_raw": "87089900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Car Accessories 61 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 33,
+   "line_no_raw": "33",
+   "description_raw": "Card Holder",
+   "quantity_raw": "10",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "8.62",
+   "currency_raw": "USD",
+   "hs_code_raw": "39269099900",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Card Holder 10 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 34,
+   "line_no_raw": "34",
+   "description_raw": "Card Reader",
+   "quantity_raw": "5",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "3.67",
+   "currency_raw": "USD",
+   "hs_code_raw": "85235900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Card Reader 5 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 35,
+   "line_no_raw": "35",
+   "description_raw": "Charger",
+   "quantity_raw": "7",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "34.76",
+   "currency_raw": "USD",
+   "hs_code_raw": "85044090900",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Charger 7 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 36,
+   "line_no_raw": "36",
+   "description_raw": "Cigarette Holder",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "0.79",
+   "currency_raw": "USD",
+   "hs_code_raw": "44209000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cigarette Holder 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 37,
+   "line_no_raw": "37",
+   "description_raw": "Cleaning Supplies",
+   "quantity_raw": "36",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "5.12",
+   "currency_raw": "USD",
+   "hs_code_raw": "34029000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cleaning Supplies 36 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 38,
+   "line_no_raw": "38",
+   "description_raw": "Cloth Apron",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "3.46",
+   "currency_raw": "USD",
+   "hs_code_raw": "62114310000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cloth Apron 4 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 39,
+   "line_no_raw": "39",
+   "description_raw": "Coffee making Accessories",
+   "quantity_raw": "14",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "1.91",
+   "currency_raw": "USD",
+   "hs_code_raw": "85169000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Coffee making Accessories 14 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 40,
+   "line_no_raw": "40",
+   "description_raw": "Comb",
+   "quantity_raw": "25",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "13.4",
+   "currency_raw": "USD",
+   "hs_code_raw": "96151100000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Comb 25 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 41,
+   "line_no_raw": "41",
+   "description_raw": "Computer accessories",
+   "quantity_raw": "5",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "10.76",
+   "currency_raw": "USD",
+   "hs_code_raw": "84734000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Computer accessories 5 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 42,
+   "line_no_raw": "42",
+   "description_raw": "Cosplay Costume",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "2.02",
+   "currency_raw": "USD",
+   "hs_code_raw": "95059000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cosplay Costume 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 43,
+   "line_no_raw": "43",
+   "description_raw": "Cotton Towel",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "3.72",
+   "currency_raw": "USD",
+   "hs_code_raw": "63026000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cotton Towel 3 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 44,
+   "line_no_raw": "44",
+   "description_raw": "Cover",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "6.75",
+   "currency_raw": "USD",
+   "hs_code_raw": "63079090000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cover 4 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 45,
+   "line_no_raw": "45",
+   "description_raw": "Crafting Supplies",
+   "quantity_raw": "89",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "9.41",
+   "currency_raw": "USD",
+   "hs_code_raw": "39269099900",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Crafting Supplies 89 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 46,
+   "line_no_raw": "46",
+   "description_raw": "Cross Body Bag",
+   "quantity_raw": "24",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "70.32",
+   "currency_raw": "USD",
+   "hs_code_raw": "42022990000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cross Body Bag 24 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 47,
+   "line_no_raw": "47",
+   "description_raw": "Cushion",
+   "quantity_raw": "7",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "7.48",
+   "currency_raw": "USD",
+   "hs_code_raw": "94049000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cushion 7 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 48,
+   "line_no_raw": "48",
+   "description_raw": "Cutter",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "2.89",
+   "currency_raw": "USD",
+   "hs_code_raw": "82119300000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cutter 3 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 49,
+   "line_no_raw": "49",
+   "description_raw": "Decorative item",
+   "quantity_raw": "76",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "9.55",
+   "currency_raw": "USD",
+   "hs_code_raw": "39269099900",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Decorative item 76 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 50,
+   "line_no_raw": "50",
+   "description_raw": "Dental Floss",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "9.89",
+   "currency_raw": "USD",
+   "hs_code_raw": "33062000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Dental Floss 3 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 51,
+   "line_no_raw": "51",
+   "description_raw": "Dental Tool",
+   "quantity_raw": "20",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "3.5",
+   "currency_raw": "USD",
+   "hs_code_raw": "90212900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Dental Tool 20 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 52,
+   "line_no_raw": "52",
+   "description_raw": "Display Stand",
+   "quantity_raw": "8",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "10.0",
+   "currency_raw": "USD",
+   "hs_code_raw": "73219000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Display Stand 8 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 53,
+   "line_no_raw": "53",
+   "description_raw": "DIY Jewelry Making Sets",
+   "quantity_raw": "167",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "9.01",
+   "currency_raw": "USD",
+   "hs_code_raw": "82072000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "DIY Jewelry Making Sets 167 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 54,
+   "line_no_raw": "54",
+   "description_raw": "Door Lock",
+   "quantity_raw": "5",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "19.51",
+   "currency_raw": "USD",
+   "hs_code_raw": "83017000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Door Lock 5 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 55,
+   "line_no_raw": "55",
+   "description_raw": "Door Stopper",
+   "quantity_raw": "16",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "8.98",
+   "currency_raw": "USD",
+   "hs_code_raw": "83024200000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Door Stopper 16 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 56,
+   "line_no_raw": "56",
+   "description_raw": "Dress",
+   "quantity_raw": "24",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "100.75",
+   "currency_raw": "USD",
+   "hs_code_raw": "62044200000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Dress 24 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 57,
+   "line_no_raw": "57",
+   "description_raw": "Dressing Patch",
+   "quantity_raw": "2",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "3.55",
+   "currency_raw": "USD",
+   "hs_code_raw": "33049990000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Dressing Patch 2 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 58,
+   "line_no_raw": "58",
+   "description_raw": "Drill Bit",
+   "quantity_raw": "14",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "12.28",
+   "currency_raw": "USD",
+   "hs_code_raw": "82075000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Drill Bit 14 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 59,
+   "line_no_raw": "59",
+   "description_raw": "Drinking Straw Pipe",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "1.99",
+   "currency_raw": "USD",
+   "hs_code_raw": "39249090000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Drinking Straw Pipe 4 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 60,
+   "line_no_raw": "60",
+   "description_raw": "Ear Cleaner",
+   "quantity_raw": "10",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "2.54",
+   "currency_raw": "USD",
+   "hs_code_raw": "39269099900",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Ear Cleaner 10 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 61,
+   "line_no_raw": "61",
+   "description_raw": "Ear Hooks",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "0.46",
+   "currency_raw": "USD",
+   "hs_code_raw": "83081000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Ear Hooks 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 62,
+   "line_no_raw": "62",
+   "description_raw": "Earmuff",
+   "quantity_raw": "5",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "2.03",
+   "currency_raw": "USD",
+   "hs_code_raw": "85183000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Earmuff 5 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 63,
+   "line_no_raw": "63",
+   "description_raw": "Earphone",
+   "quantity_raw": "17",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "57.66",
+   "currency_raw": "USD",
+   "hs_code_raw": "85183000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Earphone 17 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 64,
+   "line_no_raw": "64",
+   "description_raw": "Electronics Parts",
+   "quantity_raw": "26",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "4.36",
+   "currency_raw": "USD",
+   "hs_code_raw": "85389000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Electronics Parts 26 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 65,
+   "line_no_raw": "65",
+   "description_raw": "Eraser",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "2.81",
+   "currency_raw": "USD",
+   "hs_code_raw": "40169200000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Eraser 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 66,
+   "line_no_raw": "66",
+   "description_raw": "Eye cover",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "0.46",
+   "currency_raw": "USD",
+   "hs_code_raw": "90049000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Eye cover 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 67,
+   "line_no_raw": "67",
+   "description_raw": "Eye Pencil",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "0.6",
+   "currency_raw": "USD",
+   "hs_code_raw": "33042000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Eye Pencil 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 68,
+   "line_no_raw": "68",
+   "description_raw": "Face mask",
+   "quantity_raw": "84",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "61.26",
+   "currency_raw": "USD",
+   "hs_code_raw": "63079020000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Face mask 84 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 69,
+   "line_no_raw": "69",
+   "description_raw": "Face Patches",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "2.52",
+   "currency_raw": "USD",
+   "hs_code_raw": "33049990000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Face Patches 4 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 70,
+   "line_no_raw": "70",
+   "description_raw": "Filter Bag",
+   "quantity_raw": "2",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "1.45",
+   "currency_raw": "USD",
+   "hs_code_raw": "59119000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Filter Bag 2 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 71,
+   "line_no_raw": "71",
+   "description_raw": "Finger Splint",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "0.39",
+   "currency_raw": "USD",
+   "hs_code_raw": "90211000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Finger Splint 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 72,
+   "line_no_raw": "72",
+   "description_raw": "Finished Artificial Hair",
+   "quantity_raw": "27",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "79.12",
+   "currency_raw": "USD",
+   "hs_code_raw": "67041100000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Finished Artificial Hair 27 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 73,
+   "line_no_raw": "73",
+   "description_raw": "Fishing Accessories",
+   "quantity_raw": "31",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "4.41",
+   "currency_raw": "USD",
+   "hs_code_raw": "95071000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Fishing Accessories 31 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 74,
+   "line_no_raw": "74",
+   "description_raw": "Flash Light",
+   "quantity_raw": "12",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "3.22",
+   "currency_raw": "USD",
+   "hs_code_raw": "85139000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Flash Light 12 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 75,
+   "line_no_raw": "75",
+   "description_raw": "Flower Vase",
+   "quantity_raw": "7",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "6.88",
+   "currency_raw": "USD",
+   "hs_code_raw": "69099000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Flower Vase 7 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 76,
+   "line_no_raw": "76",
+   "description_raw": "Flute",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "1.46",
+   "currency_raw": "USD",
+   "hs_code_raw": "92059000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Flute 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 77,
+   "line_no_raw": "77",
+   "description_raw": "Food Cover",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "3.07",
+   "currency_raw": "USD",
+   "hs_code_raw": "39241090000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Food Cover 4 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 78,
+   "line_no_raw": "78",
+   "description_raw": "Furniture Supplies",
+   "quantity_raw": "14",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "10.55",
+   "currency_raw": "USD",
+   "hs_code_raw": "94039900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Furniture Supplies 14 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 79,
+   "line_no_raw": "79",
+   "description_raw": "Garden Tools",
+   "quantity_raw": "21",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "6.39",
+   "currency_raw": "USD",
+   "hs_code_raw": "82011090000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Garden Tools 21 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 80,
+   "line_no_raw": "80",
+   "description_raw": "Glass Cup",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "1.07",
+   "currency_raw": "USD",
+   "hs_code_raw": "70132800000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Glass Cup 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 81,
+   "line_no_raw": "81",
+   "description_raw": "Gloves",
+   "quantity_raw": "40",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "43.01",
+   "currency_raw": "USD",
+   "hs_code_raw": "62160000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Gloves 40 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 82,
+   "line_no_raw": "82",
+   "description_raw": "Glue",
+   "quantity_raw": "8",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "5.21",
+   "currency_raw": "USD",
+   "hs_code_raw": "35069100000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Glue 8 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 83,
+   "line_no_raw": "83",
+   "description_raw": "Guitar Accessories",
+   "quantity_raw": "15",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "16.26",
+   "currency_raw": "USD",
+   "hs_code_raw": "92099400000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Guitar Accessories 15 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 84,
+   "line_no_raw": "84",
+   "description_raw": "Hair Accessories",
+   "quantity_raw": "84",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "313.27",
+   "currency_raw": "USD",
+   "hs_code_raw": "96159000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hair Accessories 84 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 85,
+   "line_no_raw": "85",
+   "description_raw": "Hair Brush",
+   "quantity_raw": "13",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "8.42",
+   "currency_raw": "USD",
+   "hs_code_raw": "96032900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hair Brush 13 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 86,
+   "line_no_raw": "86",
+   "description_raw": "Hair Clip",
+   "quantity_raw": "31",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "9.63",
+   "currency_raw": "USD",
+   "hs_code_raw": "96151900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hair Clip 31 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 87,
+   "line_no_raw": "87",
+   "description_raw": "Hair Remover",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "7.95",
+   "currency_raw": "USD",
+   "hs_code_raw": "85103000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hair Remover 4 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 88,
+   "line_no_raw": "88",
+   "description_raw": "Halloween Prop",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "8.55",
+   "currency_raw": "USD",
+   "hs_code_raw": "95059000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Halloween Prop 4 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 89,
+   "line_no_raw": "89",
+   "description_raw": "Hand Bag",
+   "quantity_raw": "12",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "36.93",
+   "currency_raw": "USD",
+   "hs_code_raw": "42022990000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hand Bag 12 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 90,
+   "line_no_raw": "90",
+   "description_raw": "Hand Bandage",
+   "quantity_raw": "5",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "3.24",
+   "currency_raw": "USD",
+   "hs_code_raw": "30059020000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hand Bandage 5 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 91,
+   "line_no_raw": "91",
+   "description_raw": "Hand Knitting Tools",
+   "quantity_raw": "45",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "6.79",
+   "currency_raw": "USD",
+   "hs_code_raw": "73199000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hand Knitting Tools 45 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 92,
+   "line_no_raw": "92",
+   "description_raw": "Hand Tools",
+   "quantity_raw": "23",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "8.5",
+   "currency_raw": "USD",
+   "hs_code_raw": "82013000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hand Tools 23 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 93,
+   "line_no_raw": "93",
+   "description_raw": "Hardware Tools",
+   "quantity_raw": "76",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "8.32",
+   "currency_raw": "USD",
+   "hs_code_raw": "82055900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hardware Tools 76 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 94,
+   "line_no_raw": "94",
+   "description_raw": "Hat",
+   "quantity_raw": "80",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "117.56",
+   "currency_raw": "USD",
+   "hs_code_raw": "65050029000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hat 80 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 95,
+   "line_no_raw": "95",
+   "description_raw": "Head Band",
+   "quantity_raw": "40",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "4.94",
+   "currency_raw": "USD",
+   "hs_code_raw": "65070000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Head Band 40 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 96,
+   "line_no_raw": "96",
+   "description_raw": "Headphone Ear Pads",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "2.87",
+   "currency_raw": "USD",
+   "hs_code_raw": "85183000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Headphone Ear Pads 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 97,
+   "line_no_raw": "97",
+   "description_raw": "Imitation Jewellery",
+   "quantity_raw": "336",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "103.84",
+   "currency_raw": "USD",
+   "hs_code_raw": "71179000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Imitation Jewellery 336 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 98,
+   "line_no_raw": "98",
+   "description_raw": "Insole Pad",
+   "quantity_raw": "26",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "2.01",
+   "currency_raw": "USD",
+   "hs_code_raw": "64069000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Insole Pad 26 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 99,
+   "line_no_raw": "99",
+   "description_raw": "Jacket",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "4.82",
+   "currency_raw": "USD",
+   "hs_code_raw": "62033200000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Jacket 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 100,
+   "line_no_raw": "100",
+   "description_raw": "Keyboard Cover",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "0.7",
+   "currency_raw": "USD",
+   "hs_code_raw": "39269099900",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Keyboard Cover 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 101,
+   "line_no_raw": "101",
+   "description_raw": "Keychain",
+   "quantity_raw": "45",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "5.12",
+   "currency_raw": "USD",
+   "hs_code_raw": "73239300000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Keychain 45 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 102,
+   "line_no_raw": "102",
+   "description_raw": "Kitchen Accessories",
+   "quantity_raw": "56",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "11.28",
+   "currency_raw": "USD",
+   "hs_code_raw": "73239900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Kitchen Accessories 56 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 103,
+   "line_no_raw": "103",
+   "description_raw": "Knee Pads",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "2.46",
+   "currency_raw": "USD",
+   "hs_code_raw": "95069100000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Knee Pads 3 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 104,
+   "line_no_raw": "104",
+   "description_raw": "Knee Sleeves",
+   "quantity_raw": "2",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "1.64",
+   "currency_raw": "USD",
+   "hs_code_raw": "62160000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Knee Sleeves 2 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 105,
+   "line_no_raw": "105",
+   "description_raw": "Lab Tools",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "0.59",
+   "currency_raw": "USD",
+   "hs_code_raw": "90230000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Lab Tools 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 106,
+   "line_no_raw": "106",
+   "description_raw": "Ladies Swim Wear",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "1.94",
+   "currency_raw": "USD",
+   "hs_code_raw": "62111200000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Ladies Swim Wear 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 107,
+   "line_no_raw": "107",
+   "description_raw": "Lamp",
+   "quantity_raw": "18",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "37.73",
+   "currency_raw": "USD",
+   "hs_code_raw": "85392900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Lamp 18 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 108,
+   "line_no_raw": "108",
+   "description_raw": "Lamp Holder",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "0.75",
+   "currency_raw": "USD",
+   "hs_code_raw": "85366900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Lamp Holder 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 109,
+   "line_no_raw": "109",
+   "description_raw": "Laptop Bag",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "11.15",
+   "currency_raw": "USD",
+   "hs_code_raw": "42022990000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Laptop Bag 3 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 110,
+   "line_no_raw": "110",
+   "description_raw": "Laundry Bag",
+   "quantity_raw": "7",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "3.04",
+   "currency_raw": "USD",
+   "hs_code_raw": "42021900000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Laundry Bag 7 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 111,
+   "line_no_raw": "111",
+   "description_raw": "Led Bulb",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "0.58",
+   "currency_raw": "USD",
+   "hs_code_raw": "94052100000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Led Bulb 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 112,
+   "line_no_raw": "112",
+   "description_raw": "Led headlight",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "6.88",
+   "currency_raw": "USD",
+   "hs_code_raw": "85122000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Led headlight 3 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 113,
+   "line_no_raw": "113",
+   "description_raw": "LED Light",
+   "quantity_raw": "31",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "34.26",
+   "currency_raw": "USD",
+   "hs_code_raw": "94052100000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "LED Light 31 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 114,
+   "line_no_raw": "114",
+   "description_raw": "Lint Remover",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "0.56",
+   "currency_raw": "USD",
+   "hs_code_raw": "85167990000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Lint Remover 1 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 115,
+   "line_no_raw": "115",
+   "description_raw": "Lock",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "6.01",
+   "currency_raw": "USD",
+   "hs_code_raw": "83014000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Lock 3 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 116,
+   "line_no_raw": "116",
+   "description_raw": "Luggage Cover",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "5.37",
+   "currency_raw": "USD",
+   "hs_code_raw": "42021200000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Luggage Cover 3 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 117,
+   "line_no_raw": "117",
+   "description_raw": "Magnifying Glass",
+   "quantity_raw": "7",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "9.95",
+   "currency_raw": "USD",
+   "hs_code_raw": "90138000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Magnifying Glass 7 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 118,
+   "line_no_raw": "118",
+   "description_raw": "Makeup Accessories",
+   "quantity_raw": "26",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "3.87",
+   "currency_raw": "USD",
+   "hs_code_raw": "96159000000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Makeup Accessories 26 PCS"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 119,
+   "line_no_raw": "119",
+   "description_raw": "Masking Tape",
+   "quantity_raw": "6",
+   "uom_raw": "PCS",
+   "unit_price_raw": null,
+   "line_total_raw": "8.97",
+   "currency_raw": "USD",
+   "hs_code_raw": "48114100000",
+   "country_of_origin_raw": "CN",
+   "item_weight_scope": "UNKNOWN",
+   "row_classification": "REAL_GOODS_ITEM",
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Masking Tape 6 PCS"
+    }
+   ]
+  }
+ ],
+ "totals": {
+  "goods_subtotal_raw": "2108.89",
+  "freight_raw": null,
+  "grand_total_raw": "2108.89"
+ },
+ "page_complete": true,
+ "warnings": []
+}

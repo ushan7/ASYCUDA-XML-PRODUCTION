@@ -1,0 +1,2645 @@
+{
+ "role_validation": {
+  "expected_role": "PACKING_LIST",
+  "matches_expected_role": true,
+  "detected_title_raw": "Packing List"
+ },
+ "packing_list_number_raw": "DEMO-209-1",
+ "invoice_references_raw": [
+  "DEMO-209-1"
+ ],
+ "rows": [
+  {
+   "source_page_no": 1,
+   "source_row_index": 1,
+   "description_raw": "Adaptar",
+   "quantity_raw": "11",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.52",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Adaptar 1.52"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Adaptar 1.52"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 2,
+   "description_raw": "Air Freshener",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.15",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Air Freshener 0.15"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Air Freshener 0.15"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 3,
+   "description_raw": "Alarm Clock",
+   "quantity_raw": "5",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.4",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Alarm Clock 0.4"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Alarm Clock 0.4"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 4,
+   "description_raw": "Aquarium Supplies",
+   "quantity_raw": "13",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.65",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Aquarium Supplies 1.65"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Aquarium Supplies 1.65"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 5,
+   "description_raw": "Arm Sleeve",
+   "quantity_raw": "12",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.45",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Arm Sleeve 0.45"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Arm Sleeve 0.45"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 6,
+   "description_raw": "Artificial Eye Lashes",
+   "quantity_raw": "124",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "2.79",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Artificial Eye Lashes 2.79"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Artificial Eye Lashes 2.79"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 7,
+   "description_raw": "Audio Adaptar Converter",
+   "quantity_raw": "10",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.25",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Audio Adaptar Converter 0.25"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Audio Adaptar Converter 0.25"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 8,
+   "description_raw": "Audio Mixer",
+   "quantity_raw": "2",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.66",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Audio Mixer 1.66"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Audio Mixer 1.66"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 9,
+   "description_raw": "Accessories Case",
+   "quantity_raw": "22",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "2.28",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Accessories Case 2.28"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Accessories Case 2.28"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 10,
+   "description_raw": "Baby cloth",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.35",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Baby cloth 0.35"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Baby cloth 0.35"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 11,
+   "description_raw": "Baby Shoes",
+   "quantity_raw": "2",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.12",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Baby Shoes 0.12"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Baby Shoes 0.12"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 12,
+   "description_raw": "Bag accessories",
+   "quantity_raw": "12",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.78",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Bag accessories 1.78"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Bag accessories 1.78"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 13,
+   "description_raw": "Barcode Scanner",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.42",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Barcode Scanner 0.42"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Barcode Scanner 0.42"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 14,
+   "description_raw": "Bathroom Supplies",
+   "quantity_raw": "23",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "5.63",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Bathroom Supplies 5.63"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Bathroom Supplies 5.63"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 15,
+   "description_raw": "Bearings",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.18",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Bearings 0.18"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Bearings 0.18"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 16,
+   "description_raw": "Belt",
+   "quantity_raw": "35",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "2.62",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Belt 2.62"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Belt 2.62"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 17,
+   "description_raw": "Bicycle Accessories",
+   "quantity_raw": "18",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.4",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Bicycle Accessories 1.4"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Bicycle Accessories 1.4"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 18,
+   "description_raw": "Binoculars",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.07",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Binoculars 0.07"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Binoculars 0.07"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 19,
+   "description_raw": "Blower Fan",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.25",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Blower Fan 0.25"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Blower Fan 0.25"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 20,
+   "description_raw": "Body Scrubber",
+   "quantity_raw": "7",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.58",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Body Scrubber 0.58"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Body Scrubber 0.58"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 21,
+   "description_raw": "Bookmark",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.08",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Bookmark 0.08"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Bookmark 0.08"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 22,
+   "description_raw": "Bottle",
+   "quantity_raw": "21",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "2.68",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Bottle 2.68"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Bottle 2.68"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 23,
+   "description_raw": "Bottle stopper",
+   "quantity_raw": "10",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.38",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Bottle stopper 0.38"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Bottle stopper 0.38"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 24,
+   "description_raw": "BRA",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.27",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "BRA 0.27"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "BRA 0.27"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 25,
+   "description_raw": "Cable Connector",
+   "quantity_raw": "23",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "3.07",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Cable Connector 3.07"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cable Connector 3.07"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 26,
+   "description_raw": "Cable Organizer",
+   "quantity_raw": "2",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.5",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Cable Organizer 0.5"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cable Organizer 0.5"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 27,
+   "description_raw": "Cable Protector",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.02",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Cable Protector 0.02"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cable Protector 0.02"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 28,
+   "description_raw": "Cake Decorating Tools",
+   "quantity_raw": "6",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.74",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Cake Decorating Tools 0.74"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cake Decorating Tools 0.74"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 29,
+   "description_raw": "Camera Accessories",
+   "quantity_raw": "8",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.62",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Camera Accessories 0.62"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Camera Accessories 0.62"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 30,
+   "description_raw": "Candle holder",
+   "quantity_raw": "15",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "10.67",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Candle holder 10.67"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Candle holder 10.67"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 31,
+   "description_raw": "Cap",
+   "quantity_raw": "42",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "2.22",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Cap 2.22"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cap 2.22"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 32,
+   "description_raw": "Car Accessories",
+   "quantity_raw": "61",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "7.71",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Car Accessories 7.71"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Car Accessories 7.71"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 33,
+   "description_raw": "Card Holder",
+   "quantity_raw": "10",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.51",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Card Holder 0.51"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Card Holder 0.51"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 34,
+   "description_raw": "Card Reader",
+   "quantity_raw": "5",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.09",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Card Reader 0.09"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Card Reader 0.09"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 35,
+   "description_raw": "Charger",
+   "quantity_raw": "7",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.97",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Charger 0.97"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Charger 0.97"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 36,
+   "description_raw": "Cigarette Holder",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.05",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Cigarette Holder 0.05"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cigarette Holder 0.05"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 37,
+   "description_raw": "Cleaning Supplies",
+   "quantity_raw": "36",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "2.74",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Cleaning Supplies 2.74"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cleaning Supplies 2.74"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 38,
+   "description_raw": "Cloth Apron",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.54",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Cloth Apron 0.54"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cloth Apron 0.54"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 39,
+   "description_raw": "Coffee making Accessories",
+   "quantity_raw": "14",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.59",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Coffee making Accessories 1.59"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Coffee making Accessories 1.59"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 40,
+   "description_raw": "Comb",
+   "quantity_raw": "25",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.05",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Comb 1.05"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Comb 1.05"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 41,
+   "description_raw": "Computer accessories",
+   "quantity_raw": "5",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.99",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Computer accessories 0.99"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Computer accessories 0.99"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 42,
+   "description_raw": "Cosplay Costume",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.12",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Cosplay Costume 0.12"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cosplay Costume 0.12"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 43,
+   "description_raw": "Cotton Towel",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.36",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Cotton Towel 0.36"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cotton Towel 0.36"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 44,
+   "description_raw": "Cover",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.51",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Cover 0.51"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cover 0.51"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 45,
+   "description_raw": "Crafting Supplies",
+   "quantity_raw": "89",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "7.6",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Crafting Supplies 7.6"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Crafting Supplies 7.6"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 46,
+   "description_raw": "Cross Body Bag",
+   "quantity_raw": "24",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "3.84",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Cross Body Bag 3.84"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cross Body Bag 3.84"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 47,
+   "description_raw": "Cushion",
+   "quantity_raw": "7",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.54",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Cushion 0.54"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cushion 0.54"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 48,
+   "description_raw": "Cutter",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.31",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Cutter 0.31"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Cutter 0.31"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 49,
+   "description_raw": "Decorative item",
+   "quantity_raw": "76",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "8.64",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Decorative item 8.64"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Decorative item 8.64"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 50,
+   "description_raw": "Dental Floss",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.36",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Dental Floss 0.36"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Dental Floss 0.36"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 51,
+   "description_raw": "Dental Tool",
+   "quantity_raw": "20",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.46",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Dental Tool 1.46"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Dental Tool 1.46"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 52,
+   "description_raw": "Display Stand",
+   "quantity_raw": "8",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.11",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Display Stand 1.11"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Display Stand 1.11"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 53,
+   "description_raw": "DIY Jewelry Making Sets",
+   "quantity_raw": "167",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "13.84",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "DIY Jewelry Making Sets 13.84"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "DIY Jewelry Making Sets 13.84"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 54,
+   "description_raw": "Door Lock",
+   "quantity_raw": "5",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.72",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Door Lock 0.72"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Door Lock 0.72"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 55,
+   "description_raw": "Door Stopper",
+   "quantity_raw": "16",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.5",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Door Stopper 1.5"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Door Stopper 1.5"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 56,
+   "description_raw": "Dress",
+   "quantity_raw": "24",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "3.33",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Dress 3.33"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Dress 3.33"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 57,
+   "description_raw": "Dressing Patch",
+   "quantity_raw": "2",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.04",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Dressing Patch 0.04"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Dressing Patch 0.04"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 58,
+   "description_raw": "Drill Bit",
+   "quantity_raw": "14",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.88",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Drill Bit 0.88"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Drill Bit 0.88"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 59,
+   "description_raw": "Drinking Straw Pipe",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.22",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Drinking Straw Pipe 0.22"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Drinking Straw Pipe 0.22"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 60,
+   "description_raw": "Ear Cleaner",
+   "quantity_raw": "10",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.63",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Ear Cleaner 0.63"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Ear Cleaner 0.63"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 61,
+   "description_raw": "Ear Hooks",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.01",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Ear Hooks 0.01"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Ear Hooks 0.01"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 62,
+   "description_raw": "Earmuff",
+   "quantity_raw": "5",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.13",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Earmuff 0.13"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Earmuff 0.13"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 63,
+   "description_raw": "Earphone",
+   "quantity_raw": "17",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "2.29",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Earphone 2.29"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Earphone 2.29"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 64,
+   "description_raw": "Electronics Parts",
+   "quantity_raw": "26",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "2.86",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Electronics Parts 2.86"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Electronics Parts 2.86"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 65,
+   "description_raw": "Eraser",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.03",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Eraser 0.03"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Eraser 0.03"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 66,
+   "description_raw": "Eye cover",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.03",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Eye cover 0.03"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Eye cover 0.03"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 67,
+   "description_raw": "Eye Pencil",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.02",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Eye Pencil 0.02"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Eye Pencil 0.02"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 68,
+   "description_raw": "Face mask",
+   "quantity_raw": "84",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "2.37",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Face mask 2.37"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Face mask 2.37"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 69,
+   "description_raw": "Face Patches",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.09",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Face Patches 0.09"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Face Patches 0.09"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 70,
+   "description_raw": "Filter Bag",
+   "quantity_raw": "2",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.11",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Filter Bag 0.11"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Filter Bag 0.11"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 71,
+   "description_raw": "Finger Splint",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.02",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Finger Splint 0.02"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Finger Splint 0.02"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 72,
+   "description_raw": "Finished Artificial Hair",
+   "quantity_raw": "27",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.69",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Finished Artificial Hair 1.69"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Finished Artificial Hair 1.69"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 73,
+   "description_raw": "Fishing Accessories",
+   "quantity_raw": "31",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.88",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Fishing Accessories 1.88"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Fishing Accessories 1.88"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 74,
+   "description_raw": "Flash Light",
+   "quantity_raw": "12",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.88",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Flash Light 0.88"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Flash Light 0.88"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 75,
+   "description_raw": "Flower Vase",
+   "quantity_raw": "7",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.76",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Flower Vase 0.76"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Flower Vase 0.76"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 76,
+   "description_raw": "Flute",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.07",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Flute 0.07"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Flute 0.07"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 77,
+   "description_raw": "Food Cover",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.24",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Food Cover 0.24"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Food Cover 0.24"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 78,
+   "description_raw": "Furniture Supplies",
+   "quantity_raw": "14",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.47",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Furniture Supplies 1.47"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Furniture Supplies 1.47"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 79,
+   "description_raw": "Garden Tools",
+   "quantity_raw": "21",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "6.1",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Garden Tools 6.1"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Garden Tools 6.1"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 80,
+   "description_raw": "Glass Cup",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.11",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Glass Cup 0.11"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Glass Cup 0.11"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 81,
+   "description_raw": "Gloves",
+   "quantity_raw": "40",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "2.43",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Gloves 2.43"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Gloves 2.43"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 82,
+   "description_raw": "Glue",
+   "quantity_raw": "8",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.63",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Glue 0.63"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Glue 0.63"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 83,
+   "description_raw": "Guitar Accessories",
+   "quantity_raw": "15",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "2.38",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Guitar Accessories 2.38"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Guitar Accessories 2.38"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 84,
+   "description_raw": "Hair Accessories",
+   "quantity_raw": "84",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "5.22",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Hair Accessories 5.22"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hair Accessories 5.22"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 85,
+   "description_raw": "Hair Brush",
+   "quantity_raw": "13",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.0",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Hair Brush 1.0"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hair Brush 1.0"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 86,
+   "description_raw": "Hair Clip",
+   "quantity_raw": "31",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.42",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Hair Clip 1.42"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hair Clip 1.42"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 87,
+   "description_raw": "Hair Remover",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.57",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Hair Remover 0.57"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hair Remover 0.57"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 88,
+   "description_raw": "Halloween Prop",
+   "quantity_raw": "4",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.34",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Halloween Prop 0.34"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Halloween Prop 0.34"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 89,
+   "description_raw": "Hand Bag",
+   "quantity_raw": "12",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.67",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Hand Bag 1.67"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hand Bag 1.67"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 90,
+   "description_raw": "Hand Bandage",
+   "quantity_raw": "5",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.14",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Hand Bandage 0.14"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hand Bandage 0.14"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 91,
+   "description_raw": "Hand Knitting Tools",
+   "quantity_raw": "45",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "5.37",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Hand Knitting Tools 5.37"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hand Knitting Tools 5.37"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 92,
+   "description_raw": "Hand Tools",
+   "quantity_raw": "23",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "2.45",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Hand Tools 2.45"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hand Tools 2.45"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 93,
+   "description_raw": "Hardware Tools",
+   "quantity_raw": "76",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "8.66",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Hardware Tools 8.66"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hardware Tools 8.66"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 94,
+   "description_raw": "Hat",
+   "quantity_raw": "80",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "6.92",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Hat 6.92"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Hat 6.92"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 95,
+   "description_raw": "Head Band",
+   "quantity_raw": "40",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.31",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Head Band 1.31"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Head Band 1.31"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 96,
+   "description_raw": "Headphone Ear Pads",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.03",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Headphone Ear Pads 0.03"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Headphone Ear Pads 0.03"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 97,
+   "description_raw": "Imitation Jewellery",
+   "quantity_raw": "336",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "8.54",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Imitation Jewellery 8.54"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Imitation Jewellery 8.54"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 98,
+   "description_raw": "Insole Pad",
+   "quantity_raw": "26",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.12",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Insole Pad 1.12"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Insole Pad 1.12"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 99,
+   "description_raw": "Jacket",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.19",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Jacket 0.19"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Jacket 0.19"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 100,
+   "description_raw": "Keyboard Cover",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.03",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Keyboard Cover 0.03"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Keyboard Cover 0.03"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 101,
+   "description_raw": "Keychain",
+   "quantity_raw": "45",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.89",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Keychain 1.89"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Keychain 1.89"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 102,
+   "description_raw": "Kitchen Accessories",
+   "quantity_raw": "56",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "7.46",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Kitchen Accessories 7.46"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Kitchen Accessories 7.46"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 103,
+   "description_raw": "Knee Pads",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.17",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Knee Pads 0.17"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Knee Pads 0.17"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 104,
+   "description_raw": "Knee Sleeves",
+   "quantity_raw": "2",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.09",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Knee Sleeves 0.09"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Knee Sleeves 0.09"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 105,
+   "description_raw": "Lab Tools",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.06",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Lab Tools 0.06"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Lab Tools 0.06"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 106,
+   "description_raw": "Ladies Swim Wear",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.06",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Ladies Swim Wear 0.06"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Ladies Swim Wear 0.06"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 107,
+   "description_raw": "Lamp",
+   "quantity_raw": "18",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "2.01",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Lamp 2.01"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Lamp 2.01"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 108,
+   "description_raw": "Lamp Holder",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.08",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Lamp Holder 0.08"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Lamp Holder 0.08"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 109,
+   "description_raw": "Laptop Bag",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.44",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Laptop Bag 0.44"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Laptop Bag 0.44"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 110,
+   "description_raw": "Laundry Bag",
+   "quantity_raw": "7",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.22",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Laundry Bag 0.22"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Laundry Bag 0.22"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 111,
+   "description_raw": "Led Bulb",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.06",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Led Bulb 0.06"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Led Bulb 0.06"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 112,
+   "description_raw": "Led headlight",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.36",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Led headlight 0.36"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Led headlight 0.36"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 113,
+   "description_raw": "LED Light",
+   "quantity_raw": "31",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "3.74",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "LED Light 3.74"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "LED Light 3.74"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 114,
+   "description_raw": "Lint Remover",
+   "quantity_raw": "1",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.05",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Lint Remover 0.05"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Lint Remover 0.05"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 115,
+   "description_raw": "Lock",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.23",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Lock 0.23"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Lock 0.23"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 116,
+   "description_raw": "Luggage Cover",
+   "quantity_raw": "3",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.5",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Luggage Cover 0.5"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Luggage Cover 0.5"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 117,
+   "description_raw": "Magnifying Glass",
+   "quantity_raw": "7",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.4",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Magnifying Glass 0.4"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Magnifying Glass 0.4"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 118,
+   "description_raw": "Makeup Accessories",
+   "quantity_raw": "26",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "1.25",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Makeup Accessories 1.25"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Makeup Accessories 1.25"
+    }
+   ]
+  },
+  {
+   "source_page_no": 1,
+   "source_row_index": 119,
+   "description_raw": "Masking Tape",
+   "quantity_raw": "6",
+   "uom_raw": "PCS",
+   "gross_weight": {
+    "value_raw": "0.3",
+    "unit_raw": "KG",
+    "evidence": {
+     "page_no": 1,
+     "label": "Gross Weight",
+     "quote": "Masking Tape 0.3"
+    }
+   },
+   "evidence": [
+    {
+     "page_no": 1,
+     "quote": "Masking Tape 0.3"
+    }
+   ]
+  }
+ ],
+ "total_gross_weight": {
+  "value_raw": "199.00",
+  "unit_raw": "KG",
+  "evidence": {
+   "page_no": 1,
+   "label": "Total",
+   "quote": "TOTAL 199.00"
+  }
+ },
+ "total_packages": {
+  "value_raw": "12",
+  "unit_raw": "CTN"
+ },
+ "warnings": []
+}

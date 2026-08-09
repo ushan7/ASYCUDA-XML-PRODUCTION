@@ -1,0 +1,56 @@
+Code,Description
+1000,Permanent Export - General Procedure
+1021,Permanent export after temporary export
+1022,Permanent Export - temporary export for repair or re-packaging
+1023,Permanent Export - Raw Mat manu. & Products for re-export
+2100,Temporary Export - re-export in the same state
+2200,Temporary Export for Repair or Repackaging
+2300,Temporary Export - Raw Mat & Manu. Product
+3040,Re-Export of good Previously Imported to Free Circulation
+3051,Re-export after temporary import
+3052,Re-export - After repair and re-packed
+3053,Re-Export After Inward Processing
+3055,Re-export Goods by Diplomatic Organizations
+3056,Re-export Goods for Project
+3070,Re-Export - Warehousing
+4000,Permanent Import
+4051,Permanent import after temporary import of goods in the same state
+4052,Permanent import after temporarily imported for repair or packaging
+4053,Goods are sold in Nepal
+4055,Sales in Nepal Diplomatic Goods
+4056,Sales in Nepal Good for Projects
+4070,Permanent Import goods from warehouse
+4071,Sales (NEPAL Use) from Warehouse
+4072,Relief Materials from Warehouse
+4073,Use from Warehouse Aircraft or Aircraft Parts
+4074,Clear the Goods from Yard or Customs Area
+4075,Partial Clearance (Partial) PATAKE
+5100,Temporary Import - Intended to be re-export
+5200,Temporary import of goods for repair or re-packaging
+5300,Temporary Import for Inward Processing
+5400,Temporary Import - Rescue Equipment Intended to re-export
+5500,Temporary Import Goods by Diplomatic Mission & Organisations
+5555,Ownership Transfer to Diplomatic Mission
+5600,Temporary Import of goods by Projects
+5700,Temporary Import - Dispute
+6021,Re-import of goods in same state after temporarily imported
+6022,Re-import of goods following repair of re-packaging
+6023,Re-import of mfg products made from TE materials
+7000,Direct Warehousing
+7051,Re-exported Warehousing Same state
+7052,Repack & Repairing Warehousing
+7053,Inward Processing Warehousing
+7055,Warehousing Goods by Diplomatic Mission & Organisations
+7070,Transfers of goods between Warehouses
+7100,Warehouse import - Duty Free Shop
+7200,Warehouse for Relief Materials
+7300,"Warehouse Aircraft, Aircraft Parts Equipment"
+7400,Storage Goods more than 7 Days in Custom Godown or Yard
+7500,Partial Clearance Procedure (BULK)
+8000,Transit
+9000,Other Procedure
+9072,Other Import - Auction of Relief materials
+9074,Other Import - Auction of Goods more than 60 Days stored
+9100,"Other Import - Aircraft, Aircraft parts for use Airside"
+9100,Import - Goods sold in duty free shops
+9200,Other Import - Simplified Declaration

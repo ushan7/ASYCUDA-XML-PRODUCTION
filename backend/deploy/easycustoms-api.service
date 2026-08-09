@@ -1,0 +1,97 @@
+# Easy Customs API — systemd unit (EC2 / any Linux box).
+#
+# Install:
+#   sudo cp backend/deploy/easycustoms-api.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now easycustoms-api
+# Watch:
+#   journalctl -u easycustoms-api -f
+#
+# Prerequisites on the box:
+#   * the repo at /opt/easycustoms (git clone — never a folder copy),
+#     backend/.venv created and `pip install -r requirements.txt` done;
+#   * backend/.env with EASYCUSTOMS_AUTH_USERNAME / _PASSWORD / _SECRET (the
+#     app fails CLOSED without them — every route answers 401), the OCR/LLM
+#     keys, and EASYCUSTOMS_DATABASE_URL;
+#   * EASYCUSTOMS_SESSION_COOKIE_SECURE=always in that .env. Behind a TLS
+#     terminator the app sees plain http, so the `auto` default would ship the
+#     session cookie WITHOUT `Secure` to a browser that is very much on https.
+#     app/main.py::_cookie_secure documents this and names `always` as the
+#     answer for exactly this deployment — it is not optional here.
+#   * Caddy (or another TLS terminator) in front — see Caddyfile.example.
+#     This unit binds LOOPBACK ONLY and is not reachable from the network by
+#     itself, which is deliberate: the app speaks plain HTTP.
+#
+# Deploying a schema change (Postgres): migrations are a DELIBERATE step, not
+# something this unit does to itself on restart.
+#
+#   sudo systemctl stop easycustoms-api easycustoms-worker
+#   cd /opt/easycustoms/backend && .venv/bin/alembic upgrade head
+#   sudo systemctl start easycustoms-api easycustoms-worker
+#
+# No ExecStartPre runs it, on purpose: an API restart during an incident must
+# not silently reshape the database, and two units restarting together would
+# race each other applying the same DDL. Both processes refuse to start until
+# the schema is at head and say exactly which command to run, so a forgotten
+# migration is a loud startup failure rather than a column-missing error on a
+# reviewer's screen. A database that predates alembic needs `alembic stamp`
+# first — the refusal message spells that case out separately.
+#
+# Pairs with easycustoms-worker.service. With EASYCUSTOMS_QUEUE_PROVIDER=sqs
+# this process stops doing OCR/LLM work entirely and only claims + enqueues;
+# run both units. With the queue off, extraction happens inside the request
+# here and the worker unit should not be enabled at all.
+
+[Unit]
+Description=Easy Customs API (FastAPI/uvicorn)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=easycustoms
+Group=easycustoms
+WorkingDirectory=/opt/easycustoms/backend
+# --host 127.0.0.1: TLS and the public port belong to Caddy. Binding 0.0.0.0
+# here would publish an unencrypted declaration workspace on the VPC.
+#
+# NO --proxy-headers, deliberately. It would rewrite request.client.host from
+# X-Forwarded-For, and app/main.py::_client_id refuses to trust that header on
+# purpose — a caller who can forge it could reset its own login-failure count
+# at will. The cost of leaving it off is that every request looks like it came
+# from Caddy (127.0.0.1), so the login throttle becomes ONE global bucket
+# instead of one per client: 10 failures in 5 minutes locks out logins for
+# everybody, which an unauthenticated attacker can trigger on purpose. For a
+# single-operator tool that is an accepted nuisance, not a breach — but it is
+# the reason to put a rate limit in Caddy (see Caddyfile.example) rather than
+# to turn this flag on. Fixing it properly means teaching _client_id to read a
+# proxy-set header it can trust, which is a code change, not a unit-file one.
+#
+# --workers 1 on purpose. Two process-local pieces of state get weaker, not
+# just slower, with more workers: the login throttle is an in-process dict
+# (N workers = N times the allowed guess rate), and the vendor layout/field-
+# profile stores are read-modify-write JSON files under storage/ that
+# concurrent processes can interleave and lose entries from. Raise this only
+# after those two have a shared home — and note that in queue mode the slow
+# work is not here anyway, so one worker goes a long way.
+ExecStart=/opt/easycustoms/backend/.venv/bin/uvicorn app.main:app \
+          --host 127.0.0.1 --port 8000 --workers 1
+Restart=always
+RestartSec=5
+
+# QUEUE OFF: a request can hold OCR + LLM for minutes, and killing it mid-run
+# leaves a claimed document that only the startup sweep releases. QUEUE ON:
+# requests are short and this is generous slack. Sized for the worse case.
+TimeoutStopSec=300
+KillSignal=SIGTERM
+
+# The app writes storage/ (uploads, plus the vendor layout/profile JSON) and
+# /tmp (Starlette spools multipart parts there before any route runs).
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/easycustoms/backend/storage
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,50 @@
+# Build context excludes.  The image is built from the REPOSITORY ROOT
+# (`docker build -f backend/Dockerfile .`), and backend/Dockerfile does
+# `COPY backend/ /app/` — which copies whatever is sitting in that directory on
+# the build machine.  Docker does not read .gitignore, so without this file a
+# developer's backend/.env (Mistral + OpenAI keys, the login password) is baked
+# into an image layer and travels with every push of it.  Deleting the file in a
+# later layer would NOT remove it: layers are additive and readable.
+#
+# Credentials reach the container through the environment instead — see the
+# `environment:` block in docker-compose.yml and the "Signing in" section of
+# README.md.
+#
+# SYNTAX NOTE — these are NOT .gitignore rules.  Docker matches each pattern
+# against the WHOLE path relative to the context root using Go's filepath.Match,
+# where `*` does not cross a `/`.  So `.venv/` matches only a venv at the root
+# and would sail straight past backend/.venv; nested matches need `**/`.  Every
+# rule below is therefore either an explicit path or `**/`-prefixed.
+
+# ---- Secrets -----------------------------------------------------------
+**/.env
+**/.env.*
+# .env.example is the documented template and carries only placeholders.
+!.env.example
+
+# ---- Local state that must never become image content ------------------
+# The SQLite database holds real declarations; storage/ holds the uploaded
+# invoices and packing lists.  Both are per-deployment runtime state (the app
+# recreates them on first boot), not build inputs.
+**/*.db
+**/*.db-shm
+**/*.db-wal
+backend/storage
+backend/split_job_id.txt
+
+# ---- Host-specific build junk ------------------------------------------
+# .venv is a Windows/macOS virtualenv full of absolute paths and native wheels;
+# the image installs its own from requirements.txt (backend/Dockerfile line 8).
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/node_modules
+
+# ---- Git / tooling / scratch -------------------------------------------
+.git
+.git1
+.gitignore
+.claude
+ALL7_split
