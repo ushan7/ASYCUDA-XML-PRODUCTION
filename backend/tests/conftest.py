@@ -89,6 +89,24 @@ if not os.environ.get("EASYCUSTOMS_DATABASE_URL"):
     os.environ["EASYCUSTOMS_DATABASE_URL"] = f"sqlite:///{_db_file}"
     _sweep_abandoned_databases(_db_dir)
 
+    # ...and the STORAGE directory with it, for the same reason and one more.
+    #
+    # The suite was writing its uploads into backend/storage/ — the real one,
+    # beside 3600+ job directories of actual customer paperwork. Nothing failed,
+    # which is why it lasted: the run just left more litter in the one directory
+    # on this machine that must not be casually written to. (test_repo_hygiene
+    # catches those files becoming TRACKED; it cannot see them being created.)
+    #
+    # It also stopped being merely untidy once the vendor layout/profile stores
+    # moved into the database: startup imports any legacy JSON it finds there,
+    # so a developer's real remembered vendors were being loaded into the test
+    # database and counted by tests that assert nothing was learned.
+    #
+    # Set inside this branch on purpose: someone pointing the suite at their own
+    # DATABASE_URL is running it against a real deployment's data and should get
+    # that deployment's storage too.
+    os.environ.setdefault("EASYCUSTOMS_STORAGE_DIR", os.path.join(_db_dir, "storage"))
+
 
 def pytest_sessionfinish(session, exitstatus):
     """Delete this run's database directory.
@@ -128,8 +146,59 @@ TestClient.__init__ = _authenticated_init
 
 @pytest.fixture(autouse=True)
 def _reset_login_throttle():
-    """The failed-attempt memory is process-wide; one module's deliberate bad
-    logins must not throttle the next module's."""
-    auth.reset_throttle()
+    """One module's deliberate bad logins must not throttle the next module's.
+
+    The failure window is a database table now (a per-process dict allowed N
+    times the guess rate on an N-process deployment), so this needs a schema —
+    but most modules never build one, and creating it for all ~1900 tests to
+    serve the handful that sign in badly would be pure cost.  Best effort: if
+    there is no table yet, there are no failures to clear either.
+    """
+    def _clear() -> None:
+        try:
+            auth.reset_throttle()
+        except Exception:
+            pass
+
+    _clear()
     yield
-    auth.reset_throttle()
+    _clear()
+
+
+@pytest.fixture
+def isolated_vendor_stores():
+    """Empty the vendor layout / field-profile tables around a test.
+
+    These two stores were JSON files under ``storage/``, and tests isolated them
+    by pointing ``storage_dir`` at a tmp_path.  They are database tables now
+    (they had to be: a whole-file read-modify-write silently loses one writer's
+    entries when a second process records at the same moment), so isolation is
+    per-TABLE rather than per-directory.
+
+    It still matters for the same reason it did before: a layout remembered by
+    an earlier test would non-deterministically feed itself into a later
+    headerless-page case, which is precisely the parse those tests assert stands
+    down.  Cleared on the way in as well as out, so a test is unaffected by
+    whatever ran before it.
+    """
+    from app.database import SessionLocal, init_db
+    from app.models import VendorFieldProfile, VendorLayout
+
+    # The parser test modules never build a schema — they exercise pure parsing
+    # and, until these stores were files, needed no database at all.  init_db is
+    # idempotent (create_all, then a stamp/upgrade that no-ops once at head), so
+    # the first test through here pays for it and the rest do not.
+    init_db()
+
+    def _clear() -> None:
+        db = SessionLocal()
+        try:
+            db.query(VendorLayout).delete()
+            db.query(VendorFieldProfile).delete()
+            db.commit()
+        finally:
+            db.close()
+
+    _clear()
+    yield
+    _clear()

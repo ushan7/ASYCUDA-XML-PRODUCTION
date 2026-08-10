@@ -27,20 +27,23 @@ Consumption (``coo_default_for``, used by ``rules.coo``): the default fills a
 MISSING item COO *before* the exporter-country fallback, always with a
 reviewer-visible warning — it proposes, never decides.
 
-Storage: ``<storage_dir>/vendor_field_profiles.json`` — tiny, human-
-inspectable, written atomically.  Any store failure degrades to "no profile",
-never breaks a job.  Gated by ``vendor_field_profiles_enabled``.
+Storage: the ``vendor_field_profile`` table, one row per normalised vendor key.
+It was ``<storage_dir>/vendor_field_profiles.json``; see ``layout_memory`` for
+why a whole-file read-modify-write could not survive a second process.  Any
+store failure degrades to "no profile", never breaks a job.  Gated by
+``vendor_field_profiles_enabled``.
 """
 from __future__ import annotations
 
-import json
 import logging
-import os
 import re
-import tempfile
-from datetime import datetime, timezone
+
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from ..config import get_settings
+from ..database import side_store_session
+from ..models import VendorFieldProfile
 
 log = logging.getLogger("easycustoms.extraction")
 
@@ -48,34 +51,22 @@ _MIN_OBSERVED_DOCS = 2          # observed-only defaults need this many agreeing
 _MIN_SHARE = 0.8                # item agreement AND coverage threshold
 
 
-def _store_path():
-    return get_settings().storage_dir / "vendor_field_profiles.json"
-
-
 def _norm_vendor(name: str | None) -> str | None:
     key = re.sub(r"[^a-z0-9]", "", str(name or "").lower())
     return key or None
 
 
-def _load() -> dict:
-    try:
-        with open(_store_path(), encoding="utf-8") as fh:
-            data = json.load(fh)
-        if isinstance(data, dict) and isinstance(data.get("profiles"), list):
-            return data
-    except FileNotFoundError:
-        pass
-    except Exception as e:
-        log.warning("vendor field-profile store unreadable (%s) — starting empty", e)
-    return {"version": 1, "profiles": []}
+def _locked_profile(db, vendor: str) -> VendorFieldProfile | None:
+    """The row for this vendor, locked for update where the database can.
 
-
-def _save(data: dict) -> None:
-    path = _store_path()
-    fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
-    with os.fdopen(fd, "w", encoding="utf-8") as fh:
-        json.dump(data, fh, indent=1, ensure_ascii=False)
-    os.replace(tmp, path)                              # atomic on the same volume
+    ``coo_docs`` is a counter and the source precedence is a state machine, so
+    two finalizes for one vendor at the same moment must not both read the same
+    "before" and both write their own "after".
+    """
+    stmt = select(VendorFieldProfile).where(VendorFieldProfile.vendor == vendor)
+    if db.get_bind().dialect.name != "sqlite":
+        stmt = stmt.with_for_update()
+    return db.scalars(stmt).first()
 
 
 def coo_default_for(exporter_name: str | None) -> str | None:
@@ -88,17 +79,19 @@ def coo_default_for(exporter_name: str | None) -> str | None:
     if not key:
         return None
     try:
-        entry = next((p for p in _load()["profiles"] if p.get("vendor") == key), None)
+        with side_store_session() as db:
+            entry = db.scalars(
+                select(VendorFieldProfile).where(VendorFieldProfile.vendor == key)).first()
+            if not entry or not entry.coo_default:
+                return None
+            if entry.coo_source == "REVIEWER":
+                return str(entry.coo_default)
+            if int(entry.coo_docs or 0) >= _MIN_OBSERVED_DOCS:
+                return str(entry.coo_default)
+            return None
     except Exception as e:                             # profiles must never break a job
         log.warning("vendor field-profile read failed (%s)", e)
         return None
-    if not entry or not entry.get("coo_default"):
-        return None
-    if entry.get("coo_source") == "REVIEWER":
-        return str(entry["coo_default"])
-    if int(entry.get("coo_docs", 0)) >= _MIN_OBSERVED_DOCS:
-        return str(entry["coo_default"])
-    return None
 
 
 def record_coo_observation(exporter_name: str | None,
@@ -121,32 +114,93 @@ def record_coo_observation(exporter_name: str | None,
     top = max(set(evidenced), key=evidenced.count)
     if evidenced.count(top) < _MIN_SHARE * len(evidenced):
         return                                        # the vendor's items disagree
+    # Two attempts, because SELECT-then-INSERT is a race that a row lock cannot
+    # close: `FOR UPDATE` locks a row, and the row does not exist yet, so two
+    # finalizes for a NEW vendor both find nothing and both insert.  One wins on
+    # the primary key and the other's observation would simply be dropped —
+    # which is the same silent loss the JSON file had.  On the retry the row is
+    # there, so it takes the normal locked-update path.
+    for attempt in (1, 2):
+        try:
+            with side_store_session(write=True) as db:
+                entry = _locked_profile(db, key)
+                if entry is None:
+                    entry = VendorFieldProfile(
+                        vendor=key, display=str(exporter_name or "").strip()[:120],
+                        coo_default=None, coo_source=None, coo_docs=0)
+                    db.add(entry)
+                _apply_coo_observation(entry, top, reviewer_confirmed=reviewer_confirmed)
+            return
+        except IntegrityError:
+            if attempt == 2:                           # pragma: no cover - defensive
+                log.warning("vendor field-profile write lost a race twice for %r", key)
+                return
+            continue
+        except Exception as e:                         # profiles must never break finalize
+            log.warning("vendor field-profile write failed (%s)", e)
+            return
+
+
+def _apply_coo_observation(entry: VendorFieldProfile, top: str, *,
+                           reviewer_confirmed: bool) -> None:
+    """The source-precedence state machine, applied to a locked (or new) row."""
+    if reviewer_confirmed:
+        if entry.coo_default != top or entry.coo_source != "REVIEWER":
+            entry.coo_docs = 0
+        entry.coo_default, entry.coo_source = top, "REVIEWER"
+        entry.coo_docs = int(entry.coo_docs or 0) + 1
+    elif entry.coo_source == "REVIEWER":
+        # observed evidence never erases a deliberate reviewer decision;
+        # an agreeing observation still strengthens it
+        if entry.coo_default == top:
+            entry.coo_docs = int(entry.coo_docs or 0) + 1
+    elif entry.coo_default == top:
+        entry.coo_docs = int(entry.coo_docs or 0) + 1
+        entry.coo_source = entry.coo_source or "OBSERVED"
+    elif entry.coo_default:
+        # observed contradiction: the vendor is not uniform — stop proposing
+        entry.coo_default, entry.coo_source, entry.coo_docs = None, None, 0
+    else:
+        entry.coo_default, entry.coo_source, entry.coo_docs = top, "OBSERVED", 1
+
+
+def import_legacy_json(path) -> int:
+    """Carry a pre-table ``vendor_field_profiles.json`` into the database, once.
+
+    A dropped profile is not a clean slate: it is the reviewer's deliberate COO
+    correction being forgotten, and the next shipment from that vendor silently
+    going back to the exporter-country fallback that was wrong in the first
+    place.  Never raises — a broken legacy file means start empty, not fail boot.
+    """
+    import json
+
     try:
-        data = _load()
-        entry = next((p for p in data["profiles"] if p.get("vendor") == key), None)
-        if entry is None:
-            entry = {"vendor": key, "display": str(exporter_name or "").strip()[:120],
-                     "coo_default": None, "coo_source": None, "coo_docs": 0}
-            data["profiles"].append(entry)
-        if reviewer_confirmed:
-            if entry.get("coo_default") != top or entry.get("coo_source") != "REVIEWER":
-                entry["coo_docs"] = 0
-            entry["coo_default"], entry["coo_source"] = top, "REVIEWER"
-            entry["coo_docs"] = int(entry.get("coo_docs", 0)) + 1
-        elif entry.get("coo_source") == "REVIEWER":
-            # observed evidence never erases a deliberate reviewer decision;
-            # an agreeing observation still strengthens it
-            if entry.get("coo_default") == top:
-                entry["coo_docs"] = int(entry.get("coo_docs", 0)) + 1
-        elif entry.get("coo_default") == top:
-            entry["coo_docs"] = int(entry.get("coo_docs", 0)) + 1
-            entry["coo_source"] = entry.get("coo_source") or "OBSERVED"
-        elif entry.get("coo_default"):
-            # observed contradiction: the vendor is not uniform — stop proposing
-            entry["coo_default"], entry["coo_source"], entry["coo_docs"] = None, None, 0
-        else:
-            entry["coo_default"], entry["coo_source"], entry["coo_docs"] = top, "OBSERVED", 1
-        entry["last_seen"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        _save(data)
-    except Exception as e:                             # profiles must never break finalize
-        log.warning("vendor field-profile write failed (%s)", e)
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+        profiles = data.get("profiles") if isinstance(data, dict) else None
+        if not isinstance(profiles, list):
+            return 0
+    except FileNotFoundError:
+        return 0
+    except Exception as e:
+        log.warning("legacy vendor field-profile file unreadable (%s) — not imported", e)
+        return 0
+
+    imported = 0
+    try:
+        with side_store_session(write=True) as db:
+            for old in profiles:
+                if not isinstance(old, dict):
+                    continue
+                vendor = old.get("vendor")
+                if not vendor or _locked_profile(db, vendor) is not None:
+                    continue
+                db.add(VendorFieldProfile(
+                    vendor=vendor, display=str(old.get("display") or "")[:120],
+                    coo_default=old.get("coo_default"), coo_source=old.get("coo_source"),
+                    coo_docs=int(old.get("coo_docs", 0) or 0)))
+                imported += 1
+    except Exception as e:
+        log.warning("legacy vendor field-profile import failed (%s)", e)
+        return 0
+    return imported

@@ -18,6 +18,10 @@
 #     session cookie WITHOUT `Secure` to a browser that is very much on https.
 #     app/main.py::_cookie_secure documents this and names `always` as the
 #     answer for exactly this deployment — it is not optional here.
+#   * EASYCUSTOMS_TRUSTED_PROXY_HOPS=1 in that .env (2 if a CDN sits in front of
+#     Caddy). Also not optional: at the default of 0 the login throttle keys
+#     every request on Caddy's own address, so all callers share one bucket and
+#     10 failed sign-ins lock out everybody. See app/auth.py::client_key.
 #   * Caddy (or another TLS terminator) in front — see Caddyfile.example.
 #     This unit binds LOOPBACK ONLY and is not reachable from the network by
 #     itself, which is deliberate: the app speaks plain HTTP.
@@ -55,27 +59,42 @@ WorkingDirectory=/opt/easycustoms/backend
 # --host 127.0.0.1: TLS and the public port belong to Caddy. Binding 0.0.0.0
 # here would publish an unencrypted declaration workspace on the VPC.
 #
-# NO --proxy-headers, deliberately. It would rewrite request.client.host from
-# X-Forwarded-For, and app/main.py::_client_id refuses to trust that header on
-# purpose — a caller who can forge it could reset its own login-failure count
-# at will. The cost of leaving it off is that every request looks like it came
-# from Caddy (127.0.0.1), so the login throttle becomes ONE global bucket
-# instead of one per client: 10 failures in 5 minutes locks out logins for
-# everybody, which an unauthenticated attacker can trigger on purpose. For a
-# single-operator tool that is an accepted nuisance, not a breach — but it is
-# the reason to put a rate limit in Caddy (see Caddyfile.example) rather than
-# to turn this flag on. Fixing it properly means teaching _client_id to read a
-# proxy-set header it can trust, which is a code change, not a unit-file one.
+# STILL no --proxy-headers, and now for a better reason than before. uvicorn
+# would rewrite request.client.host from X-Forwarded-For, trusting the header
+# based on the PEER address (FORWARDED_ALLOW_IPS) rather than on how many hops
+# it should count — so a caller reaching us through Caddy could still supply a
+# leading entry and pick its own throttle key.
 #
-# --workers 1 on purpose. Two process-local pieces of state get weaker, not
-# just slower, with more workers: the login throttle is an in-process dict
-# (N workers = N times the allowed guess rate), and the vendor layout/field-
-# profile stores are read-modify-write JSON files under storage/ that
-# concurrent processes can interleave and lose entries from. Raise this only
-# after those two have a shared home — and note that in queue mode the slow
-# work is not here anyway, so one worker goes a long way.
+# app/auth.py::client_key does the same job correctly: it counts
+# EASYCUSTOMS_TRUSTED_PROXY_HOPS entries FROM THE RIGHT, which is the only part
+# of the header our own proxies wrote. Set that variable (1 for the Caddy config
+# below) and leave this flag off. request.client.host then stays the honest
+# socket peer for everything else that reads it.
+#
+# --workers may now exceed 1. Every piece of process-local state that made more
+# workers WRONG rather than merely different was removed on 2026-08-11:
+#
+#   * the per-job lock is a Postgres transaction-scoped advisory lock, not a
+#     threading.Lock, so review/finalize/mutations serialise across processes;
+#   * the vendor layout/field-profile stores are database tables, not
+#     read-modify-write JSON files that concurrent processes lose entries from;
+#   * the login throttle is a database table keyed by a client address read from
+#     a trusted position, not a per-process dict — so N workers no longer allow
+#     N times the guess rate.
+#
+# Two things to size together when raising it. EASYCUSTOMS_DB_POOL_SIZE and
+# _DB_MAX_OVERFLOW are PER PROCESS, so the connections this unit can open is
+# workers x (pool + overflow) — check that against the server's max_connections.
+# And in queue mode the slow work is not in this process at all, so one worker
+# still goes a long way; scale the WORKER unit first.
+#
+# EASYCUSTOMS_TRUSTED_PROXY_HOPS=1 is required with the Caddy config below (2
+# if something like CloudFront sits in front of Caddy). Left at the default 0
+# behind a proxy, every request looks like it came from the proxy and all
+# callers share ONE throttle bucket: 10 failed logins in 5 minutes locks out
+# everybody, which an unauthenticated attacker can trigger deliberately.
 ExecStart=/opt/easycustoms/backend/.venv/bin/uvicorn app.main:app \
-          --host 127.0.0.1 --port 8000 --workers 1
+          --host 127.0.0.1 --port 8000 --workers 2
 Restart=always
 RestartSec=5
 

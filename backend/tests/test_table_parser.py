@@ -11,15 +11,15 @@ from app.ocr.base import OcrDocument, OcrPage
 
 
 @pytest.fixture(autouse=True)
-def _isolate_layout_store(tmp_path, monkeypatch):
-    """Point vendor layout memory at an empty tmp dir so these tests never read
-    the real storage/vendor_layouts.json (a populated store would non-
-    deterministically feed remembered layouts into the headerless-page cases)."""
-    from app import config as config_mod
-    from app.extraction import layout_memory
-    s = config_mod.get_settings_uncached()
-    s.storage_dir = tmp_path
-    monkeypatch.setattr(layout_memory, "get_settings", lambda: s)
+def _isolate_layout_store(isolated_vendor_stores):
+    """Vendor layout memory starts empty for every test in this file.
+
+    A remembered layout is keyed by role + header signature and is offered
+    to any later document whose own header is unreadable — so one test
+    recording a layout would feed it into another test's headerless-page
+    case, which is exactly the parse those tests assert stands down.
+    (Was a tmp storage_dir; the store is a database table now.)
+    """
 
 HEADER = "|  MODEL NO. | DESCRIPTION | QTY SHIPPED | U/M | UNIT PRICE (USD) | TOTAL (USD)  |"
 ROW_A = "|  RONYX22515X 00763000248437 | STENT RONYX22515X ONYX 2.25X15RX | 3 | EA | 320.00 | 960.00  |"
@@ -269,12 +269,10 @@ def test_headerless_doc_below_memory_threshold_stands_down():
     assert res.pages == {}
 
 
-def test_layout_memory_roundtrip(tmp_path, monkeypatch):
-    from app import config as config_mod
+def test_layout_memory_roundtrip(isolated_vendor_stores):
+    from app.database import SessionLocal
     from app.extraction import layout_memory
-    settings = config_mod.get_settings_uncached()
-    settings.storage_dir = tmp_path
-    monkeypatch.setattr(layout_memory, "get_settings", lambda: settings)
+    from app.models import VendorLayout
 
     mapping = {"qty": 2, "uom": 3, "price": 4, "total": 5, "desc": 1, "n_cols": 6}
     layout_memory.record_layout(DeclaredRole.INVOICE, mapping, "MODELNO|DESCRIPTION|QTY",
@@ -283,19 +281,23 @@ def test_layout_memory_roundtrip(tmp_path, monkeypatch):
                                 None, 40)                   # second doc, lower count
     got = layout_memory.stored_layouts(DeclaredRole.INVOICE)
     assert got == [mapping]
-    data = json.loads((tmp_path / "vendor_layouts.json").read_text(encoding="utf-8"))
-    assert data["layouts"][0]["docs"] == 2
-    assert data["layouts"][0]["confirmed_rows"] == 57       # max, not last
-    assert data["layouts"][0]["vendor_hint"] == "Medtronic International Ltd"
+
+    # One ROW per (role, signature) — the upsert must not append a second.
+    db = SessionLocal()
+    try:
+        rows = db.query(VendorLayout).all()
+        assert len(rows) == 1
+        entry = rows[0]
+        assert entry.docs == 2
+        assert entry.confirmed_rows == 57                   # max, not last
+        assert entry.vendor_hint == "Medtronic International Ltd"
+    finally:
+        db.close()
     assert layout_memory.stored_layouts(DeclaredRole.PACKING_LIST) == []
 
 
-def test_layout_memory_rejects_thin_evidence(tmp_path, monkeypatch):
-    from app import config as config_mod
+def test_layout_memory_rejects_thin_evidence(isolated_vendor_stores):
     from app.extraction import layout_memory
-    settings = config_mod.get_settings_uncached()
-    settings.storage_dir = tmp_path
-    monkeypatch.setattr(layout_memory, "get_settings", lambda: settings)
     layout_memory.record_layout(DeclaredRole.INVOICE, {"qty": 2}, "SIG", None, 2)  # < 3 rows
     assert layout_memory.stored_layouts(DeclaredRole.INVOICE) == []
 

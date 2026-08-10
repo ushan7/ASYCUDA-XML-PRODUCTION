@@ -6,7 +6,9 @@ DB-agnostic: the same models run on SQLite (default, zero setup) and Postgres
 from __future__ import annotations
 
 import logging
+import threading
 from collections.abc import Iterator
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 
 from sqlalchemy import create_engine, event
@@ -29,10 +31,105 @@ class Base(DeclarativeBase):
 
 settings = get_settings()
 
-_connect_args = ({"check_same_thread": False, "timeout": 30}
-                 if settings.database_url.startswith("sqlite") else {})
-engine = create_engine(settings.database_url, connect_args=_connect_args, future=True)
+_is_sqlite = settings.database_url.startswith("sqlite")
+_connect_args = {"check_same_thread": False, "timeout": 30} if _is_sqlite else {}
+
+# Pool sizing is DELIBERATE on a server database and left alone on SQLite.
+#
+# On SQLite the bound is the single writer, not the pool, and the pragmas below
+# are what make concurrency work; passing pool sizes there would only add
+# connections contending for the same write lock.
+#
+# On Postgres the pool is the one setting whose wrong value fails in aggregate
+# rather than locally — see the note on Settings.db_pool_size.  It is spelled
+# out here so that the number of connections one process can hold is a value
+# someone chose, not a library default nobody read.
+_pool_args = {} if _is_sqlite else {
+    "pool_size": settings.db_pool_size,
+    "max_overflow": settings.db_max_overflow,
+    "pool_recycle": settings.db_pool_recycle_seconds,
+    "pool_pre_ping": settings.db_pool_pre_ping,
+}
+engine = create_engine(settings.database_url, connect_args=_connect_args,
+                       future=True, **_pool_args)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False, future=True)
+
+
+# --------------------------------------------------------------------------- #
+# A SEPARATE, deliberately tiny pool for best-effort side stores.
+#
+# The vendor layout and field-profile stores are consulted from `app/rules/` and
+# `app/pipeline.py`, which hold no session and must not start to: they are the
+# deterministic layer, and threading a Session into it to reach a cache is
+# exactly the coupling that keeps those functions pure and testable.  So those
+# stores open their own session — and that is a NESTED checkout, taken while the
+# request's own transaction is already holding a connection.
+#
+# On the main pool that is a deadlock waiting for peak load: `threadpool_max_threads`
+# requests can each hold one connection and each want a second, and the pool has
+# no more to give.  Nothing recovers; every thread waits out pool_timeout.
+#
+# Its own pool makes that impossible.  Small, because these are single-row reads
+# and upserts measured in milliseconds; and fail-FAST, because a side store that
+# cannot get a connection must degrade to "no memory" immediately (every caller
+# already treats any failure that way) rather than stall a declaration for 30
+# seconds to consult a cache.
+# --------------------------------------------------------------------------- #
+_SIDE_POOL_SIZE = 1
+_SIDE_POOL_MAX_OVERFLOW = 2
+_SIDE_POOL_TIMEOUT_SECONDS = 2
+
+_side_pool_args = {} if _is_sqlite else {
+    "pool_size": _SIDE_POOL_SIZE,
+    "max_overflow": _SIDE_POOL_MAX_OVERFLOW,
+    "pool_timeout": _SIDE_POOL_TIMEOUT_SECONDS,
+    "pool_recycle": settings.db_pool_recycle_seconds,
+    "pool_pre_ping": settings.db_pool_pre_ping,
+}
+side_engine = create_engine(settings.database_url, connect_args=_connect_args,
+                            future=True, **_side_pool_args)
+SideSessionLocal = sessionmaker(bind=side_engine, autoflush=False,
+                                expire_on_commit=False, future=True)
+
+
+# Serialises side-store WRITES on SQLite.  Those writes are read-modify-writes
+# (counters, and the COO source state machine), which take two statements and so
+# need something held across both.  Postgres has that: the stores select their
+# row FOR UPDATE.  SQLite has no row lock to take, and its file lock is only
+# held for the write itself — so two threads can both read docs=2 and both
+# write 3, losing one.
+#
+# A process-local lock is the whole scope on SQLite, because SQLite IS the
+# single-process deployment: one file, one writer, a broker's laptop.  Same
+# split, for the same reason, as services.job_lock.
+_SIDE_WRITE_LOCK = threading.Lock()
+
+
+@contextmanager
+def side_store_session(*, write: bool = False) -> Iterator[Session]:
+    """A short, independent transaction for a best-effort side store.
+
+    Pass ``write=True`` for a read-modify-write, which is what the lock above
+    serialises on SQLite.  Reads do not take it: a cache lookup must never wait
+    behind a writer.
+
+    Independent also means the write is NOT rolled back with the caller's own
+    transaction.  For these stores that is the right trade and worth stating:
+    they are proposal-only caches (a remembered layout still has to
+    arithmetic-verify every row; a remembered COO is only ever offered with a
+    reviewer-visible warning), so learning from a job whose finalize later failed
+    costs a re-verified proposal, not a wrong declared value.
+    """
+    with (_SIDE_WRITE_LOCK if (write and _is_sqlite) else nullcontext()):
+        session = SideSessionLocal()
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
 
 if settings.database_url.startswith("sqlite"):
@@ -105,12 +202,73 @@ def init_db() -> None:
     from . import models  # noqa: F401  (register models)
 
     if settings.database_url.startswith("sqlite"):
-        existed = _sqlite_file_exists()
-        Base.metadata.create_all(bind=engine)
-        _migrate_sqlite()
-        _apply_sqlite_migrations(pre_existing=existed)
+        # The question is whether this database already HAS the application's
+        # schema — not whether a file is present at the path.  Those differ, and
+        # both mistakes are real:
+        #
+        #   * always create_all, then replay the ladder: on an existing database
+        #     create_all silently creates any table added since that database
+        #     was made, and the revision that creates the same table then fails
+        #     with "table already exists".  Latent until a revision added a
+        #     TABLE — every earlier one added a column, and create_all never
+        #     ALTERs, so nothing caught it for two revisions;
+        #   * skip create_all whenever the FILE exists: an empty file (a stopped
+        #     first run, `touch`, a wiped volume) is then treated as a
+        #     pre-alembic database, stamped at the baseline, and the upgrade
+        #     ALTERs tables that were never created.
+        #
+        # Asking the schema itself distinguishes the three states that actually
+        # exist, and each needs different treatment.
+        has_schema = _sqlite_has_schema()
+        if not has_schema:
+            # Fresh: built from the models, which puts it at head — and
+            # _apply_sqlite_migrations stamps it there rather than replaying.
+            Base.metadata.create_all(bind=engine)
+        else:
+            # Existing: carried forward by the ladder alone.  (_migrate_sqlite
+            # is the pre-alembic column ladder; it no-ops once past that.)
+            _migrate_sqlite()
+        _apply_sqlite_migrations(pre_existing=has_schema)
+        import_legacy_side_stores()
         return
     _require_schema_at_head()
+    import_legacy_side_stores()
+
+
+def import_legacy_side_stores() -> None:
+    """Carry the pre-table vendor JSON stores into the database.
+
+    The layout and field-profile stores used to be files under ``storage/``.
+    Dropping their contents at the cutover is not a clean slate: a proven layout
+    going missing sends documents that used to parse deterministically back to
+    the LLM path, and a missing field profile silently reinstates the exporter-
+    country COO fallback that a reviewer had already corrected by hand.
+
+    Idempotent by key rather than by a marker file, and deliberately so: it
+    re-reads the (tiny) files every boot and skips anything already present, so
+    there is no rename to fail, no marker to lose, and no half-migrated state if
+    a boot is interrupted.  Delete the JSON files once you are satisfied to
+    finish the cutover.
+
+    Racy only in the harmless direction: two instances starting together may both
+    try to insert the same key, the unique constraint refuses one, and that
+    importer logs and gives up on a store the other has just filled.
+    """
+    for name, importer in (("vendor_layouts.json", "layout_memory"),
+                           ("vendor_field_profiles.json", "field_profiles")):
+        path = settings.storage_dir / name
+        if not path.exists():
+            continue
+        try:
+            module = __import__(f"app.extraction.{importer}", fromlist=["import_legacy_json"])
+            count = module.import_legacy_json(path)
+        except Exception as e:                        # never block startup for a cache
+            log.warning("could not import legacy %s (%s) — the store starts empty", name, e)
+            continue
+        if count:
+            log.info("imported %s remembered entries from legacy %s; delete the file "
+                     "once you are satisfied, the database is authoritative now",
+                     count, name)
 
 
 class SchemaOutOfDateError(RuntimeError):
@@ -211,24 +369,19 @@ def _migrate_sqlite() -> None:
                 "ON customs_job (owner_key)"))
 
 
-def _sqlite_file_exists() -> bool:
-    """Whether the SQLite file was already on disk BEFORE create_all ran.
+def _sqlite_has_schema() -> bool:
+    """Whether this database already holds the application's tables.
 
-    This is the one fact that distinguishes the two states an unstamped file
-    can be in, and they need opposite treatment: a file create_all just raised
-    is at HEAD (it was built from the current models) and must only be stamped,
-    while a file that predates alembic is at the BASELINE and must be stamped
-    there and then upgraded.  Getting it backwards means replaying an ADD
-    COLUMN against a column that already exists.
+    ``customs_job`` is the probe because it has existed since the baseline, so
+    its presence means "some version of this app built this database" — which is
+    the fact ``init_db`` branches on.  Deliberately not a file-existence check:
+    an empty file is a FRESH database that happens to have a path, and treating
+    it as an existing one stamps a schema that is not there.
     """
-    try:
-        db_path = make_url(settings.database_url).database
-    except Exception:
-        return False
-    # ":memory:" (and a blank path) is a new database every time by definition.
-    if not db_path or db_path == ":memory:":
-        return False
-    return Path(db_path).exists()
+    from sqlalchemy import inspect
+
+    with engine.connect() as conn:
+        return inspect(conn).has_table("customs_job")
 
 
 def _alembic_config():

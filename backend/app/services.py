@@ -10,8 +10,9 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from sqlalchemy import delete as sql_delete
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy import update as sql_update
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
 from . import images
@@ -63,18 +64,124 @@ from .xml.bms_export import BMS_TEMPLATE_VERSION, build_bms_xls
 from .xml.bms_export import checksum as bms_checksum
 from .xml.composer import build_xml, checksum
 
-# Per-job advisory lock: review/finalize/mutation transactions never interleave
-# within this process (the deployment is a single uvicorn process; SQLite's
-# single-writer property backstops cross-process races).
+# --------------------------------------------------------------------------- #
+# Per-job mutual exclusion for review / finalize / item mutations.
+#
+# Two implementations, chosen by the database, because the guarantee has to
+# survive the deployment shape rather than assume one:
+#
+#   POSTGRES — a TRANSACTION-scoped advisory lock.  Cross-process by
+#     construction, which is the whole reason more than one API process may
+#     exist: a threading.Lock only ever serialised the threads inside ONE
+#     uvicorn worker, so with two workers (let alone two containers) a finalize
+#     and an hs-review could interleave on the same declaration and neither side
+#     would see the other.  That is not a slower app, it is a wrong one — the
+#     comment this replaces said "the deployment is a single uvicorn process",
+#     and it was load-bearing.
+#
+#     Transaction-scoped (pg_advisory_xact_lock) rather than session-scoped
+#     (pg_advisory_lock), for two independent reasons:
+#       * an exception that escapes the block releases the lock via the
+#         rollback, so a crashed or killed request cannot wedge a job forever;
+#       * it is the only kind that is safe behind a connection pooler in
+#         transaction mode (PgBouncer, RDS Proxy), where the connection under a
+#         session is not stable from one statement to the next.
+#     The cost is that the lock ends at the COMMIT rather than at the end of the
+#     `with` block.  Every call site already commits as its last statement and
+#     then only returns values it has in hand — which is precisely the ordering
+#     the "persist before the lock is released" comments describe.
+#
+#   SQLITE — the in-process threading.Lock.  SQLite has no advisory locks and
+#     is single-writer anyway; this is the dev/test/one-laptop path.
+# --------------------------------------------------------------------------- #
+
+# Namespace for this application's advisory locks, so a key can never collide
+# with another tool taking advisory locks on the same database.  Must fit int4.
+_ADVISORY_LOCK_NAMESPACE = 0x45435F4A          # "EC_J"
+
+# Postgres SQLSTATE 55P03 lock_not_available — what a lock_timeout raises.
+_LOCK_NOT_AVAILABLE = "55P03"
+
 _JOB_LOCKS: dict[str, threading.Lock] = {}
+_JOB_LOCK_WAITERS: dict[str, int] = {}
 _JOB_LOCKS_GUARD = threading.Lock()
 
 
 @contextmanager
-def job_lock(job_id: str):
+def _in_process_job_lock(job_id: str):
+    """Serialise threads within ONE process, and forget the job afterwards.
+
+    The dict used to keep an entry per job id for the life of the process.  On a
+    laptop that is nothing; on a server it is a slow leak keyed by every job
+    anyone has ever opened, and nothing ever removed an entry.  The refcount is
+    what makes removal safe: an entry may only go when nobody holds the lock and
+    nobody is queued for it.
+    """
     with _JOB_LOCKS_GUARD:
         lock = _JOB_LOCKS.setdefault(job_id, threading.Lock())
-    with lock:
+        _JOB_LOCK_WAITERS[job_id] = _JOB_LOCK_WAITERS.get(job_id, 0) + 1
+    try:
+        with lock:
+            yield
+    finally:
+        with _JOB_LOCKS_GUARD:
+            remaining = _JOB_LOCK_WAITERS.get(job_id, 1) - 1
+            if remaining > 0:
+                _JOB_LOCK_WAITERS[job_id] = remaining
+            else:
+                _JOB_LOCK_WAITERS.pop(job_id, None)
+                _JOB_LOCKS.pop(job_id, None)
+
+
+def _is_postgres(db: Session) -> bool:
+    try:
+        return db.get_bind().dialect.name == "postgresql"
+    except Exception:
+        # An unbound or exotic session is not a Postgres one for our purposes;
+        # falling back to the in-process lock is the conservative answer.
+        return False
+
+
+def _take_advisory_lock(db: Session, job_id: str) -> None:
+    timeout = get_settings().job_lock_timeout_seconds
+    if timeout > 0:
+        # set_config(..., is_local=true) is the parameterised form of
+        # `SET LOCAL` — plain SET takes no bind parameters.  Being LOCAL is what
+        # keeps the timeout from leaking onto the next request that borrows this
+        # pooled connection.
+        db.execute(text("SELECT set_config('lock_timeout', :ms, true)"),
+                   {"ms": f"{int(timeout * 1000)}"})
+    try:
+        # hashtext() is 32-bit, so two different job ids can theoretically share
+        # a key.  The consequence is that those two jobs serialise against each
+        # other — slower, never wrong — which is why a hash is acceptable here
+        # and would not be for a uniqueness check.
+        db.execute(text("SELECT pg_advisory_xact_lock(:ns, hashtext(:job))"),
+                   {"ns": _ADVISORY_LOCK_NAMESPACE, "job": job_id})
+    except DBAPIError as e:
+        if _sqlstate(e) != _LOCK_NOT_AVAILABLE:
+            raise                            # a real database fault, not contention
+        raise BlockingValidationError(
+            "JOB_BUSY",
+            f"Another change to this job is still running and did not finish within "
+            f"{timeout:.0f}s. Wait for it to complete, then try again.") from e
+
+
+def _sqlstate(e: DBAPIError) -> str | None:
+    """The SQLSTATE of a driver error, across psycopg 3 and psycopg 2 spellings."""
+    orig = getattr(e, "orig", None)
+    return getattr(orig, "sqlstate", None) or getattr(orig, "pgcode", None)
+
+
+@contextmanager
+def job_lock(db: Session, job_id: str):
+    """Hold the job for a read-modify-write.  See the note above for why this
+    takes the session: on Postgres the lock lives in the transaction."""
+    if _is_postgres(db):
+        _take_advisory_lock(db, job_id)
+        yield                                # released by the caller's commit
+        return
+    with _in_process_job_lock(job_id):
         yield
 
 
@@ -628,7 +735,7 @@ def run_extraction(db: Session, doc: Document, fixture: dict | None = None, *,
     # is not held across them, and the SPA extracts documents in parallel.  It
     # covers the one window that matters — this delete racing a concurrent
     # finalize writing the very artifact being deleted.
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         superseded = job.critical_review is not None or job.declaration is not None
         _invalidate_derived(db, job)
@@ -800,7 +907,7 @@ def resolve_document_role(db: Session, job: Job, doc: Document, *, accept: bool,
     changes what the declaration is built from, so everything derived is
     invalidated and the reviewer goes back through Critical Review.
     """
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         if doc.status != DocumentStatus.ROLE_REVIEW_REQUIRED.value:
             raise BlockingValidationError(
@@ -841,7 +948,7 @@ def remove_document(db: Session, job: Job, doc: Document, *, actor: str = SYSTEM
     same way a role decision does it.  The stored file is deleted best-effort;
     the audit trail records the removal.
     """
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         if doc.status == DocumentStatus.EXTRACTING.value:
             raise BlockingValidationError(
@@ -874,7 +981,7 @@ def remove_document(db: Session, job: Job, doc: Document, *, actor: str = SYSTEM
 
 def critical_review(db: Session, job: Job, *, actor: str = SYSTEM_ACTOR) -> dict:
     _require_extracted(job)
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         docs = declarable_documents(job)
         ctx = resolve_context(docs, _rate(job), item_mutations=job.item_mutations,
@@ -895,7 +1002,7 @@ _LEGACY_BODY_KEYS = {"insurance_national": "manual_insurance_amount",
 
 def finalize_job(db: Session, job: Job, body: dict, *, actor: str = SYSTEM_ACTOR) -> dict:
     _require_extracted(job)
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         result = _finalize_job_locked(db, job, body, actor=actor)
         db.commit()                      # persist before the lock is released
@@ -1206,7 +1313,7 @@ def edit_item_bms(db: Session, job: Job, body: dict, actor: str = SYSTEM_ACTOR) 
     artifact and the job status all survive.  The override is stored, the review
     preview is refreshed, and only the .xls is rebuilt (user rule 2026-07-21).
     """
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_extracted(job)
         ctx = resolve_context(declarable_documents(job), _rate(job), item_mutations=job.item_mutations,
@@ -1241,7 +1348,7 @@ def _recompute_after_mutation(db: Session, job: Job) -> dict:
 
 
 def add_job_item(db: Session, job: Job, body: dict, actor: str = SYSTEM_ACTOR) -> dict:
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_item_mutable(job)
         ctx = resolve_context(declarable_documents(job), _rate(job), item_mutations=job.item_mutations,
@@ -1273,7 +1380,7 @@ def review_item_hs(db: Session, job: Job, body: dict, actor: str = SYSTEM_ACTOR)
     declaration, XML) is invalidated and recomputed deterministically."""
     from .reference.store import get_reference
 
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_item_mutable(job)
         ctx = resolve_context(declarable_documents(job), _rate(job), item_mutations=job.item_mutations,
@@ -1303,7 +1410,7 @@ def review_item_hs_range(db: Session, job: Job, body: dict, actor: str = SYSTEM_
     not a replacement; a later per-row pick still overrides any one row."""
     from .reference.store import get_reference
 
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_item_mutable(job)
         ctx = resolve_context(declarable_documents(job), _rate(job), item_mutations=job.item_mutations,
@@ -1332,7 +1439,7 @@ def edit_job_item(db: Session, job: Job, item_id: str, body: dict,
     """Reviewer edits of an item's invoice fields (description / COO / qty /
     UOM / total price) — stored by immutable item_id, every derived value
     (HS/COO resolution, allocation, supplementary, totals, XML) recomputed."""
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_item_mutable(job)
         ctx = resolve_context(declarable_documents(job), _rate(job), item_mutations=job.item_mutations,
@@ -1357,7 +1464,7 @@ def set_all_item_coo(db: Session, job: Job, body: dict, actor: str = SYSTEM_ACTO
     """Bulk-apply one reviewer COO to every item (DB-validated), then recompute."""
     from .reference.store import get_reference
 
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_item_mutable(job)
         overlay, event = itemmut.set_all_coo(
@@ -1380,7 +1487,7 @@ def review_shipment_totals(db: Session, job: Job, body: dict,
     """Reviewer-corrected gross weight / cartons become the durable shipment
     authority: stored in the overlay, every recompute reconciles item sums
     exactly to them, and stale declaration/XML are invalidated."""
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_item_mutable(job)
         overlay, event = itemmut.set_shipment_totals(
@@ -1461,7 +1568,7 @@ def review_regime_selections(db: Session, job: Job, body: dict,
                                             f"Nationality {v!r} is not a valid alpha-2 country code.")
         return v
 
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_extracted(job)
         stored = dict(job.review_selections or {})
@@ -1503,7 +1610,7 @@ def review_regime_selections(db: Session, job: Job, body: dict,
 
 def delete_job_item(db: Session, job: Job, item_id: str, body: dict,
                     actor: str = SYSTEM_ACTOR) -> dict:
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_item_mutable(job)
         ctx = resolve_context(declarable_documents(job), _rate(job), item_mutations=job.item_mutations,

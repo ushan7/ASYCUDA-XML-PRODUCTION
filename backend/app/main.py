@@ -305,8 +305,36 @@ def _security_headers(resp) -> None:
         resp.headers.setdefault("Content-Security-Policy", "frame-ancestors 'self'")
 
 
+def _widen_threadpool() -> None:
+    """Lift Starlette's 40-thread default to the configured ceiling.
+
+    Every `def` route runs there, and so does every explicit run_in_threadpool
+    call — which is to say uploads, extraction and finalize, the three slowest
+    things this app does.  40 is therefore the per-process concurrency limit on
+    exactly the routes that hold a thread for seconds to minutes, and it is
+    reached long before CPU is: 41 reviewers pressing Finalize means the 41st
+    waits for a thread before it waits for anything real.
+
+    Never fatal.  A failure to widen the pool is a slower app, not a broken one,
+    and refusing to boot over it would trade a throughput ceiling for an outage.
+    """
+    target = get_settings().threadpool_max_threads
+    try:
+        import anyio.to_thread
+
+        limiter = anyio.to_thread.current_default_thread_limiter()
+        if limiter.total_tokens < target:
+            limiter.total_tokens = target
+            log.info("threadpool limiter raised to %s threads", target)
+    except Exception as e:                    # pragma: no cover - defensive
+        log.warning("could not raise the threadpool limiter to %s (%s: %s) — the "
+                    "process keeps AnyIO's default of 40 concurrent threadpool "
+                    "requests", target, type(e).__name__, e)
+
+
 @app.on_event("startup")
 def _startup() -> None:
+    _widen_threadpool()
     if not auth.credentials_configured():
         # Loud, because the symptom otherwise reads as a broken app: every
         # screen is a login form that rejects every password.
@@ -380,9 +408,14 @@ class LoginRequest(BaseModel):
 
 
 def _client_id(request: Request) -> str:
-    """Throttle key.  Proxy headers are NOT trusted: a caller that can forge
-    X-Forwarded-For could otherwise reset its own failure count at will."""
-    return request.client.host if request.client else "unknown"
+    """Throttle key — see auth.client_key.
+
+    X-Forwarded-For is read only as far as EASYCUSTOMS_TRUSTED_PROXY_HOPS says
+    the proxies in front of this app are ours; at the default of 0 it is ignored
+    entirely and the socket peer is used, because a caller that can set the
+    header would otherwise pick its own key and reset its failure count.
+    """
+    return auth.client_key(request)
 
 
 def _actor(request: Request) -> str:
@@ -427,30 +460,43 @@ def _session_payload(session: auth.Session, token: str | None = None) -> dict:
 
 
 @app.post("/api/auth/login")
-def login(body: LoginRequest, request: Request):
+def login(body: LoginRequest, request: Request, db: Session = Depends(db_dep)):
     """Exchange the configured username + password for a token valid for
     ``auth_token_ttl_hours`` (24h).  The token comes back in the body (for API
     clients and the SPA's fetches) AND as an HttpOnly cookie (for the evidence
-    iframe and the XML/.xls download links, which are plain navigations)."""
+    iframe and the XML/.xls download links, which are plain navigations).
+
+    The session itself stays stateless; the database is here only for the
+    failure counter, which cannot live in this process (see app/auth.py).
+    """
     if not auth.credentials_configured():
         raise HTTPException(503, "This server has no login account configured. Set "
                                  "EASYCUSTOMS_AUTH_USERNAME and EASYCUSTOMS_AUTH_PASSWORD in "
                                  "backend/.env and restart it.")
     client = _client_id(request)
-    retry_after = auth.throttle_retry_after(client)
+    try:
+        retry_after = auth.throttle_retry_after(db, client)
+    except auth.ThrottleUnavailable as e:
+        # FAIL CLOSED. Letting the attempt through because the counter is
+        # unreadable would turn a database fault into unlimited password
+        # guessing against a public endpoint — and a signed-in user could not do
+        # anything without that database anyway, so nothing is gained by it.
+        log.error("refusing sign-in: the failure counter is unreadable (%s)", e)
+        raise HTTPException(503, "This server cannot verify sign-in attempts right now. "
+                                 "Try again shortly.")
     if retry_after:
         return JSONResponse(status_code=429, headers={"Retry-After": str(retry_after)}, content={
             "status": "THROTTLED", "code": "TOO_MANY_ATTEMPTS",
             "detail": f"Too many failed sign-in attempts. Try again in {retry_after} second(s)."})
     if not auth.verify_credentials(body.username, body.password):
-        auth.record_failure(client)
+        auth.record_failure(db, client)
         log.warning("failed sign-in attempt from %s", client)
         # One message for both halves: which of the two was wrong is not the
         # caller's business.
         return JSONResponse(status_code=401, content={
             "status": "UNAUTHENTICATED", "code": "BAD_CREDENTIALS",
             "detail": "Incorrect username or password."})
-    auth.clear_failures(client)
+    auth.clear_failures(db, client)
     # The token names the CONFIGURED username, not the typed one: the login
     # comparison is case-insensitive, and a token has to keep matching the
     # account it was issued for (verify_token re-checks that).

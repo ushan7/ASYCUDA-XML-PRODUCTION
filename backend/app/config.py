@@ -56,6 +56,82 @@ class Settings(BaseSettings):
     #   EASYCUSTOMS_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/easycustoms
     database_url: str = f"sqlite:///{BACKEND_ROOT / 'easy_customs.db'}"
 
+    # Connection pool (Postgres only — SQLAlchemy pools a SQLite FILE too, but
+    # the knobs that matter there are the WAL pragmas in database.py, not these).
+    #
+    # These exist because the fleet's total connection count is a number someone
+    # has to CHOOSE.  Left at the SQLAlchemy defaults (5 + 10) they are invisible
+    # per process and catastrophic in aggregate: N API tasks and M extraction
+    # workers each open up to 15, so a 10 + 75 fleet asks a Postgres whose
+    # max_connections is 500 for more than 1200.  The failure is not a slow
+    # query, it is `FATAL: sorry, too many clients already` on an arbitrary
+    # request, and it arrives the first time the worker fleet scales up under
+    # load — i.e. exactly when the queue is deepest.
+    #
+    # Size them as:  tasks x (pool_size + max_overflow) <= the server's ceiling,
+    # minus headroom for migrations and psql.  Behind PgBouncer/RDS Proxy the
+    # ceiling that matters is the POOLER's, not the database's.
+    #
+    # The defaults are 10 + 30 rather than SQLAlchemy's 5 + 10 so that capacity
+    # MATCHES `threadpool_max_threads` below.  That relationship is the point:
+    # Starlette already lets 40 threadpool requests run at once, so a 15
+    # connection pool was always the tighter of the two limits and the surplus
+    # 25 queued on it silently.  Persistent cost stays 10; the other 30 are
+    # burst connections the pool opens under load and closes again.
+    db_pool_size: int = Field(default=10, ge=1, validation_alias=_alias("DB_POOL_SIZE"))
+    db_max_overflow: int = Field(default=30, ge=0, validation_alias=_alias("DB_MAX_OVERFLOW"))
+    # Recycle before any upstream idle-reaper (RDS Proxy, PgBouncer, an NLB) can
+    # drop a pooled connection underneath us: a reaped-but-pooled connection
+    # surfaces as a random OperationalError on a healthy request.
+    db_pool_recycle_seconds: int = Field(default=1800,
+                                         validation_alias=_alias("DB_POOL_RECYCLE_SECONDS"))
+    # One round-trip per checkout, in exchange for never handing a handler a
+    # connection the server has already closed.  Worth it on any deployment
+    # where something sits between this process and Postgres.
+    db_pool_pre_ping: bool = Field(default=True, validation_alias=_alias("DB_POOL_PRE_PING"))
+
+    # ---- Concurrency -------------------------------------------------------
+    # Starlette runs every `def` route (and every run_in_threadpool call) on an
+    # AnyIO thread limiter whose default is 40 PER PROCESS.  Uploads, extraction
+    # and finalize all go through it, so 40 is the real per-task concurrency
+    # ceiling on precisely the slowest routes — reached long before CPU is.
+    #
+    # Raising it is only safe up to the connection pool: a thread that gets past
+    # the limiter and then waits on an exhausted pool has just moved the queue
+    # somewhere with a 30s timeout and a worse error message.  The validator
+    # below enforces that relationship rather than trusting two numbers in a
+    # .env to stay in step.
+    threadpool_max_threads: int = Field(default=40, ge=1,
+                                        validation_alias=_alias("THREADPOOL_MAX_THREADS"))
+
+    # How long a review/finalize/mutation waits for another one to let go of the
+    # SAME job (services.job_lock).  Postgres deployments only — the SQLite path
+    # uses an in-process lock that has no timeout to give.
+    #
+    # 0 (default) = wait indefinitely, which is what the in-process lock has
+    # always done.  The reason to set it on a real deployment is that "wait
+    # forever" and "wedged" look identical from a browser: a request that has
+    # been holding the lock since a hung upstream call keeps every later request
+    # on that job queued behind it with no error anywhere.  A finite value turns
+    # that into a 409 the reviewer can act on.  Size it above your slowest
+    # legitimate finalize, not below.
+    job_lock_timeout_seconds: float = Field(default=0.0, ge=0,
+                                            validation_alias=_alias("JOB_LOCK_TIMEOUT_SECONDS"))
+
+    @model_validator(mode="after")
+    def _threadpool_fits_the_pool(self) -> "Settings":
+        if self.database_url.startswith("sqlite"):
+            return self                       # single writer; the pool is not the bound
+        capacity = self.db_pool_size + self.db_max_overflow
+        if self.threadpool_max_threads > capacity:
+            raise ValueError(
+                f"EASYCUSTOMS_THREADPOOL_MAX_THREADS={self.threadpool_max_threads} exceeds the "
+                f"connection pool ({self.db_pool_size} + {self.db_max_overflow} = {capacity}). "
+                f"Every one of those threads runs a request that wants a connection, so the "
+                f"surplus would queue on the pool and time out instead of being refused. "
+                f"Raise EASYCUSTOMS_DB_POOL_SIZE / _DB_MAX_OVERFLOW with it.")
+        return self
+
     # ---- Queue (async extraction) -------------------------------------------
     # "off" (default): POST /extract runs OCR + LLM inside the API request,
     # exactly as before.  "sqs": the endpoint only CLAIMS the document
@@ -154,6 +230,27 @@ class Settings(BaseSettings):
     # should say so outright.
     session_cookie_secure: str = Field(default="auto",
                                        validation_alias=_alias("SESSION_COOKIE_SECURE"))
+    # How many proxies of YOURS sit in front of this app.  Decides where the
+    # caller's real IP is read from for the login throttle (auth.client_key).
+    #
+    #   0 (default) — nothing trusted in front. The socket peer is the key and
+    #                 X-Forwarded-For is ignored entirely, because a caller that
+    #                 can set that header would otherwise choose its own throttle
+    #                 key and reset its failure count at will.
+    #   1           — one reverse proxy / load balancer (Caddy, nginx, an ALB).
+    #   2           — e.g. CloudFront in front of an ALB.
+    #
+    # This is NOT optional behind a proxy, and getting it wrong is not a subtle
+    # degradation.  Left at 0, every request appears to come from the proxy, so
+    # all callers share ONE throttle bucket: ten failed sign-ins from anywhere
+    # lock out every user of the system, and an unauthenticated attacker can
+    # trigger that deliberately.  Set too HIGH, the key is read from a position
+    # the caller controls, and the throttle stops limiting anyone.
+    #
+    # Count only hops you operate. Each appends the address it received the
+    # request from, so the real client is the hops-th entry from the right.
+    trusted_proxy_hops: int = Field(default=0, ge=0,
+                                    validation_alias=_alias("TRUSTED_PROXY_HOPS"))
 
     @field_validator("session_cookie_secure")
     @classmethod
@@ -277,14 +374,19 @@ class Settings(BaseSettings):
     # tables in code (arithmetic-verified) and call the LLM only for pages
     # the parser could not fully own, plus one header/totals call.
     deterministic_table_parser_enabled: bool = True
-    # Remember proven table layouts per vendor (storage/vendor_layouts.json)
-    # so headerless/garbled-header documents still parse deterministically;
+    # Remember proven table layouts per vendor (the `vendor_layout` table) so
+    # headerless/garbled-header documents still parse deterministically;
     # arithmetic verification still gates every row.
     vendor_layout_memory_enabled: bool = True
     # Remember per-vendor field-allocation defaults learned from finalized /
-    # reviewer-corrected jobs (storage/vendor_field_profiles.json) — today the
+    # reviewer-corrected jobs (the `vendor_field_profile` table) — today the
     # vendor's default COO, proposed (with a warning) before the exporter-
     # country fallback.  Read by extraction/field_profiles.py.
+    #
+    # Both were JSON files under storage/ until 2026-08-11.  They are tables
+    # because a whole-file read-modify-write loses one writer's entries the
+    # moment a second process records at the same time, and a local file is
+    # invisible to a second container at all.
     vendor_field_profiles_enabled: bool = True
 
     # ---- Mistral OCR request options ---------------------------------------

@@ -21,10 +21,16 @@ from app.rules.models import WorkItem
 
 
 @pytest.fixture(autouse=True)
-def _isolated_store(tmp_path, monkeypatch):
+def _isolated_store(isolated_vendor_stores, monkeypatch):
+    """An empty profile table, plus a Settings object tests can flip.
+
+    The store is a database table now (a JSON file could not survive a second
+    process writing it), so isolation comes from `isolated_vendor_stores`.  The
+    private Settings stays because these tests toggle
+    `vendor_field_profiles_enabled`, which field_profiles reads for itself.
+    """
     from app import config as config_mod
     s = config_mod.get_settings_uncached()
-    s.storage_dir = tmp_path
     monkeypatch.setattr(field_profiles, "get_settings", lambda: s)
     yield s
 
@@ -138,7 +144,14 @@ def test_demo_finalize_records_no_profile(_isolated_store):
             "border_mode": "01", "inland_mode_of_transport": "09",
         })
         assert r.status_code == 200
-    store = _isolated_store.storage_dir / "vendor_field_profiles.json"
-    assert not store.exists() or not json.loads(store.read_text())["profiles"], (
+    from app.database import SessionLocal
+    from app.models import VendorFieldProfile
+
+    db = SessionLocal()
+    try:
+        learned = db.query(VendorFieldProfile).count()
+    finally:
+        db.close()
+    assert learned == 0, (
         "a fixture-driven demo finalize wrote a vendor profile — the live-OCR "
         "gate in services._finalize_job_locked is gone")

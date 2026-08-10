@@ -131,3 +131,39 @@ def test_a_brand_new_file_is_stamped_at_head_not_replayed(tmp_path, monkeypatch)
         assert "extraction_provenance" in _columns(path)
     finally:
         engine.dispose()
+
+
+def test_a_revision_that_adds_a_TABLE_still_upgrades_a_pre_alembic_file(pre_alembic_db):
+    """The case that create_all used to break.
+
+    init_db ran ``create_all`` before replaying the ladder, so on a pre-existing
+    file it silently created any table added since that file was made — and then
+    the revision that creates the same table failed with "table already exists".
+    Nothing caught it for two revisions because both added COLUMNS, and
+    create_all never ALTERs an existing table; the first revision to add a table
+    broke every existing SQLite deployment's startup.
+
+    Pinned against the vendor stores because they are the first such tables, but
+    the assertion is about the mechanism, not about them.
+    """
+    assert "vendor_layout" not in _tables(pre_alembic_db)
+
+    database.init_db()                        # must not raise
+
+    assert "vendor_layout" in _tables(pre_alembic_db)
+    assert "vendor_field_profile" in _tables(pre_alembic_db)
+    # ...and the pre-alembic rows are still there afterwards
+    con = sqlite3.connect(pre_alembic_db)
+    try:
+        assert list(con.execute("select id from customs_job")) == [("job-1",)]
+    finally:
+        con.close()
+
+
+def _tables(path) -> set[str]:
+    con = sqlite3.connect(path)
+    try:
+        return {r[0] for r in con.execute(
+            "select name from sqlite_master where type='table'")}
+    finally:
+        con.close()
