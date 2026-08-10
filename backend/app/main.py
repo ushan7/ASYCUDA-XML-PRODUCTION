@@ -26,7 +26,7 @@ from . import auth, queueing, services
 from .config import get_settings
 from .database import SessionLocal, get_session, init_db
 from .demo import seed_demo_job
-from .domain.enums import DeclaredRole, DocumentStatus
+from .domain.enums import DeclaredRole, DocumentStatus, ExtractionProvenance
 from .domain.errors import BlockingValidationError
 from .reference.store import get_reference, hs_query_error
 from .review.item_mutations import ItemMutationError
@@ -270,11 +270,23 @@ def _security_headers(resp) -> None:
     'unsafe-eval' because Babel standalone COMPILES the application in the
     browser.  Both are concessions to the current frontend, not endorsements —
     vendoring those bundles locally is what lets this tighten to 'self'.
+
+    The framing rule is split by content type, because this app is BOTH the
+    thing that must never be framed and the thing that frames.  The workspace
+    is HTML and carries the clickjackable finalize button, so it stays at
+    `DENY`/`frame-ancestors 'none'`.  Everything else is evidence and payload —
+    above all the stored PDF the reviewer's document panel loads in an
+    `<iframe>` FROM THIS ORIGIN.  Sending `DENY` there too blanked that panel
+    in every browser (`X-Frame-Options: DENY` refuses same-origin framing as
+    firmly as cross-origin), which is the whole reason a reviewer could not see
+    the document behind a 📄 link.  `SAMEORIGIN`/'self' keeps a third-party
+    page from embedding an importer's invoice while letting the app frame its
+    own; a PDF or JSON response has no control to clickjack in the first place.
     """
     resp.headers.setdefault("X-Content-Type-Options", "nosniff")
     resp.headers.setdefault("Referrer-Policy", "same-origin")
-    resp.headers.setdefault("X-Frame-Options", "DENY")
     if resp.headers.get("content-type", "").startswith("text/html"):
+        resp.headers.setdefault("X-Frame-Options", "DENY")
         resp.headers.setdefault("Content-Security-Policy", "; ".join((
             "default-src 'self'",
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com",
@@ -286,6 +298,11 @@ def _security_headers(resp) -> None:
             "form-action 'self'",
             "frame-ancestors 'none'",
         )))
+    else:
+        resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        # Modern browsers prefer frame-ancestors over X-Frame-Options; both are
+        # sent so the rule holds either way it is read.
+        resp.headers.setdefault("Content-Security-Policy", "frame-ancestors 'self'")
 
 
 @app.on_event("startup")
@@ -668,9 +685,13 @@ async def upload_document(job_id: str, role: str, request: Request, file: Upload
     # file.content_type is NOT forwarded: it is the browser's guess from the
     # file extension, i.e. attacker-influenced, and storing it once meant the
     # evidence viewer served it back as the response media type.
-    doc = await run_in_threadpool(services.add_document, db, job, declared,
-                                  file.filename or "upload.pdf", data, fixture_obj,
-                                  actor=_actor(request))
+    doc = await run_in_threadpool(partial(services.add_document, db, job, declared,
+                                          file.filename or "upload.pdf", data, fixture_obj,
+                                          actor=_actor(request),
+                                          # Anything arriving on THIS route came from the
+                                          # request, whatever it claims — the one provenance
+                                          # that stays behind allow_fixture_uploads.
+                                          provenance=ExtractionProvenance.CLIENT_FIXTURE))
     return {"document_id": doc.id, "role": doc.declared_role, "role_match": doc.role_match,
             "status": doc.status, "warnings": doc.warnings}
 
@@ -699,13 +720,21 @@ async def upload_photo_document(job_id: str, role: str, request: Request,
             "status": doc.status, "warnings": doc.warnings}
 
 
-@app.get("/api/jobs/{job_id}/documents/{document_id}/file")
+@app.api_route("/api/jobs/{job_id}/documents/{document_id}/file", methods=["GET", "HEAD"])
 def get_document_file(job_id: str, document_id: str, db: Session = Depends(db_dep),
                       principal: str = Depends(principal_dep)):
     """Serve the stored upload inline — the evidence the review's document
     viewer shows next to the extracted values.  Read-only in every job state:
     a finalized declaration's documents stay viewable (post-clearance audits
-    arrive months later), they just can't be changed."""
+    arrive months later), they just can't be changed.
+
+    HEAD is answered as well as GET, and is not decoration: the viewer panel
+    frames this URL, and a frame reports nothing back — its load event fires
+    for a refusal exactly as for a PDF.  The panel therefore asks HEAD first
+    and renders the reason instead of an empty grey rectangle.  FileResponse
+    sends headers only for HEAD, so the probe costs no bytes; without the
+    method here it answered 404 (the SPA mount at "/" swallows the 405) and
+    every document would have been reported unavailable."""
     job = services.get_job(db, job_id, principal=principal)
     if not job:
         raise HTTPException(404, "job not found")
@@ -829,9 +858,15 @@ def get_job(job_id: str, db: Session = Depends(db_dep),
     return {
         "job_id": job.id, "status": job.status, "exchange_rate": job.exchange_rate,
         "rule_set_version": job.rule_set_version,
+        # Whether this job's facts were seeded from the bundled samples rather
+        # than read off the attached documents. The SPA marks it everywhere the
+        # job appears: a demo declaration is a real, downloadable XML, so the
+        # one thing that must not happen is mistaking it for a shipment.
+        "is_demo": services.is_demo_job(job),
         "documents": [
             {"document_id": d.id, "role": d.declared_role, "file": d.original_file_name,
-             "status": d.status, "role_match": d.role_match, "warnings": d.warnings or []}
+             "status": d.status, "role_match": d.role_match, "warnings": d.warnings or [],
+             "provenance": d.extraction_provenance}
             for d in sorted(job.documents, key=lambda x: x.declared_role)
         ],
         "critical_review": job.critical_review,

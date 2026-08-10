@@ -116,3 +116,42 @@ def test_served_file_is_always_pdf_and_nosniff(client, invoice_bytes, declared):
     assert r.headers["x-content-type-options"] == "nosniff"
     # still inline: the evidence viewer renders it next to the extracted values
     assert r.headers["content-disposition"].startswith("inline")
+
+
+# --------------------------------------------------------------------------- #
+# Gate 3 — the evidence PDF must stay framable BY THIS ORIGIN
+#
+# The hardening that made the media type a server fact also put
+# `X-Frame-Options: DENY` on every response, evidence included.  DENY refuses
+# same-origin framing exactly as firmly as cross-origin, so the reviewer's
+# document panel — an <iframe> on this very origin — rendered nothing at all:
+# clicking a 📄 evidence link opened an empty panel, with the bytes served
+# correctly at 200 the whole time.  Nothing tested the header, so a change that
+# broke the app's central verification surface looked green.
+#
+# Both directions are asserted, because the fix is a split and either half can
+# regress on its own: too strict blanks the viewer again, too loose puts the
+# finalize button back inside somebody else's frame.
+# --------------------------------------------------------------------------- #
+def test_served_file_is_framable_by_this_origin(client, invoice_bytes):
+    job_id = _new_job(client)
+    doc_id = client.post(f"/api/jobs/{job_id}/documents/INVOICE",
+                         files={"file": ("invoice.pdf", invoice_bytes, "application/pdf")}
+                         ).json()["document_id"]
+    r = client.get(f"/api/jobs/{job_id}/documents/{doc_id}/file")
+    assert r.status_code == 200
+    # NOT "DENY": that is what the browser refuses to display in the panel.
+    assert r.headers["x-frame-options"] == "SAMEORIGIN"
+    # ...and not framable from anywhere else — an importer's invoice is not for
+    # embedding in a third-party page.
+    assert "frame-ancestors 'self'" in r.headers["content-security-policy"]
+
+
+def test_app_shell_is_never_framable(client):
+    """The workspace HTML is the clickjacking target (finalize is one click on
+    it), so its rule does NOT relax with the evidence rule."""
+    r = client.get("/")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/html")
+    assert r.headers["x-frame-options"] == "DENY"
+    assert "frame-ancestors 'none'" in r.headers["content-security-policy"]

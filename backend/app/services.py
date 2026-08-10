@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from . import images
 from .config import get_settings
 from .declaration.validator import WARN_MODE_HARD_CODES
-from .domain.enums import DeclaredRole, DocumentStatus, JobStatus
+from .domain.enums import DeclaredRole, DocumentStatus, ExtractionProvenance, JobStatus
 from .domain.errors import BlockingValidationError, ValidationMessage
 from .extraction import field_profiles
 from .extraction.service import extract_document
@@ -294,10 +294,16 @@ def validate_upload(filename: str, data: bytes) -> str:
 
 
 def add_document(db: Session, job: Job, role: DeclaredRole, filename: str, data: bytes,
-                 fixture: dict | None, *, actor: str = SYSTEM_ACTOR) -> Document:
+                 fixture: dict | None, *, actor: str = SYSTEM_ACTOR,
+                 provenance: ExtractionProvenance = ExtractionProvenance.OCR) -> Document:
     """Store the upload. Extraction is a separate user-triggered step, except
     for fixture uploads (demo/tests) which extract immediately — deterministic
     and instant, no external calls.
+
+    ``provenance`` says where ``fixture`` came from, and every caller passing a
+    fixture must state it (see :func:`_attach_document`).  It is what separates
+    the bundled demo from unverified facts arriving in an HTTP request; the two
+    used to be the same hook, so the gate on one closed the other.
 
     The client's declared MIME type is deliberately NOT a parameter.  What gets
     stored is always PDF bytes — validate_upload proved it, or images.py just
@@ -318,7 +324,8 @@ def add_document(db: Session, job: Job, role: DeclaredRole, filename: str, data:
         # Downstream never learns that image uploads exist.
         data = images.photos_to_pdf([(filename, data)])
     return _attach_document(db, job, role, filename, data, digest,
-                            fixture, converted_pages=1 if converted else 0, actor=actor)
+                            fixture, converted_pages=1 if converted else 0, actor=actor,
+                            provenance=provenance)
 
 
 def add_photo_document(db: Session, job: Job, role: DeclaredRole,
@@ -361,24 +368,83 @@ def add_photo_document(db: Session, job: Job, role: DeclaredRole,
                             fixture=None, converted_pages=len(photos), actor=actor)
 
 
+def _stamp_provenance(db: Session, job: Job, doc: Document,
+                      provenance: ExtractionProvenance, *, actor: str) -> None:
+    """Record on the row where this document's facts came from, and say so in
+    the audit trail when they did not come from the document.
+
+    Silence is the failure mode worth avoiding here: a seeded extraction and a
+    real one are the same JSON in the same column, so without this the only
+    trace that a declaration was built from values nobody read off the paper is
+    an operator's memory of which button they pressed.
+    """
+    doc.extraction_provenance = provenance.value
+    if provenance is ExtractionProvenance.OCR:
+        return
+    # Flush before auditing: a brand-new row's id is assigned by the column
+    # default AT FLUSH (models._uuid), so reading doc.id before one records the
+    # event against document None — a trail that names no document is not a
+    # trail.  Harmless no-op on the retry path, where the row is already
+    # persistent.
+    db.flush()
+    _audit(db, job.id, "EXTRACTION_SEEDED",
+           f"{doc.declared_role} extraction supplied, not read from the document "
+           f"(provenance {provenance.value})", actor=actor,
+           payload={"document_id": doc.id, "provenance": provenance.value})
+
+
+def is_demo_job(job: Job) -> bool:
+    """True when any of this job's documents was seeded from a bundled sample.
+
+    DERIVED, never stored: a flag on the job and a provenance on the row are
+    two things that can disagree, and the one that would be wrong is the one
+    the UI reads.  The documents are the evidence, so they are the answer.
+    """
+    return any(d.extraction_provenance == ExtractionProvenance.BUNDLED_DEMO.value
+               for d in job.documents)
+
+
 def _attach_document(db: Session, job: Job, role: DeclaredRole, filename: str, data: bytes,
                      digest: str, fixture: dict | None,
-                     converted_pages: int = 0, *, actor: str = SYSTEM_ACTOR) -> Document:
+                     converted_pages: int = 0, *, actor: str = SYSTEM_ACTOR,
+                     provenance: ExtractionProvenance = ExtractionProvenance.OCR) -> Document:
     """Shared tail of every upload path: duplicate gate, retry-reset, row +
     stored file.  ``data`` is what is STORED (always PDF bytes by now);
     ``digest`` identifies what the user picked (pre-conversion)."""
-    # The fixture replay hook is gated HERE as well as on the upload route,
-    # because the route is not the only way in: seed_demo_job calls
-    # add_document with a bundled fixture directly, so POST /api/jobs/demo
-    # planted unverified hard-coded values into a real job on a server where
-    # the setting was off — the gate reported a state it was not enforcing.
-    # A gate on one caller is a gate on one caller.
-    if fixture is not None and not get_settings().allow_fixture_uploads:
+    # The replay hook is gated HERE as well as on the upload route, because the
+    # route is not the only way in — seed_demo_job calls add_document directly.
+    #
+    # But the gate is on PROVENANCE, not on "a fixture was passed", and the
+    # difference is the whole bug.  What must never reach a declaration
+    # unannounced is facts supplied by a CLIENT: chosen outside the server,
+    # bounded by nothing, indistinguishable afterwards from something read off
+    # the paper.  A fixture the server loads from its own backend/sample_data
+    # is none of those things — it ships with the code, no request can alter
+    # it, and it is the entire content of the demo.  Gating both as one turned
+    # "reject unverified values from the network" into "the sample shipment
+    # button 409s on every deployment that has not opted in", which is how it
+    # was found.  Bundled fixtures are allowed and MARKED (below); client
+    # fixtures still need the flag.
+    if fixture is not None and provenance is ExtractionProvenance.OCR:
+        # A caller that supplies an extraction without saying where it came
+        # from does NOT get the benefit of the doubt: OCR is the default value,
+        # so honouring it here would let a forgotten argument label supplied
+        # facts as read-from-the-document — the one thing this column exists to
+        # prevent.  Fall back to the gated, marked provenance instead, so the
+        # mistake surfaces as a refusal on a default deployment rather than as
+        # a quietly laundered value.
+        provenance = ExtractionProvenance.CLIENT_FIXTURE
+    if (fixture is not None and provenance is ExtractionProvenance.CLIENT_FIXTURE
+            and not get_settings().allow_fixture_uploads):
         raise BlockingValidationError(
             "FIXTURE_UPLOADS_DISABLED",
             "This server does not accept supplied extraction values: a document's facts must "
             "come from its own OCR. Set EASYCUSTOMS_ALLOW_FIXTURE_UPLOADS=true only on a test "
             "or demo deployment.", scope="DOCUMENT")
+    # Nothing was supplied, so the row says what is true regardless of what the
+    # caller asked for.
+    if fixture is None:
+        provenance = ExtractionProvenance.OCR
     # A byte-identical file in the SAME role box is never a legitimate second
     # document.  Several documents per role IS supported (a shipment may carry
     # several invoices), but every extra copy of the *same* file contributes
@@ -408,6 +474,7 @@ def _attach_document(db: Session, job: Job, role: DeclaredRole, filename: str, d
         # envelope survives, so the retry costs no re-OCR.
         twin.status = DocumentStatus.UPLOADED.value
         twin.warnings = []
+        _stamp_provenance(db, job, twin, provenance, actor=actor)
         db.flush()
         _audit(db, job.id, "DOCUMENT_UPLOAD_RETRIED",
                f"{role.value} #{twin.upload_index_within_role} reset for re-extraction "
@@ -426,6 +493,7 @@ def _attach_document(db: Session, job: Job, role: DeclaredRole, filename: str, d
                    original_file_name=filename, byte_size=len(data),
                    sha256=digest, status=DocumentStatus.UPLOADED.value)
     db.add(doc)
+    _stamp_provenance(db, job, doc, provenance, actor=actor)
     db.flush()
     # A converted photo keeps its camera filename for display, but the stored
     # file IS a PDF — name it as one so the storage directory tells the truth.
@@ -1525,6 +1593,10 @@ def list_jobs(db: Session, limit: int = 50, offset: int = 0, *, principal: str) 
             "declaration_type": " ".join(x for x in (cr.get("declaration_type"),
                                                      cr.get("gen_procedure_code")) if x),
             "has_xml": j.id in with_xml,
+            # Demo jobs sit in the real dashboard beside real ones (that is the
+            # point — the demo shows the actual workspace), so the listing has
+            # to say which is which.
+            "is_demo": is_demo_job(j),
         })
     return {"jobs": out, "total": total}
 

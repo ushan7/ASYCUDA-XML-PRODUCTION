@@ -77,6 +77,14 @@ class Document(Base):
     sha256: Mapped[str] = mapped_column(String(64), default="")
     storage_key: Mapped[str] = mapped_column(String(400), default="")
     status: Mapped[str] = mapped_column(String(40), default="UPLOADED")
+    # Where raw_extraction came from (domain.enums.ExtractionProvenance).  The
+    # row is the only place that can answer it afterwards: a fixture-seeded
+    # extraction and an OCR'd one are the same JSON in the same column, and
+    # "these values were never read off the document" is exactly what an audit
+    # of a declaration needs to be able to establish.  Defaults to OCR, which
+    # is what every row written before this column existed was.
+    extraction_provenance: Mapped[str] = mapped_column(String(24), default="OCR",
+                                                       server_default="OCR")
 
     ocr: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     raw_extraction: Mapped[dict | None] = mapped_column(JSON, nullable=True)

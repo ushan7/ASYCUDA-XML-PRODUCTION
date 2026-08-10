@@ -11,7 +11,7 @@ import json
 from sqlalchemy.orm import Session
 
 from .config import SAMPLE_DIR
-from .domain.enums import DeclaredRole
+from .domain.enums import DeclaredRole, ExtractionProvenance
 from .models import Job
 from .services import add_document, create_job
 
@@ -32,5 +32,12 @@ def seed_demo_job(db: Session, created_by: str = "demo", *, actor: str = "demo",
         pdf_path = SAMPLE_DIR / pdf_name
         data = pdf_path.read_bytes() if pdf_path.exists() else b"%PDF-1.4\n"
         fixture = json.loads((SAMPLE_DIR / "fixtures" / fixture_name).read_text())
-        add_document(db, job, role, pdf_name, data, fixture, actor=actor)
+        # BUNDLED_DEMO, not the client-fixture hook: these files ship with the
+        # server and no request can influence them, so the demo runs on any
+        # deployment — while every document it seeds is stamped, audited and
+        # shown as a demo, so the values can never be mistaken for OCR of the
+        # attached PDF.  Sharing one ungated hook with client-supplied facts is
+        # what made this button 409 wherever the fixture flag was off.
+        add_document(db, job, role, pdf_name, data, fixture, actor=actor,
+                     provenance=ExtractionProvenance.BUNDLED_DEMO)
     return job

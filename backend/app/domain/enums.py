@@ -35,6 +35,34 @@ OPTIONAL_ROLES = (
 )
 
 
+class ExtractionProvenance(str, Enum):
+    """WHERE a document's extracted facts came from — recorded on the row.
+
+    The distinction is not academic.  Extraction values that did not come from
+    the document's own bytes are values nobody read off the paper, and they end
+    up in a legally binding declaration looking exactly like values that were.
+    Until this existed there was one undifferentiated "fixture" hook, so the
+    only way to gate the dangerous case (facts supplied in an HTTP request) was
+    to gate the harmless one too — which is precisely what silently disabled
+    the bundled demo on every deployment that had not opted in.
+
+    OCR is the only one that means "read from this document".  The other two
+    are always visible: BUNDLED_DEMO marks its job as a demo throughout the UI,
+    and CLIENT_FIXTURE cannot be used at all unless the deployment turned
+    EASYCUSTOMS_ALLOW_FIXTURE_UPLOADS on.
+    """
+
+    #: Read from the document's own bytes (OCR + extractor). The normal path.
+    OCR = "OCR"
+    #: A sample fixture shipped in backend/sample_data, seeded by the demo
+    #: button.  Server-side and part of the deployment artifact — no client can
+    #: choose or influence it — so it needs no flag, only a visible mark.
+    BUNDLED_DEMO = "BUNDLED_DEMO"
+    #: Supplied in the upload REQUEST. Unverified facts from outside the
+    #: server; refused unless allow_fixture_uploads is explicitly on.
+    CLIENT_FIXTURE = "CLIENT_FIXTURE"
+
+
 class JobStatus(str, Enum):
     UPLOADING = "UPLOADING"
     UPLOAD_COMPLETE = "UPLOAD_COMPLETE"

@@ -115,6 +115,14 @@ Field 18 / Field 21 / insurance as applicable) →
 (no keys needed); uploading your own PDFs runs live Mistral OCR + OpenAI
 extraction when keys are set.
 
+The demo needs no flag — its fixtures ship with the server, so no request can
+choose them — but every job it seeds is marked **DEMO** in the dashboard and
+across the workspace, each seeded document records `BUNDLED_DEMO` provenance,
+and the seeding is in the audit trail. What it produces is a real ASYCUDA XML
+built by the real pipeline: use it to try ASYCUDA, never to file. Supplying
+extraction values in an *upload request* is a different thing entirely and
+stays refused unless `EASYCUSTOMS_ALLOW_FIXTURE_UPLOADS=true`.
+
 ### Option B — Postgres + Docker
 
 ```bash

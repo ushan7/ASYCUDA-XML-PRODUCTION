@@ -21,7 +21,8 @@ from fastapi.testclient import TestClient
 
 from app import services
 from app.config import get_settings
-from app.database import init_db
+from app.database import SessionLocal, init_db
+from app.domain.enums import DeclaredRole, ExtractionProvenance
 from app.domain.errors import BlockingValidationError
 from app.main import app
 
@@ -107,20 +108,40 @@ def test_page_count_of_an_unreadable_pdf_does_not_raise():
 
 # --------------------------------------------------------------------------- #
 # Fixture replay gate — enforced at the service boundary, not one route
+#
+# The gate is on the PROVENANCE of the supplied values, not on the fact that
+# some were supplied.  It once refused both, which meant the bundled demo was
+# refused too: POST /api/jobs/demo answered 409 on every deployment that had
+# not opted into a flag it has no reason to set.  See
+# tests/test_extraction_provenance.py for the split in full; what belongs here
+# is that the service boundary — not just the upload route — is where a
+# CLIENT-supplied extraction is stopped.
 # --------------------------------------------------------------------------- #
-def test_demo_seeding_obeys_the_fixture_gate(client, monkeypatch):
-    """POST /api/jobs/demo used to plant supplied extraction values into a real
-    job on a server whose configuration said that was refused."""
+def test_client_supplied_extraction_is_stopped_at_the_service_boundary(client, monkeypatch):
+    """The upload route checks too, but the route is not the only way in, so
+    the refusal has to live under it."""
+    monkeypatch.setattr(get_settings(), "allow_fixture_uploads", False, raising=False)
+    job_id = client.post("/api/jobs").json()["job_id"]
+    db = SessionLocal()
+    try:
+        job = services.get_job(db, job_id, principal=services.SYSTEM_PRINCIPAL)
+        with pytest.raises(BlockingValidationError) as e:
+            services.add_document(db, job, DeclaredRole.INVOICE, "invoice.pdf",
+                                  b"%PDF-1.4\ninvoice\n", {"invoice_number": "MADE-UP"},
+                                  provenance=ExtractionProvenance.CLIENT_FIXTURE)
+        assert e.value.message.code == "FIXTURE_UPLOADS_DISABLED"
+    finally:
+        db.rollback()
+        db.close()
+
+
+def test_demo_seeding_does_not_need_the_flag(client, monkeypatch):
+    """Bundled sample data is server-side and unreachable from a request, so
+    the demo runs on a default deployment — marked, not gated."""
     monkeypatch.setattr(get_settings(), "allow_fixture_uploads", False, raising=False)
     r = client.post("/api/jobs/demo")
-    assert r.status_code == 409, r.text
-    assert r.json()["blocking_errors"][0]["code"] == "FIXTURE_UPLOADS_DISABLED"
-
-
-def test_demo_seeding_still_works_where_it_is_allowed(client):
-    """conftest enables the hook, which is what a demo deployment does."""
-    assert get_settings().allow_fixture_uploads is True
-    assert client.post("/api/jobs/demo").status_code == 200
+    assert r.status_code == 200, r.text
+    assert client.get(f"/api/jobs/{r.json()['job_id']}").json()["is_demo"] is True
 
 
 # --------------------------------------------------------------------------- #
