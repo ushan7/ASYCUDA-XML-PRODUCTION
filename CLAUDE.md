@@ -56,6 +56,8 @@ Concretely:
 - `app/xml/composer.py` is a pure serializer over a *validated* `MergedDeclaration`. It never calls OCR/LLM and never reads raw extraction.
 - `app/numbers.py` is the single conversion boundary between untrusted text and authoritative numbers. Money/weight/quantity maths is `Decimal`, never float.
 
+**And the rules themselves are frozen.** Every customs rule here — allocation, reconciliation, item order, the reference-data lookups, the ADR config flags — is an authoritative business requirement, not an implementation detail that happens to be written this way. A refactor changes how a rule is *expressed*, never what it *decides*. A rule that looks wrong is reported by name and left in place; it is never silently corrected, because a quiet "fix" and a regression are indistinguishable by the time anyone notices. Changing one takes explicit approval first, and updates `docs/allocation-spec.md` in the same commit.
+
 ## Pipeline
 
 `app/pipeline.py` is the spine. Resolution always replays from the **stored raw extraction** — never re-OCRing — so Critical Review and Finalize run the same deterministic steps in dependency order:
