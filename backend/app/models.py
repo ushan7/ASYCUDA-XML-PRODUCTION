@@ -123,6 +123,64 @@ class BmsArtifact(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
+class UsageEvent(Base):
+    """One billable vendor call, attributed to the user who caused it.
+
+    Every extraction spends real money at Mistral and OpenAI, and nothing
+    recorded who spent it.  The token counts existed — the extractor has always
+    accumulated them — but only to be written to a log line and thrown away, so
+    the questions that matter at 1500 users ("what does a job cost", "which
+    account is burning the budget", "is anyone abusing this") had no answer.
+
+    UNITS ARE AUTHORITATIVE, COST IS AN ESTIMATE.  The token and page counts
+    come from the vendor's own response and are always recorded.  The money
+    column is computed from a rate table this deployment configures, is NULL
+    when no rate is known for that model, and is stamped with the rate version
+    that produced it — so a later price change cannot silently rewrite what
+    last month appeared to cost.
+
+    Deliberately NOT a ledger.  It records what was spent, never what is owed;
+    a credits/billing ledger is a separate thing with different integrity rules
+    (it has to be append-only and reconcilable against payments), and conflating
+    measurement with money owed is how the two end up disagreeing.
+    """
+
+    __tablename__ = "usage_event"
+    __table_args__ = (
+        # Every read is "this owner, this period" — the rollup and any future
+        # quota check both scan exactly this.
+        Index("ix_usage_event_owner_created", "owner_key", "created_at"),
+        Index("ix_usage_event_job", "job_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    # WHOSE spend.  Job.owner_key, copied at the time of the call rather than
+    # joined on demand: reassigning a job later must not move last month's cost
+    # onto a different account's total.
+    owner_key: Mapped[str] = mapped_column(String(160), default="")
+    job_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    document_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    provider: Mapped[str] = mapped_column(String(40))          # openai | mistral
+    operation: Mapped[str] = mapped_column(String(40))         # extraction | ocr
+    model: Mapped[str] = mapped_column(String(80), default="")
+    # How many vendor calls this row aggregates (an extraction is many windows).
+    calls: Mapped[int] = mapped_column(Integer, default=0)
+    prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    # Cached prompt tokens are billed at a lower rate and are the single biggest
+    # lever on extraction cost, so they are recorded separately rather than
+    # folded into prompt_tokens.
+    cached_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    pages: Mapped[int] = mapped_column(Integer, default=0)     # OCR
+    # Decimal-as-string, like Job.exchange_rate: money never touches a float in
+    # this codebase.  NULL means "no rate configured for this model" — which is
+    # a different fact from zero and must not be reported as free.
+    estimated_cost_usd: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    rate_version: Mapped[str] = mapped_column(String(40), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),
+                                                 default=_now, index=True)
+
+
 class LoginAttempt(Base):
     """One FAILED sign-in, kept only long enough to rate-limit the next one.
 

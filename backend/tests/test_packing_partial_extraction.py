@@ -104,8 +104,10 @@ def test_extract_document_keeps_a_partial_payload(monkeypatch):
 
     def _run(role, ocr, fixture, deadline=None):
         from app.extraction.common_models import PackingListChunkRaw
+        # (payload, warnings, provider, usage) — usage is the vendor token
+        # accounting, None here because this stub buys nothing.
         return (PackingListChunkRaw.model_validate(json.loads(content)),
-                ["PACKING_EXTRACTION_PARTIAL: 1 window(s) hit the budget"], "openai")
+                ["PACKING_EXTRACTION_PARTIAL: 1 window(s) hit the budget"], "openai", None)
 
     monkeypatch.setattr(extraction_service, "_run_provider", _run)
     result = extraction_service.extract_document(DeclaredRole.PACKING_LIST, _ocr(2))
