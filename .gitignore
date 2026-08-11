@@ -45,3 +45,8 @@ ALL7_split/
 .claude/skills/
 .claude/ui-ux-pro-max-repo/
 .claude/worktrees/
+
+# Your negotiated vendor rates (backend/vendor_prices.example.json is the
+# template). Kept out of git: what a deployment is charged is its own business,
+# and a committed rate table is one more thing to drift from the invoice.
+backend/vendor_prices.json

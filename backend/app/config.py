@@ -326,6 +326,32 @@ class Settings(BaseSettings):
     allow_fixture_uploads: bool = Field(default=False,
                                         validation_alias=_alias("ALLOW_FIXTURE_UPLOADS"))
 
+    # ---- Usage metering (app/metering.py) ----------------------------------
+    # Vendor prices, per model.  SHIPPED EMPTY on purpose: this code cannot know
+    # what OpenAI and Mistral charge THIS account — list prices change, and a
+    # volume tier or negotiated rate makes them wrong in a way nobody would
+    # notice.  A price this app invented would look exactly as authoritative as
+    # one verified against an invoice.
+    #
+    # So token and page counts are always recorded (they come from the vendor's
+    # own response and are facts), and the money column stays NULL until rates
+    # are configured here.  Copy vendor_prices.example.json, fill in the rates
+    # off your own invoice, and bump its `version` whenever they change — every
+    # row records the version that priced it, so a later change cannot rewrite
+    # what last month appeared to cost.
+    usage_price_path: Path = Field(default=BACKEND_ROOT / "vendor_prices.json",
+                                   validation_alias=_alias("USAGE_PRICE_PATH"))
+    # Documents one account may have extracted per calendar month.  0 (default)
+    # is unlimited.
+    #
+    # Counted in DOCUMENTS rather than dollars deliberately: it is derived from
+    # what actually happened, needs no price table, and so cannot be defeated by
+    # a model whose rate nobody configured.  A spend limit in money belongs with
+    # the credits ledger, where a balance is the mechanism — this is the blunt
+    # stop that keeps one account from running up an unbounded vendor bill.
+    usage_monthly_document_cap: int = Field(
+        default=0, ge=0, validation_alias=_alias("USAGE_MONTHLY_DOCUMENT_CAP"))
+
     # ---- Object storage ----------------------------------------------------
     # WHERE uploaded documents live.
     #

@@ -23,7 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from . import auth, queueing, services, storage
+from . import auth, metering, queueing, services, storage
 from .config import get_settings
 from .database import SessionLocal, get_session, init_db
 from .demo import seed_demo_job
@@ -540,6 +540,25 @@ def logout(request: Request):
     return resp
 
 
+@app.get("/api/usage")
+def usage(db: Session = Depends(db_dep), principal: str = Depends(principal_dep)):
+    """What THIS account has spent this calendar month.
+
+    Scoped to the caller like every other job route — usage is derived from a
+    user's own declarations, so one account's totals are as private as the
+    shipments that produced them.
+
+    `estimated_cost_usd` is null until vendor rates are configured
+    (backend/vendor_prices.example.json), and `unpriced_events` counts the calls
+    no rate could price. A non-zero value there means the cost shown is a FLOOR,
+    not a total — token and page counts are always exact, money never guesses.
+    """
+    return {
+        **metering.summary(db, principal),
+        "monthly_document_cap": get_settings().usage_monthly_document_cap or None,
+    }
+
+
 @app.get("/api/reference/hs")
 def search_hs(q: str = "", limit: int = 30):
     """Deterministic, local, network-free search of the official HS database.
@@ -862,6 +881,14 @@ async def extract_uploaded_document(job_id: str, document_id: str, request: Requ
                                  "wait for it to finish rather than starting a second one")
     if doc.status not in (DocumentStatus.UPLOADED.value, DocumentStatus.FAILED.value):
         raise HTTPException(409, f"document already processed (status {doc.status})")
+    # BEFORE the claim and before anything is bought. This is the last point at
+    # which refusing costs nothing — past it the OCR is paid for whether or not
+    # the account was over its limit.
+    over_quota = metering.quota_exceeded(db, principal)
+    if over_quota:
+        return JSONResponse(status_code=429, content={
+            "status": "QUOTA_EXCEEDED", "code": "USAGE_LIMIT_REACHED",
+            "detail": over_quota})
     if get_settings().queue_provider == "sqs":
         # Queue mode: claim + enqueue, return immediately.  backend/worker.py
         # does the slow work; the SPA already polls any document it sees in

@@ -15,7 +15,7 @@ from sqlalchemy import update as sql_update
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
-from . import images
+from . import images, metering
 from .config import get_settings
 from .declaration.validator import WARN_MODE_HARD_CODES
 from .domain.enums import DeclaredRole, DocumentStatus, ExtractionProvenance, JobStatus
@@ -706,12 +706,36 @@ def run_extraction(db: Session, doc: Document, fixture: dict | None = None, *,
                                      filename=doc.original_file_name or "")
             ocr = provider.run(document_id=doc.id, declared_role=role,
                                data=data, sha256=doc.sha256)
+            if fixture is None and getattr(provider, "name", "") != "offline":
+                # Recorded HERE, next to the paid call, and only for a real one:
+                # the offline provider and fixture replays cost nothing, and a
+                # cost report that counted them would make the demo look like
+                # spend.
+                metering.record(
+                    db, owner_key=_owner_of_job(db, doc.job_id),
+                    provider=getattr(provider, "name", "ocr"), operation="ocr",
+                    model=get_settings().mistral_ocr_model,
+                    job_id=doc.job_id, document_id=doc.id,
+                    calls=1, pages=len(ocr.pages))
             doc.ocr = ocr.model_dump(mode="json")
             # Persist the paid OCR envelope immediately: if the LLM phase dies
             # or the process restarts, a retry reuses it instead of re-paying,
             # and a doc with OCR but no raw_extraction is visibly in flight.
             db.commit()
         result = extract_document(role, ocr, fixture, deadline=deadline)
+        if result.usage:
+            # Also on a budget abort: the windows that finished before the clock
+            # ran out were paid for, and an aborted packing list is the most
+            # expensive thing this app does.
+            metering.record(
+                db, owner_key=_owner_of_job(db, doc.job_id),
+                provider="openai", operation="extraction",
+                model=str(result.usage.get("model") or ""),
+                job_id=doc.job_id, document_id=doc.id,
+                calls=int(result.usage.get("calls") or 0),
+                prompt_tokens=int(result.usage.get("prompt_tokens") or 0),
+                cached_tokens=int(result.usage.get("cached_tokens") or 0),
+                completion_tokens=int(result.usage.get("completion_tokens") or 0))
         # Belt-and-suspenders: if extraction drained just past the budget
         # without the deadline firing (e.g. a single sub-budget call finishing
         # late), still flag it so allocation uses the fallback. extract_document
@@ -764,6 +788,16 @@ def run_extraction(db: Session, doc: Document, fixture: dict | None = None, *,
                    actor=actor)
         db.commit()                      # persist before the lock is released
     return doc
+
+
+def _owner_of_job(db: Session, job_id: str) -> str:
+    """Whose spend a vendor call on this job is.
+
+    Read fresh rather than passed down: the extractor and the OCR provider have
+    no business knowing about users, and the worker that runs an extraction in
+    queue mode never saw the request that created the job.
+    """
+    return db.scalar(select(Job.owner_key).where(Job.id == job_id)) or ""
 
 
 def recover_interrupted_extractions(db: Session) -> list[Document]:

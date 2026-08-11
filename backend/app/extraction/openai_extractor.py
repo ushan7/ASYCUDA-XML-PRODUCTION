@@ -1043,6 +1043,16 @@ class OpenAIExtractor:
         if details is not None:
             self._usage["cached_tokens"] += getattr(details, "cached_tokens", 0) or 0
 
+    def usage(self) -> dict:
+        """Token accounting for the last extract() call, plus the model it used.
+
+        Public because the counts have to LEAVE this object to be worth
+        anything: they were accumulated and logged and then discarded, which
+        answered no question anyone could act on. services.run_extraction turns
+        this into a usage_event row attributed to the job's owner.
+        """
+        return {**self._usage, "model": self._model}
+
     def _log_usage(self, role: DeclaredRole) -> None:
         u = self._usage
         if not u["calls"]:

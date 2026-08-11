@@ -1,0 +1,35 @@
+{
+  "_README": [
+    "Copy this to vendor_prices.json and fill in YOUR rates, then restart.",
+    "",
+    "It ships with every rate null on purpose. This app cannot know what OpenAI",
+    "and Mistral charge your account: list prices change, and a volume tier or a",
+    "negotiated rate makes them wrong in a way nobody would notice. A price this",
+    "app invented would look exactly as authoritative as one you verified against",
+    "an invoice.",
+    "",
+    "Until a model has rates here, its usage is still recorded in full (tokens and",
+    "pages come from the vendor's own response and are facts) and its cost is",
+    "reported as UNKNOWN rather than zero. /api/usage counts those rows in",
+    "`unpriced_events`, so a cost total that is only a floor says so.",
+    "",
+    "Take the numbers from your invoice, not from a pricing page. Bump `version`",
+    "whenever you change them: every usage row records the version that priced it,",
+    "so a later change cannot rewrite what last month appeared to cost.",
+    "",
+    "Model keys are matched case-insensitively against the model actually called,",
+    "so they must match EASYCUSTOMS_LLM_MODEL / _MISTRAL_OCR_MODEL / the reasoning",
+    "and fallback models if you set those."
+  ],
+  "version": "example-not-in-use",
+  "models": {
+    "gpt-4o-mini": {
+      "input_per_1m_tokens": null,
+      "cached_input_per_1m_tokens": null,
+      "output_per_1m_tokens": null
+    },
+    "mistral-ocr-latest": {
+      "per_page": null
+    }
+  }
+}
