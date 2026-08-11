@@ -58,6 +58,13 @@ boto3>=1.34
 supabase>=2.31
 python-dotenv>=1.0
 
+# ---- Supabase Auth (EASYCUSTOMS_AUTH_PROVIDER=supabase) ----
+# Sign-in is one POST to Supabase's password-grant endpoint (app/auth_supabase.py),
+# proxied server-side so the SPA keeps its same-origin HttpOnly cookie. That is
+# deliberately NOT the `supabase` SDK above: the SDK pulls realtime and its
+# websockets pin for a single HTTP call the request path makes on every login.
+# httpx is here rather than under Tests because APPLICATION code imports it now.
+httpx>=0.27
+
 # ---- Tests ----
 pytest>=8.2
-httpx>=0.27

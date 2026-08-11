@@ -39,7 +39,14 @@ from sqlalchemy import select
 from app import services
 from app.config import SAMPLE_DIR
 from app.database import SessionLocal, init_db
+from app import auth
 from app.demo import seed_demo_job
+# The principal the TestClient's token carries (tests/conftest.py configures the
+# account).  Demo jobs are seeded as THIS user because these tests then act as
+# it over HTTP — an unowned job is visible to nobody now that a second account
+# can exist (services.job_visible_to).
+OPERATOR = auth.configured_username() or "pytest-operator"
+
 from app.domain.enums import DeclaredRole, DocumentStatus
 from app.domain.errors import BlockingValidationError
 from app.extraction.service import extract_document as real_extract_document
@@ -83,7 +90,7 @@ def _job_with_an_unextracted_invoice(db):
     """A job whose INVOICE is uploaded, OCR'd and waiting for extraction --
     the state the Continue button acts on.  Seeded from the demo (so the OCR
     envelope is genuine) and wound back."""
-    job = seed_demo_job(db)
+    job = seed_demo_job(db, owner_key=OPERATOR)
     doc = next(d for d in job.documents if d.declared_role == DeclaredRole.INVOICE.value)
     doc.status = DocumentStatus.UPLOADED.value
     doc.raw_extraction = None
@@ -144,7 +151,7 @@ def test_a_pending_document_change_survives_the_job_lock():
     erase the caller's un-flushed writes.  Kept separate from the endpoint test
     because every job_lock site depends on this, not just extraction."""
     db = SessionLocal()
-    job = seed_demo_job(db)
+    job = seed_demo_job(db, owner_key=OPERATOR)
     db.commit()
     doc = next(d for d in job.documents if d.declared_role == DeclaredRole.INVOICE.value)
     doc_id = doc.id
@@ -259,7 +266,7 @@ def test_an_interrupted_extraction_is_returned_to_the_queue():
 
 def test_recovery_leaves_healthy_documents_alone():
     db = SessionLocal()
-    job = seed_demo_job(db)
+    job = seed_demo_job(db, owner_key=OPERATOR)
     db.commit()
     before = {d.id: d.status for d in job.documents}
     job_id = job.id
