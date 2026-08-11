@@ -275,7 +275,49 @@ class Settings(BaseSettings):
                                         validation_alias=_alias("ALLOW_FIXTURE_UPLOADS"))
 
     # ---- Object storage ----------------------------------------------------
+    # WHERE uploaded documents live.
+    #
+    #   "local" (default) — a directory on this machine.  Correct for a broker's
+    #                       laptop or a single server, and the reason the app
+    #                       needs no cloud account to run.
+    #   "s3"              — an S3 bucket.
+    #
+    # This is the difference between one API instance and several.  A local
+    # directory is not shared: the instance that did NOT receive the upload has
+    # no such file, so the reviewer's evidence panel answers 410 depending on
+    # which instance the load balancer picked.  Queue mode makes it worse — the
+    # worker that OCRs a document is a different machine from the API that
+    # stored it, so with local storage it has nothing to read.
+    #
+    # Switching is safe in one direction and only one: keys already written are
+    # read by the backend that WROTE them (app/storage.py dispatches on the key,
+    # not on this setting), so turning s3 on leaves existing local documents
+    # readable.  Turning it back off does not make S3 documents local.
+    storage_backend: str = Field(default="local", validation_alias=_alias("STORAGE_BACKEND"))
     storage_dir: Path = BACKEND_ROOT / "storage"
+    s3_bucket: str = Field(default="", validation_alias=_alias("S3_BUCKET"))
+    # Key prefix inside the bucket, for sharing one bucket between environments
+    # ("staging/", "prod/").  Documents are written under <prefix>jobs/<job>/...
+    s3_prefix: str = Field(default="", validation_alias=_alias("S3_PREFIX"))
+    # Empty = boto3's own chain (env, shared config, or the EC2/ECS task role —
+    # the right credential source in production), same rule as sqs_region.
+    s3_region: str = Field(default="", validation_alias=_alias("S3_REGION"))
+
+    @field_validator("storage_backend")
+    @classmethod
+    def _check_storage_backend(cls, v: str) -> str:
+        choice = (v or "local").strip().lower()
+        if choice not in ("local", "s3"):
+            raise ValueError("EASYCUSTOMS_STORAGE_BACKEND must be local or s3")
+        return choice
+
+    @model_validator(mode="after")
+    def _check_storage_config(self) -> "Settings":
+        if self.storage_backend == "s3" and not self.s3_bucket.strip():
+            # At boot, not at the first upload: a bucket-less s3 backend would
+            # accept a document, fail to store it, and lose it.
+            raise ValueError("EASYCUSTOMS_STORAGE_BACKEND=s3 requires EASYCUSTOMS_S3_BUCKET")
+        return self
     # Upload ceiling in megabytes.  Real customs paperwork tops out around a
     # few MB; anything far beyond that is a mis-pick (a video, an installer)
     # that would sit in "uploading…" for minutes and then cost a full OCR run.

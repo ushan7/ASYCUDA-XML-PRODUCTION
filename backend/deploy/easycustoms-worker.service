@@ -13,6 +13,10 @@
 #   * backend/.env with EASYCUSTOMS_QUEUE_PROVIDER=sqs, SQS_QUEUE_URL,
 #     AWS_REGION, EASYCUSTOMS_DATABASE_URL (Postgres — SQLite only if the API
 #     runs on this same machine), and the OCR/LLM keys;
+#   * EASYCUSTOMS_STORAGE_BACKEND=s3 (+ S3_BUCKET) unless this worker shares a
+#     filesystem with the API. This worker READS the document the API stored, so
+#     with local storage on a separate machine there is nothing to OCR — the
+#     same constraint as the database above, and it fails the same way.
 #   * AWS credentials from the EC2 INSTANCE ROLE (sqs:ReceiveMessage,
 #     sqs:DeleteMessage, sqs:ChangeMessageVisibility on the queue) — no
 #     long-lived keys in .env on a server.

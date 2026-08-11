@@ -6,6 +6,8 @@ should be routed to the Mistral provider in production.
 """
 from __future__ import annotations
 
+import io
+
 from ..domain.enums import DeclaredRole
 from .base import OcrBlock, OcrDocument, OcrPage
 
@@ -13,12 +15,13 @@ from .base import OcrBlock, OcrDocument, OcrPage
 class OfflineOcrProvider:
     name = "offline"
 
-    def run(self, *, document_id: str, declared_role: DeclaredRole, file_path: str, sha256: str) -> OcrDocument:
+    def run(self, *, document_id: str, declared_role: DeclaredRole, data: bytes,
+            sha256: str) -> OcrDocument:
         pages: list[OcrPage] = []
         try:
             from pypdf import PdfReader
 
-            reader = PdfReader(file_path)
+            reader = PdfReader(io.BytesIO(data))
             for i, page in enumerate(reader.pages, start=1):
                 text = (page.extract_text() or "").strip()
                 blocks = [

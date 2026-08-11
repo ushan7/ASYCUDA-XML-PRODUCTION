@@ -16,13 +16,14 @@ from decimal import Decimal, InvalidOperation
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
+from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse, Response,
+                               StreamingResponse)
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from . import auth, queueing, services
+from . import auth, queueing, services, storage
 from .config import get_settings
 from .database import SessionLocal, get_session, init_db
 from .demo import seed_demo_job
@@ -787,18 +788,38 @@ def get_document_file(job_id: str, document_id: str, db: Session = Depends(db_de
     doc = next((d for d in job.documents if d.id == document_id), None)
     if not doc:
         raise HTTPException(404, "document not found")
-    if not doc.storage_key or not Path(doc.storage_key).is_file():
+    if not storage.document_exists(doc.storage_key):
         raise HTTPException(410, f"the stored file for {doc.original_file_name!r} is no longer "
-                                 f"on this server (its extracted content is still available)")
+                                 f"available (its extracted content is still available)")
     # The media type is a SERVER fact, never the stored row's: every upload is
     # PDF bytes by the time it is written (services.add_document), and this
     # response is rendered INLINE on the app's own origin.  Reflecting a
     # client-supplied type here turned an uploaded file into script running as
     # the signed-in operator.  nosniff stops the browser second-guessing it.
-    return FileResponse(doc.storage_key, media_type="application/pdf",
-                        filename=doc.original_file_name or "document.pdf",
-                        content_disposition_type="inline",
-                        headers={"X-Content-Type-Options": "nosniff"})
+    name = doc.original_file_name or "document.pdf"
+    headers = {"X-Content-Type-Options": "nosniff"}
+    if not storage.is_remote(doc.storage_key):
+        # Local files keep FileResponse: it serves ranges, which is how a PDF
+        # viewer loads a large document a piece at a time, and it does so
+        # without reading the file through this process.
+        return FileResponse(doc.storage_key, media_type="application/pdf",
+                            filename=name, content_disposition_type="inline",
+                            headers=headers)
+    # Remote objects are STREAMED THROUGH this app rather than redirected to a
+    # presigned URL.  A redirect would be cheaper, and it is the obvious
+    # optimisation if egress ever shows up on the bill — but the evidence panel
+    # frames this URL, and the page's CSP is `default-src 'self'`, so a redirect
+    # to the bucket's origin is refused by the browser unless that origin is
+    # added to frame-src.  Widening the CSP of the page that holds the finalize
+    # button, to save bandwidth on a few-MB PDF, is the wrong trade to make by
+    # default. Streaming also keeps the bytes behind this app's own login.
+    try:
+        body = storage.open_document(doc.storage_key)
+    except storage.DocumentUnavailable as e:
+        raise HTTPException(410, f"the stored file for {name!r} could not be read "
+                                 f"(its extracted content is still available): {e}")
+    headers["Content-Disposition"] = f'inline; filename="{storage.safe_filename(name)}"'
+    return StreamingResponse(body, media_type="application/pdf", headers=headers)
 
 
 @app.delete("/api/jobs/{job_id}/documents/{document_id}")
