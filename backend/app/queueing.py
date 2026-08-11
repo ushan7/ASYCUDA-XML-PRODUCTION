@@ -30,6 +30,8 @@ from . import services
 from .config import get_settings
 from .models import Document
 
+from . import logging_setup
+
 log = logging.getLogger("easycustoms.queue")
 
 # Message schema, versioned so a worker can refuse what it does not
@@ -94,6 +96,11 @@ def enqueue_extraction(db: Session, doc: Document, *, actor: str) -> None:
         # Audit attribution for the worker's writes: the human who pressed
         # Continue, not the worker process.
         "actor": actor,
+        # Correlation only, never a decision. The worker adopts it so a
+        # queued extraction's log lines join up with the request that
+        # enqueued it — otherwise the slow half of the system is the half
+        # nobody can trace. An older worker ignores the extra field.
+        "request_id": logging_setup.current_request_id(),
     })
     try:
         _sqs().send_message(QueueUrl=settings.sqs_queue_url, MessageBody=body)

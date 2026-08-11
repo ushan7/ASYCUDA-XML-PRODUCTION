@@ -326,6 +326,41 @@ class Settings(BaseSettings):
     allow_fixture_uploads: bool = Field(default=False,
                                         validation_alias=_alias("ALLOW_FIXTURE_UPLOADS"))
 
+    # ---- Logging (app/logging_setup.py) ------------------------------------
+    # "auto" (default) picks json when stdout is not a terminal and text when it
+    # is — so a container gets machine-readable logs without anyone remembering
+    # to ask, and a developer still gets readable ones.
+    log_format: str = Field(default="auto", validation_alias=_alias("LOG_FORMAT"))
+    log_level: str = Field(default="INFO", validation_alias=_alias("LOG_LEVEL"))
+    # Let the LIBRARIES log at DEBUG too.  Off by default, and separate from
+    # log_level on purpose: `sqlalchemy.engine` at DEBUG prints every statement
+    # WITH ITS BOUND PARAMETERS (party names, invoice values, the declaration
+    # itself), and `httpx` at DEBUG prints request bodies — which on the login
+    # route is the operator's password.  Raising this app's own level to DEBUG
+    # to chase a bug is reasonable; doing that to those two on a live box writes
+    # an importer's commercial documents into the log aggregator.
+    #
+    # Turn this on only against test data, and turn it off again.
+    log_third_party_debug: bool = Field(
+        default=False, validation_alias=_alias("LOG_THIRD_PARTY_DEBUG"))
+
+    @field_validator("log_format")
+    @classmethod
+    def _check_log_format(cls, v: str) -> str:
+        choice = (v or "auto").strip().lower()
+        if choice not in ("auto", "json", "text"):
+            raise ValueError("EASYCUSTOMS_LOG_FORMAT must be auto, json or text")
+        return choice
+
+    @field_validator("log_level")
+    @classmethod
+    def _check_log_level(cls, v: str) -> str:
+        choice = (v or "INFO").strip().upper()
+        if choice not in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"):
+            raise ValueError("EASYCUSTOMS_LOG_LEVEL must be one of DEBUG, INFO, "
+                             "WARNING, ERROR, CRITICAL")
+        return choice
+
     # ---- Usage metering (app/metering.py) ----------------------------------
     # Vendor prices, per model.  SHIPPED EMPTY on purpose: this code cannot know
     # what OpenAI and Mistral charge THIS account — list prices change, and a

@@ -70,6 +70,7 @@ from app.database import SessionLocal, init_db
 from app.domain.enums import DocumentStatus
 from app.domain.errors import BlockingValidationError
 from app.models import Document
+from app import logging_setup
 from app.queueing import KIND_EXTRACT_DOCUMENT, MESSAGE_V, make_sqs_client
 
 log = logging.getLogger("easycustoms.worker")
@@ -108,8 +109,10 @@ def parse_message(body: str) -> tuple[str, dict[str, str] | None]:
             isinstance(document_id, str) and document_id):
         return "malformed", None
     actor = data.get("actor")
+    request_id = data.get("request_id")
     return "ok", {"job_id": job_id, "document_id": document_id,
-                  "actor": actor if isinstance(actor, str) and actor else "worker"}
+                  "actor": actor if isinstance(actor, str) and actor else "worker",
+                  "request_id": request_id if isinstance(request_id, str) else ""}
 
 
 class Heartbeat(threading.Thread):
@@ -188,6 +191,16 @@ def process_message(sqs: Any, settings: Any, msg: dict) -> None:
                           extend_to=settings.sqs_visibility_extend_seconds,
                           label=label)
     heartbeat.start()
+    # Adopt the enqueuing request's id, so this extraction's lines select
+    # with the upload that caused it. Falls back to the document id, which
+    # is still better than nothing for a redelivery.
+    #
+    # RESET in the finally, because these run on a reused pool thread: a
+    # ContextVar set here outlives the message and the next one to be handled
+    # by the same thread would log under the previous document's id if it
+    # failed before reaching this line.
+    id_token = logging_setup.request_id_var.set(
+        payload["request_id"] or payload["document_id"])
     session = SessionLocal()
     try:
         doc = session.get(Document, payload["document_id"])
@@ -224,6 +237,7 @@ def process_message(sqs: Any, settings: Any, msg: dict) -> None:
             session.close()
         heartbeat.finish()       # join BEFORE disposing of the message
         _delete(sqs, settings.sqs_queue_url, msg, label=label)
+        logging_setup.request_id_var.reset(id_token)
 
 
 def _install_signal_handlers() -> None:
@@ -237,10 +251,10 @@ def _install_signal_handlers() -> None:
 
 
 def main() -> int:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s %(threadName)s: %(message)s")
     settings = get_settings()
+    # Same JSON shape and the same redaction as the API: a fleet whose two
+    # halves log differently cannot be queried as one system.
+    logging_setup.configure_logging(settings)
     if settings.queue_provider != "sqs":
         log.error("EASYCUSTOMS_QUEUE_PROVIDER is %r — this worker only serves "
                   "queue mode. Set EASYCUSTOMS_QUEUE_PROVIDER=sqs (and "
