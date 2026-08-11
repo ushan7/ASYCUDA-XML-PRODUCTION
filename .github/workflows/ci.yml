@@ -3,12 +3,12 @@
 # No secrets, deliberately. `app/extraction/service.py` falls back to the
 # offline provider when a live key or library is missing, and `tests/conftest.py`
 # supplies its own operator account plus a per-run temp SQLite database, so the
-# suite is green on a runner that has never seen a key. That was verified rather
-# than assumed before this file was written: a tracked-files-only export of HEAD,
-# with no `backend/.env` present and no keys in the environment, runs
-# 1987 passed, 13 skipped, 47 xfailed. (Four tests skip themselves when the live
-# keys are absent — which is the shape a key-dependent test should have. If one
-# ever needs a real key, it belongs behind a skip, not behind a secret in here.)
+# suite is green on a runner that has never seen a key: this workflow's first
+# run was 1991 passed, 9 skipped, 47 xfailed — the same counts a developer
+# machine WITH both keys configured produces, because no test's outcome depends
+# on having them. The nine skips are content-driven (`refusal case`,
+# `parser stood down`), not key-driven. If a test ever does need a real key, it
+# belongs behind a skip, not behind a secret in here.
 name: CI
 
 on:
