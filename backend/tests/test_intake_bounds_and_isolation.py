@@ -250,12 +250,15 @@ def test_system_callers_still_see_everything(client):
         db.close()
 
 
-def test_a_job_from_before_ownership_stays_visible(client):
-    """Rows written before owner_key existed must not vanish from the dashboard.
+def test_an_unowned_job_is_visible_to_nobody(client):
+    """The branch that used to make these readable by anyone is gone.
 
-    The SQLite migration backfills them; this covers the deployment that has
-    not run one. It is also the branch that MUST be deleted when a second
-    account becomes possible — see services.job_visible_to.
+    It was correct while exactly one account could exist: hiding a broker's
+    whole history behind a check only one person could ever match was the worse
+    of the two failures. A second account can now exist, so the same branch
+    means "every user sees every unowned job" — the disclosure the check exists
+    to prevent. Pre-ownership rows are BACKFILLED by the migration that removed
+    it, not shared.
     """
     from app.database import SessionLocal
     from app.models import Job
@@ -264,7 +267,36 @@ def test_a_job_from_before_ownership_stays_visible(client):
     try:
         db.get(Job, job_id).owner_key = ""
         db.commit()
-        assert services.get_job(db, job_id, principal="anyone-at-all") is not None
+        assert services.get_job(db, job_id, principal="anyone-at-all") is None
+        assert services.get_job(db, job_id, principal="pytest-operator") is None
+        # ...and it is still reachable by the internal principal, so a cascade
+        # invalidation or a startup sweep is not locked out of its own rows.
+        assert services.get_job(db, job_id,
+                                principal=services.SYSTEM_PRINCIPAL) is not None
+    finally:
+        db.close()
+
+
+def test_one_users_job_is_invisible_to_another(client):
+    """The property the whole ownership column exists for, stated directly.
+
+    Isolation is PYTHON, not Postgres row-level security: this backend connects
+    as a privileged role and bypasses RLS entirely, so a policy in the database
+    would not have caught a regression here.
+    """
+    from app.database import SessionLocal
+    from app.models import Job
+    job_id = _job(client)
+    db = SessionLocal()
+    try:
+        db.get(Job, job_id).owner_key = "user-a"
+        db.commit()
+        assert services.get_job(db, job_id, principal="user-a") is not None
+        assert services.get_job(db, job_id, principal="user-b") is None
+        # ...and the dashboard listing agrees with the per-job check. They are
+        # separate pieces of SQL, and a listing that disagreed would show one
+        # user another's shipment totals and party names in the summary.
+        assert services.list_jobs(db, principal="user-b")["total"] == 0
     finally:
         db.close()
 
@@ -313,7 +345,10 @@ def test_ownership_is_never_inferred_from_the_audit_actor(client):
         job = svc.create_job(db, actor="some-audit-label")
         db.commit()
         assert db.get(Job, job.id).owner_key == ""
-        # ...and an unowned job is readable, rather than stranded.
-        assert svc.get_job(db, job.id, principal="pytest-operator") is not None
+        # ...and naming no principal means the job belongs to no user, so no
+        # user can read it. The audit label must not become an access grant by
+        # the back door.
+        assert svc.get_job(db, job.id, principal="some-audit-label") is None
+        assert svc.get_job(db, job.id, principal="pytest-operator") is None
     finally:
         db.close()

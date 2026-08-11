@@ -246,7 +246,10 @@ def principal_of(session) -> str | None:
     genuinely have no user (startup recovery, cascade invalidation) name
     SYSTEM_PRINCIPAL themselves.
     """
-    return getattr(session, "username", None) or None
+    # The USER ID, never the display name. An email or login name can change;
+    # the jobs that account owns must not change hands when it does.
+    principal = getattr(session, "user_id", None) or getattr(session, "username", None)
+    return principal or None
 
 
 def job_visible_to(job: Job, principal: str) -> bool:
@@ -257,19 +260,21 @@ def job_visible_to(job: Job, principal: str) -> bool:
     chances to forget, and the one that forgets is not discovered until someone
     reads another operator's declaration.
 
-    An empty owner_key means the row predates ownership.  The SQLite migration
-    backfills those to the configured operator, so on a migrated deployment
-    this branch matches nothing; it stays for a Postgres deployment that has
-    not run a backfill yet, where hiding a broker's entire history would be a
-    worse failure than showing it to the single account that can log in.
-    WHEN A SECOND ACCOUNT CAN EXIST, THIS BRANCH MUST GO — it is the difference
-    between "not scoped yet" and "scoped wrongly".
+    An unowned job is visible to NOBODY (bar the system principal).  That branch
+    used to return True, and it was correct while exactly one account could
+    exist: hiding a broker's whole history behind a check that could only ever
+    match one person was the worse failure of the two.  A second account can now
+    exist, so the same branch means "every user sees every unowned job", which is
+    the disclosure this function exists to prevent.
+
+    Rows are backfilled by the migration that removed it (owner_key is NOT NULL
+    and non-empty from that revision on), so on a migrated database this returns
+    False only for a row written by something that skipped ownership — which is
+    a bug to find, not a row to share.
     """
     if principal == SYSTEM_PRINCIPAL:
         return True
-    if not job.owner_key:
-        return True
-    return job.owner_key == principal
+    return bool(job.owner_key) and job.owner_key == principal
 
 
 def get_job(db: Session, job_id: str, *, principal: str) -> Job | None:
@@ -1667,10 +1672,13 @@ def list_jobs(db: Session, limit: int = 50, offset: int = 0, *, principal: str) 
     worked = or_(Job.documents.any(),
                  Job.events.any(AuditEvent.event_code == "DOCUMENT_UPLOADED"))
     if principal != SYSTEM_PRINCIPAL:
-        # Mirrors job_visible_to, in SQL. The blank-owner arm is the same
-        # pre-ownership allowance and must be removed at the same time.
-        worked = and_(worked, or_(Job.owner_key == principal,
-                                  Job.owner_key == "", Job.owner_key.is_(None)))
+        # Mirrors job_visible_to, in SQL — and the blank-owner arm came out of
+        # both in the same commit, which is the only way that could be done
+        # safely. Leaving it here would have listed every unowned job on every
+        # user's dashboard while the per-job check correctly refused to open
+        # them: a listing of other people's shipments, with their invoice
+        # totals and party names in the summary.
+        worked = and_(worked, Job.owner_key == principal)
     total = int(db.scalar(select(func.count()).select_from(Job).where(worked)) or 0)
     jobs = db.scalars(
         select(Job)

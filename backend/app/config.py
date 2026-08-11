@@ -201,6 +201,58 @@ class Settings(BaseSettings):
         return self
 
     # ---- Authentication (see app/auth.py) ----------------------------------
+    # WHO holds the accounts.
+    #
+    #   "local" (default) — the single operator account in the two variables
+    #                       below.  One account, one password, no registration:
+    #                       correct for a broker's own machine, and the reason
+    #                       the app runs with no external service.
+    #   "supabase"        — Supabase Auth.  MANY accounts, each with its own id,
+    #                       and the only setting under which this app is
+    #                       multi-user at all.
+    #
+    # The provider decides identity, never authorization: whichever one is in
+    # use, a job is visible to the principal that owns it and to nobody else
+    # (services.job_visible_to).  In particular Supabase's row-level security
+    # does NOT protect this app — the backend connects to Postgres as a
+    # privileged role and bypasses RLS entirely, so isolation is Python, and
+    # tested as Python.
+    auth_provider: str = Field(default="local", validation_alias=_alias("AUTH_PROVIDER"))
+    # Sign-in is proxied SERVER-side (app/auth_supabase.py) rather than done in
+    # the browser with Supabase's JS SDK.  The SPA is served same-origin by this
+    # app, and its session lives in an HttpOnly cookie precisely so the evidence
+    # iframe and the XML/.xls download links work — a browser-side SDK would put
+    # the token somewhere JavaScript can read and break that.
+    supabase_url: str = Field(default="", validation_alias=AliasChoices(
+        "EASYCUSTOMS_SUPABASE_URL", "SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL"))
+    # The anon / publishable key — the one the password grant expects, and the
+    # one that is safe to hold here.  NOT the service-role key: nothing in the
+    # request path needs to act as an administrator, and a service key in this
+    # process would turn any RCE into full control of the auth database.
+    supabase_anon_key: str = Field(default="", validation_alias=AliasChoices(
+        "EASYCUSTOMS_SUPABASE_ANON_KEY", "SUPABASE_ANON_KEY",
+        "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY"))
+    supabase_timeout_seconds: float = Field(
+        default=15.0, validation_alias=_alias("SUPABASE_TIMEOUT_SECONDS"))
+
+    @field_validator("auth_provider")
+    @classmethod
+    def _check_auth_provider(cls, v: str) -> str:
+        choice = (v or "local").strip().lower()
+        if choice not in ("local", "supabase"):
+            raise ValueError("EASYCUSTOMS_AUTH_PROVIDER must be local or supabase")
+        return choice
+
+    @model_validator(mode="after")
+    def _check_auth_provider_config(self) -> "Settings":
+        if self.auth_provider == "supabase" and not (
+                self.supabase_url.strip() and self.supabase_anon_key.strip()):
+            # At boot, not at the first sign-in: an unconfigured provider would
+            # answer every login with a 502 and look like a credential problem.
+            raise ValueError("EASYCUSTOMS_AUTH_PROVIDER=supabase requires SUPABASE_URL "
+                             "and SUPABASE_ANON_KEY")
+        return self
+
     # One operator account, from the environment.  Unset = FAIL CLOSED: no
     # token can be issued and every protected route answers 401, so a
     # deployment that forgot to configure the account is visibly broken rather

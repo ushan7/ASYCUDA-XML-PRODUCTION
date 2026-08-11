@@ -470,7 +470,7 @@ def login(body: LoginRequest, request: Request, db: Session = Depends(db_dep)):
     The session itself stays stateless; the database is here only for the
     failure counter, which cannot live in this process (see app/auth.py).
     """
-    if not auth.credentials_configured():
+    if get_settings().auth_provider == "local" and not auth.credentials_configured():
         raise HTTPException(503, "This server has no login account configured. Set "
                                  "EASYCUSTOMS_AUTH_USERNAME and EASYCUSTOMS_AUTH_PASSWORD in "
                                  "backend/.env and restart it.")
@@ -489,7 +489,17 @@ def login(body: LoginRequest, request: Request, db: Session = Depends(db_dep)):
         return JSONResponse(status_code=429, headers={"Retry-After": str(retry_after)}, content={
             "status": "THROTTLED", "code": "TOO_MANY_ATTEMPTS",
             "detail": f"Too many failed sign-in attempts. Try again in {retry_after} second(s)."})
-    if not auth.verify_credentials(body.username, body.password):
+    try:
+        identity = auth.verify_login(body.username, body.password)
+    except auth.LoginUnavailable as e:
+        # The credentials could not be CHECKED. Reporting that as a bad password
+        # sends the operator to reset one that was never wrong, and hides the
+        # outage that is. The failure is NOT counted against the throttle — the
+        # caller did nothing to earn it.
+        log.error("sign-in could not be verified: %s", e)
+        raise HTTPException(502, "The sign-in service could not be reached. This is a "
+                                 "server problem, not your password — try again shortly.")
+    if identity is None:
         auth.record_failure(db, client)
         log.warning("failed sign-in attempt from %s", client)
         # One message for both halves: which of the two was wrong is not the
@@ -498,10 +508,9 @@ def login(body: LoginRequest, request: Request, db: Session = Depends(db_dep)):
             "status": "UNAUTHENTICATED", "code": "BAD_CREDENTIALS",
             "detail": "Incorrect username or password."})
     auth.clear_failures(db, client)
-    # The token names the CONFIGURED username, not the typed one: the login
-    # comparison is case-insensitive, and a token has to keep matching the
-    # account it was issued for (verify_token re-checks that).
-    token, session = auth.issue_token(auth.configured_username() or body.username.strip())
+    # sub is the account ID and dsp is what to call them — see auth.Session for
+    # why those must not be the same field.
+    token, session = auth.issue_token(identity.display, user_id=identity.user_id)
     resp = JSONResponse(_session_payload(session, token))
     resp.set_cookie(auth.COOKIE_NAME, token, max_age=auth.token_ttl_seconds(),
                     httponly=True, samesite="lax",

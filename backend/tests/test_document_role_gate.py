@@ -29,7 +29,14 @@ from fastapi.testclient import TestClient
 
 from app.config import SAMPLE_DIR
 from app.database import SessionLocal, init_db
+from app import auth
 from app.demo import seed_demo_job
+# The principal the TestClient's token carries (tests/conftest.py configures the
+# account).  Demo jobs are seeded as THIS user because these tests then act as
+# it over HTTP — an unowned job is visible to nobody now that a second account
+# can exist (services.job_visible_to).
+OPERATOR = auth.configured_username() or "pytest-operator"
+
 from app.domain.enums import DeclaredRole, DocumentStatus, JobStatus
 from app.domain.errors import BlockingValidationError
 from app.main import app
@@ -81,7 +88,7 @@ def _doubted_invoice_upload(db, job):
 def test_extractor_mismatch_marks_the_document_for_review(packing_fixture):
     init_db()
     db = SessionLocal()
-    job = seed_demo_job(db)
+    job = seed_demo_job(db, owner_key=OPERATOR)
     doc = _mismatched_invoice_upload(db, job, packing_fixture)
     db.commit()
 
@@ -93,7 +100,7 @@ def test_extractor_mismatch_marks_the_document_for_review(packing_fixture):
 def test_unanswered_mismatch_blocks_critical_review(packing_fixture):
     init_db()
     db = SessionLocal()
-    job = seed_demo_job(db)
+    job = seed_demo_job(db, owner_key=OPERATOR)
     _mismatched_invoice_upload(db, job, packing_fixture)
     db.commit()
 
@@ -111,7 +118,7 @@ def test_unanswered_mismatch_blocks_critical_review(packing_fixture):
 def test_unanswered_mismatch_blocks_finalize(packing_fixture):
     init_db()
     db = SessionLocal()
-    job = seed_demo_job(db)
+    job = seed_demo_job(db, owner_key=OPERATOR)
     _mismatched_invoice_upload(db, job, packing_fixture)
     db.commit()
 
@@ -128,7 +135,7 @@ def test_unanswered_mismatch_blocks_finalize(packing_fixture):
 def test_rejected_document_is_excluded_but_its_evidence_is_kept(packing_fixture):
     init_db()
     db = SessionLocal()
-    job = seed_demo_job(db)
+    job = seed_demo_job(db, owner_key=OPERATOR)
     baseline = services.critical_review(db, job)
 
     doc = _mismatched_invoice_upload(db, job, packing_fixture)
@@ -150,7 +157,7 @@ def test_rejected_document_is_excluded_but_its_evidence_is_kept(packing_fixture)
 def test_accepting_uses_the_document_in_its_declared_role():
     init_db()
     db = SessionLocal()
-    job = seed_demo_job(db)
+    job = seed_demo_job(db, owner_key=OPERATOR)
     baseline = services.critical_review(db, job)
 
     doc = _doubted_invoice_upload(db, job)
@@ -176,7 +183,7 @@ def test_accepting_uses_the_document_in_its_declared_role():
 def test_decision_invalidates_the_stored_declaration_and_is_audited(packing_fixture):
     init_db()
     db = SessionLocal()
-    job = seed_demo_job(db)
+    job = seed_demo_job(db, owner_key=OPERATOR)
     services.critical_review(db, job)
     assert job.critical_review is not None
 
@@ -199,7 +206,7 @@ def test_decision_invalidates_the_stored_declaration_and_is_audited(packing_fixt
 def test_deciding_twice_is_refused(packing_fixture):
     init_db()
     db = SessionLocal()
-    job = seed_demo_job(db)
+    job = seed_demo_job(db, owner_key=OPERATOR)
     doc = _mismatched_invoice_upload(db, job, packing_fixture)
     db.commit()
     services.resolve_document_role(db, job, doc, accept=True)
@@ -214,7 +221,7 @@ def test_a_matching_document_never_needs_a_decision():
     """The gate must not add a click to the normal path."""
     init_db()
     db = SessionLocal()
-    job = seed_demo_job(db)
+    job = seed_demo_job(db, owner_key=OPERATOR)
     db.commit()
 
     assert all(d.status != DocumentStatus.ROLE_REVIEW_REQUIRED.value for d in job.documents)
@@ -228,7 +235,7 @@ def test_a_matching_document_never_needs_a_decision():
 def test_role_decision_endpoint(client, packing_fixture):
     init_db()
     db = SessionLocal()
-    job = seed_demo_job(db)
+    job = seed_demo_job(db, owner_key=OPERATOR)
     doc = _mismatched_invoice_upload(db, job, packing_fixture)
     db.commit()
     job_id, doc_id = job.id, doc.id
@@ -249,7 +256,7 @@ def test_role_decision_endpoint(client, packing_fixture):
 def test_role_decision_endpoint_rejects_unknown_fields(client, packing_fixture):
     init_db()
     db = SessionLocal()
-    job = seed_demo_job(db)
+    job = seed_demo_job(db, owner_key=OPERATOR)
     doc = _mismatched_invoice_upload(db, job, packing_fixture)
     db.commit()
     job_id, doc_id = job.id, doc.id

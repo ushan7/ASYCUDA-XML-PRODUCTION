@@ -60,10 +60,30 @@ _warned_ephemeral = False
 
 @dataclass(frozen=True)
 class Session:
-    """A verified token's claims."""
+    """A verified token's claims.
+
+    Two identifiers, and keeping them apart is the whole point:
+
+      ``user_id``  WHO OWNS WHAT.  Stable for the life of the account — a
+                   Supabase ``auth.users.id``, or the configured username on the
+                   local provider.  This is what ``Job.owner_key`` holds and
+                   what every access check compares.
+      ``username`` WHAT TO CALL THEM.  An email or login name, for the screen
+                   and for the audit trail.  It can change; ownership must not
+                   change with it.
+
+    Collapsing the two is how a later email change silently hands someone else's
+    declarations to nobody, or how an audit correction quietly grants access.
+    """
     username: str
     issued_at: int
     expires_at: int
+    user_id: str = ""
+
+    def principal(self) -> str:
+        """The access key. Falls back to the display name for tokens minted
+        before user_id existed, which on the local provider are the same value."""
+        return self.user_id or self.username
 
 
 # --------------------------------------------------------------------------- #
@@ -119,6 +139,46 @@ def _user_key(name: str | None) -> bytes:
     return unicodedata.normalize("NFC", (name or "").strip()).casefold().encode("utf-8")
 
 
+@dataclass(frozen=True)
+class Identity:
+    """A verified sign-in: who they are, and what to call them."""
+    user_id: str
+    display: str
+
+
+class LoginUnavailable(Exception):
+    """The credentials could not be CHECKED — distinct from being wrong.
+
+    Reporting an outage as a bad password sends an operator to reset a password
+    that was never the problem, and hides the fault that is.
+    """
+
+
+def verify_login(username: str, password: str) -> Identity | None:
+    """Check credentials against whichever provider holds the accounts.
+
+    Returns None for "wrong", raises LoginUnavailable for "could not tell".
+    """
+    if get_settings().auth_provider == "supabase":
+        from . import auth_supabase
+
+        try:
+            identity = auth_supabase.sign_in(username.strip(), password)
+        except auth_supabase.SupabaseAuthUnavailable as e:
+            raise LoginUnavailable(str(e)) from e
+        if identity is None:
+            return None
+        return Identity(user_id=identity.user_id, display=identity.email)
+
+    if not verify_credentials(username, password):
+        return None
+    # The local account's id IS its configured name: one account, and the token
+    # names the CONFIGURED spelling rather than the typed one, because the
+    # comparison is case-insensitive and ownership must not vary by keystroke.
+    name = configured_username() or username.strip()
+    return Identity(user_id=name, display=name)
+
+
 def verify_credentials(username: str, password: str) -> bool:
     """Constant-time check of a submitted username + password.
 
@@ -160,14 +220,24 @@ def _sign(payload_b64: str) -> str:
     return _b64e(hmac.new(_secret(), payload_b64.encode("ascii"), hashlib.sha256).digest())
 
 
-def issue_token(username: str, *, now: int | None = None) -> tuple[str, Session]:
-    """Return ``(token, session)`` for a 24h (configurable) session."""
+def issue_token(username: str, *, user_id: str | None = None,
+                now: int | None = None) -> tuple[str, Session]:
+    """Return ``(token, session)`` for a 24h (configurable) session.
+
+    ``sub`` is the USER ID, not the display name, so a later email change cannot
+    orphan the jobs that account owns.  ``dsp`` carries the name to show and to
+    write on audit rows.  ``user_id`` defaults to ``username`` because on the
+    local provider they are the same single account.
+    """
     issued = int(time.time() if now is None else now)
     expires = issued + token_ttl_seconds()
-    payload = _b64e(json.dumps({"sub": username, "iat": issued, "exp": expires},
-                               separators=(",", ":"), sort_keys=True).encode("utf-8"))
+    subject = (user_id or username).strip()
+    payload = _b64e(json.dumps(
+        {"sub": subject, "dsp": username, "iat": issued, "exp": expires},
+        separators=(",", ":"), sort_keys=True).encode("utf-8"))
     return (f"{payload}.{_sign(payload)}",
-            Session(username=username, issued_at=issued, expires_at=expires))
+            Session(username=username, issued_at=issued, expires_at=expires,
+                    user_id=subject))
 
 
 def verify_token(token: str | None, *, now: int | None = None) -> Session | None:
@@ -180,19 +250,34 @@ def verify_token(token: str | None, *, now: int | None = None) -> Session | None
         if not hmac.compare_digest(signature, _sign(payload_b64)):
             return None
         claims = json.loads(_b64d(payload_b64))
-        username, issued, expires = claims["sub"], int(claims["iat"]), int(claims["exp"])
+        subject, issued, expires = claims["sub"], int(claims["iat"]), int(claims["exp"])
+        # Tokens minted before `dsp` existed carry only `sub`, which on the
+        # local provider WAS the username.
+        display = claims.get("dsp") or subject
     except Exception:
         return None
-    if not isinstance(username, str) or not username:
+    if not isinstance(subject, str) or not subject:
         return None
     if int(time.time() if now is None else now) >= expires:
         return None
-    # A token outlives its account: rotating the username in .env must not
-    # leave the previous operator's session working until it expires.
-    current = configured_username()
-    if not current or _user_key(username) != _user_key(current):
-        return None
-    return Session(username=username, issued_at=issued, expires_at=expires)
+    if get_settings().auth_provider == "local":
+        # One account, named in the environment: a token outlives its account,
+        # so rotating the username in .env must not leave the previous
+        # operator's session working until it expires.
+        #
+        # There is no equivalent check for Supabase, and inventing one here
+        # would be worse than none: the token is signed by THIS server and its
+        # subject is a stable account id, so the meaningful question is whether
+        # that account is still active — which is a live question for Supabase
+        # to answer, not something this signature can encode. Until it is asked
+        # per request, a deactivated Supabase user keeps access for the
+        # remainder of their token's lifetime (24h by default). Same window the
+        # local provider has always had for a changed password.
+        current = configured_username()
+        if not current or _user_key(subject) != _user_key(current):
+            return None
+    return Session(username=display, issued_at=issued, expires_at=expires,
+                   user_id=subject)
 
 
 def token_from_request(request) -> str | None:
