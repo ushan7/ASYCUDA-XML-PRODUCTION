@@ -67,16 +67,25 @@ customs.example.com {
 	}
 }
 
-# ---- Rate limiting: NOT configured above, on purpose -----------------------
-# Caddy has no built-in rate limiter. `rate_limit` needs a third-party module
-# and a custom binary:
+# ---- Rate limiting ---------------------------------------------------------
+# The app's OWN login throttle now works correctly behind this proxy, which it
+# did not before: it counts failures per client address in the database, and
+# reads that address from X-Forwarded-For as far as
+# EASYCUSTOMS_TRUSTED_PROXY_HOPS says the proxies in front are ours.
+#
+#   SET EASYCUSTOMS_TRUSTED_PROXY_HOPS=1 for this configuration.
+#
+# Caddy sets X-Forwarded-For itself in `reverse_proxy` — appending the address
+# it received the request from — so with hops=1 the app reads the entry Caddy
+# vouched for and ignores anything the caller put to the left of it. Left at 0,
+# every request keys on Caddy's own address, all callers share ONE bucket, and
+# 10 failed sign-ins lock out everybody.
+#
+# A proxy-level limiter is still worth adding for everything the app-level one
+# cannot see (unauthenticated floods of any route, not just login). Caddy has no
+# built-in rate limiter; it needs a third-party module and a custom binary:
 #
 #   xcaddy build --with github.com/mholt/caddy-ratelimit
 #
-# It matters more here than in a typical app because the API deliberately does
-# not trust X-Forwarded-For (app/main.py::_client_id), so behind this proxy its
-# own login throttle collapses into a single global bucket — 10 failed logins
-# in 5 minutes locks everyone out, and an unauthenticated attacker can do that
-# on purpose. Until either the module is installed or _client_id learns to read
-# a trusted proxy header, the cheap mitigation is fail2ban on the Caddy access
-# log matching POST /api/auth/login responses with status 401.
+# Without it, fail2ban on this access log matching POST /api/auth/login
+# responses with status 401 is the cheap version.

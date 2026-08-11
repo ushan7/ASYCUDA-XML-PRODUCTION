@@ -9,7 +9,8 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, LargeBinary, String, Text
+from sqlalchemy import (JSON, DateTime, ForeignKey, Index, Integer, LargeBinary, String,
+                        Text, UniqueConstraint)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -77,6 +78,14 @@ class Document(Base):
     sha256: Mapped[str] = mapped_column(String(64), default="")
     storage_key: Mapped[str] = mapped_column(String(400), default="")
     status: Mapped[str] = mapped_column(String(40), default="UPLOADED")
+    # Where raw_extraction came from (domain.enums.ExtractionProvenance).  The
+    # row is the only place that can answer it afterwards: a fixture-seeded
+    # extraction and an OCR'd one are the same JSON in the same column, and
+    # "these values were never read off the document" is exactly what an audit
+    # of a declaration needs to be able to establish.  Defaults to OCR, which
+    # is what every row written before this column existed was.
+    extraction_provenance: Mapped[str] = mapped_column(String(24), default="OCR",
+                                                       server_default="OCR")
 
     ocr: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     raw_extraction: Mapped[dict | None] = mapped_column(JSON, nullable=True)
@@ -112,6 +121,85 @@ class BmsArtifact(Base):
     checksum: Mapped[str] = mapped_column(String(64), default="")
     xls_bytes: Mapped[bytes] = mapped_column(LargeBinary)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class LoginAttempt(Base):
+    """One FAILED sign-in, kept only long enough to rate-limit the next one.
+
+    The throttle was a process-local dict, which is two different bugs at once
+    on a real deployment.  With N API processes it allowed N times the intended
+    guess rate, because each kept its own count.  And behind a load balancer
+    every request appears to come from the balancer, so all callers shared ONE
+    bucket: ten failures from anywhere locked out every user of the system, and
+    an unauthenticated attacker could do that deliberately.  A shared store
+    fixes the first; ``auth.client_key`` (trusted_proxy_hops) fixes the second,
+    and neither is any use without the other.
+
+    Successful sign-ins delete the caller's rows, and anything older than the
+    window is pruned on write — this table is a short sliding window, never a
+    login history.  It is deliberately NOT an audit record: `AuditEvent` is
+    where anything durable belongs.
+    """
+
+    __tablename__ = "login_attempt"
+    __table_args__ = (Index("ix_login_attempt_client_created", "client_key", "created_at"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    # An IP address — 45 characters covers IPv6, including a v4-mapped form.
+    client_key: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class VendorLayout(Base):
+    """A remembered table column map, keyed by role + header signature.
+
+    Was ``storage/vendor_layouts.json``, and the file is why this table exists.
+    Both stores were whole-file read-modify-write: two processes that recorded a
+    layout at the same time each loaded the document, each edited its own copy,
+    and the second `os.replace` discarded everything the first had learned.
+    Atomic on ONE writer, lossy on two — so the file was a reason the app could
+    not run more than one process, not merely a slower way to store this.
+
+    A row per key makes concurrent writers independent, and the read-modify-write
+    that remains (counters, `max` of confirmed_rows) is done under a row lock.
+    """
+
+    __tablename__ = "vendor_layout"
+    __table_args__ = (UniqueConstraint("role", "header_signature",
+                                       name="uq_vendor_layout_role_signature"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    role: Mapped[str] = mapped_column(String(40), index=True)
+    # Never "POSITIONAL" and never empty: layout_memory.record_layout refuses to
+    # write a layout that did not come from the document's own header, because
+    # such an entry matches every headerless document of the role and confirms
+    # itself.  The column is not nullable so that rule cannot be bypassed here.
+    header_signature: Mapped[str] = mapped_column(String(255))
+    mapping: Mapped[dict] = mapped_column(JSON)
+    vendor_hint: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    confirmed_rows: Mapped[int] = mapped_column(Integer, default=0)
+    docs: Mapped[int] = mapped_column(Integer, default=0)
+    last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class VendorFieldProfile(Base):
+    """Learned per-vendor field defaults — today only the default COO.
+
+    Was ``storage/vendor_field_profiles.json``; see :class:`VendorLayout` for why
+    a file could not survive a second process.  ``vendor`` is the normalised key
+    (``field_profiles._norm_vendor``), so it is the primary key outright.
+    """
+
+    __tablename__ = "vendor_field_profile"
+
+    vendor: Mapped[str] = mapped_column(String(160), primary_key=True)
+    display: Mapped[str] = mapped_column(String(120), default="")
+    coo_default: Mapped[str | None] = mapped_column(String(2), nullable=True)
+    # REVIEWER (a deliberate decision) outranks OBSERVED (agreeing finalized
+    # jobs) — the state machine that depends on this lives in field_profiles.
+    coo_source: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    coo_docs: Mapped[int] = mapped_column(Integer, default=0)
+    last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
 class AuditEvent(Base):

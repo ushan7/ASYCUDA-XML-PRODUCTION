@@ -10,14 +10,15 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from sqlalchemy import delete as sql_delete
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy import update as sql_update
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
 from . import images
 from .config import get_settings
 from .declaration.validator import WARN_MODE_HARD_CODES
-from .domain.enums import DeclaredRole, DocumentStatus, JobStatus
+from .domain.enums import DeclaredRole, DocumentStatus, ExtractionProvenance, JobStatus
 from .domain.errors import BlockingValidationError, ValidationMessage
 from .extraction import field_profiles
 from .extraction.service import extract_document
@@ -63,18 +64,124 @@ from .xml.bms_export import BMS_TEMPLATE_VERSION, build_bms_xls
 from .xml.bms_export import checksum as bms_checksum
 from .xml.composer import build_xml, checksum
 
-# Per-job advisory lock: review/finalize/mutation transactions never interleave
-# within this process (the deployment is a single uvicorn process; SQLite's
-# single-writer property backstops cross-process races).
+# --------------------------------------------------------------------------- #
+# Per-job mutual exclusion for review / finalize / item mutations.
+#
+# Two implementations, chosen by the database, because the guarantee has to
+# survive the deployment shape rather than assume one:
+#
+#   POSTGRES — a TRANSACTION-scoped advisory lock.  Cross-process by
+#     construction, which is the whole reason more than one API process may
+#     exist: a threading.Lock only ever serialised the threads inside ONE
+#     uvicorn worker, so with two workers (let alone two containers) a finalize
+#     and an hs-review could interleave on the same declaration and neither side
+#     would see the other.  That is not a slower app, it is a wrong one — the
+#     comment this replaces said "the deployment is a single uvicorn process",
+#     and it was load-bearing.
+#
+#     Transaction-scoped (pg_advisory_xact_lock) rather than session-scoped
+#     (pg_advisory_lock), for two independent reasons:
+#       * an exception that escapes the block releases the lock via the
+#         rollback, so a crashed or killed request cannot wedge a job forever;
+#       * it is the only kind that is safe behind a connection pooler in
+#         transaction mode (PgBouncer, RDS Proxy), where the connection under a
+#         session is not stable from one statement to the next.
+#     The cost is that the lock ends at the COMMIT rather than at the end of the
+#     `with` block.  Every call site already commits as its last statement and
+#     then only returns values it has in hand — which is precisely the ordering
+#     the "persist before the lock is released" comments describe.
+#
+#   SQLITE — the in-process threading.Lock.  SQLite has no advisory locks and
+#     is single-writer anyway; this is the dev/test/one-laptop path.
+# --------------------------------------------------------------------------- #
+
+# Namespace for this application's advisory locks, so a key can never collide
+# with another tool taking advisory locks on the same database.  Must fit int4.
+_ADVISORY_LOCK_NAMESPACE = 0x45435F4A          # "EC_J"
+
+# Postgres SQLSTATE 55P03 lock_not_available — what a lock_timeout raises.
+_LOCK_NOT_AVAILABLE = "55P03"
+
 _JOB_LOCKS: dict[str, threading.Lock] = {}
+_JOB_LOCK_WAITERS: dict[str, int] = {}
 _JOB_LOCKS_GUARD = threading.Lock()
 
 
 @contextmanager
-def job_lock(job_id: str):
+def _in_process_job_lock(job_id: str):
+    """Serialise threads within ONE process, and forget the job afterwards.
+
+    The dict used to keep an entry per job id for the life of the process.  On a
+    laptop that is nothing; on a server it is a slow leak keyed by every job
+    anyone has ever opened, and nothing ever removed an entry.  The refcount is
+    what makes removal safe: an entry may only go when nobody holds the lock and
+    nobody is queued for it.
+    """
     with _JOB_LOCKS_GUARD:
         lock = _JOB_LOCKS.setdefault(job_id, threading.Lock())
-    with lock:
+        _JOB_LOCK_WAITERS[job_id] = _JOB_LOCK_WAITERS.get(job_id, 0) + 1
+    try:
+        with lock:
+            yield
+    finally:
+        with _JOB_LOCKS_GUARD:
+            remaining = _JOB_LOCK_WAITERS.get(job_id, 1) - 1
+            if remaining > 0:
+                _JOB_LOCK_WAITERS[job_id] = remaining
+            else:
+                _JOB_LOCK_WAITERS.pop(job_id, None)
+                _JOB_LOCKS.pop(job_id, None)
+
+
+def _is_postgres(db: Session) -> bool:
+    try:
+        return db.get_bind().dialect.name == "postgresql"
+    except Exception:
+        # An unbound or exotic session is not a Postgres one for our purposes;
+        # falling back to the in-process lock is the conservative answer.
+        return False
+
+
+def _take_advisory_lock(db: Session, job_id: str) -> None:
+    timeout = get_settings().job_lock_timeout_seconds
+    if timeout > 0:
+        # set_config(..., is_local=true) is the parameterised form of
+        # `SET LOCAL` — plain SET takes no bind parameters.  Being LOCAL is what
+        # keeps the timeout from leaking onto the next request that borrows this
+        # pooled connection.
+        db.execute(text("SELECT set_config('lock_timeout', :ms, true)"),
+                   {"ms": f"{int(timeout * 1000)}"})
+    try:
+        # hashtext() is 32-bit, so two different job ids can theoretically share
+        # a key.  The consequence is that those two jobs serialise against each
+        # other — slower, never wrong — which is why a hash is acceptable here
+        # and would not be for a uniqueness check.
+        db.execute(text("SELECT pg_advisory_xact_lock(:ns, hashtext(:job))"),
+                   {"ns": _ADVISORY_LOCK_NAMESPACE, "job": job_id})
+    except DBAPIError as e:
+        if _sqlstate(e) != _LOCK_NOT_AVAILABLE:
+            raise                            # a real database fault, not contention
+        raise BlockingValidationError(
+            "JOB_BUSY",
+            f"Another change to this job is still running and did not finish within "
+            f"{timeout:.0f}s. Wait for it to complete, then try again.") from e
+
+
+def _sqlstate(e: DBAPIError) -> str | None:
+    """The SQLSTATE of a driver error, across psycopg 3 and psycopg 2 spellings."""
+    orig = getattr(e, "orig", None)
+    return getattr(orig, "sqlstate", None) or getattr(orig, "pgcode", None)
+
+
+@contextmanager
+def job_lock(db: Session, job_id: str):
+    """Hold the job for a read-modify-write.  See the note above for why this
+    takes the session: on Postgres the lock lives in the transaction."""
+    if _is_postgres(db):
+        _take_advisory_lock(db, job_id)
+        yield                                # released by the caller's commit
+        return
+    with _in_process_job_lock(job_id):
         yield
 
 
@@ -294,10 +401,16 @@ def validate_upload(filename: str, data: bytes) -> str:
 
 
 def add_document(db: Session, job: Job, role: DeclaredRole, filename: str, data: bytes,
-                 fixture: dict | None, *, actor: str = SYSTEM_ACTOR) -> Document:
+                 fixture: dict | None, *, actor: str = SYSTEM_ACTOR,
+                 provenance: ExtractionProvenance = ExtractionProvenance.OCR) -> Document:
     """Store the upload. Extraction is a separate user-triggered step, except
     for fixture uploads (demo/tests) which extract immediately — deterministic
     and instant, no external calls.
+
+    ``provenance`` says where ``fixture`` came from, and every caller passing a
+    fixture must state it (see :func:`_attach_document`).  It is what separates
+    the bundled demo from unverified facts arriving in an HTTP request; the two
+    used to be the same hook, so the gate on one closed the other.
 
     The client's declared MIME type is deliberately NOT a parameter.  What gets
     stored is always PDF bytes — validate_upload proved it, or images.py just
@@ -318,7 +431,8 @@ def add_document(db: Session, job: Job, role: DeclaredRole, filename: str, data:
         # Downstream never learns that image uploads exist.
         data = images.photos_to_pdf([(filename, data)])
     return _attach_document(db, job, role, filename, data, digest,
-                            fixture, converted_pages=1 if converted else 0, actor=actor)
+                            fixture, converted_pages=1 if converted else 0, actor=actor,
+                            provenance=provenance)
 
 
 def add_photo_document(db: Session, job: Job, role: DeclaredRole,
@@ -361,24 +475,83 @@ def add_photo_document(db: Session, job: Job, role: DeclaredRole,
                             fixture=None, converted_pages=len(photos), actor=actor)
 
 
+def _stamp_provenance(db: Session, job: Job, doc: Document,
+                      provenance: ExtractionProvenance, *, actor: str) -> None:
+    """Record on the row where this document's facts came from, and say so in
+    the audit trail when they did not come from the document.
+
+    Silence is the failure mode worth avoiding here: a seeded extraction and a
+    real one are the same JSON in the same column, so without this the only
+    trace that a declaration was built from values nobody read off the paper is
+    an operator's memory of which button they pressed.
+    """
+    doc.extraction_provenance = provenance.value
+    if provenance is ExtractionProvenance.OCR:
+        return
+    # Flush before auditing: a brand-new row's id is assigned by the column
+    # default AT FLUSH (models._uuid), so reading doc.id before one records the
+    # event against document None — a trail that names no document is not a
+    # trail.  Harmless no-op on the retry path, where the row is already
+    # persistent.
+    db.flush()
+    _audit(db, job.id, "EXTRACTION_SEEDED",
+           f"{doc.declared_role} extraction supplied, not read from the document "
+           f"(provenance {provenance.value})", actor=actor,
+           payload={"document_id": doc.id, "provenance": provenance.value})
+
+
+def is_demo_job(job: Job) -> bool:
+    """True when any of this job's documents was seeded from a bundled sample.
+
+    DERIVED, never stored: a flag on the job and a provenance on the row are
+    two things that can disagree, and the one that would be wrong is the one
+    the UI reads.  The documents are the evidence, so they are the answer.
+    """
+    return any(d.extraction_provenance == ExtractionProvenance.BUNDLED_DEMO.value
+               for d in job.documents)
+
+
 def _attach_document(db: Session, job: Job, role: DeclaredRole, filename: str, data: bytes,
                      digest: str, fixture: dict | None,
-                     converted_pages: int = 0, *, actor: str = SYSTEM_ACTOR) -> Document:
+                     converted_pages: int = 0, *, actor: str = SYSTEM_ACTOR,
+                     provenance: ExtractionProvenance = ExtractionProvenance.OCR) -> Document:
     """Shared tail of every upload path: duplicate gate, retry-reset, row +
     stored file.  ``data`` is what is STORED (always PDF bytes by now);
     ``digest`` identifies what the user picked (pre-conversion)."""
-    # The fixture replay hook is gated HERE as well as on the upload route,
-    # because the route is not the only way in: seed_demo_job calls
-    # add_document with a bundled fixture directly, so POST /api/jobs/demo
-    # planted unverified hard-coded values into a real job on a server where
-    # the setting was off — the gate reported a state it was not enforcing.
-    # A gate on one caller is a gate on one caller.
-    if fixture is not None and not get_settings().allow_fixture_uploads:
+    # The replay hook is gated HERE as well as on the upload route, because the
+    # route is not the only way in — seed_demo_job calls add_document directly.
+    #
+    # But the gate is on PROVENANCE, not on "a fixture was passed", and the
+    # difference is the whole bug.  What must never reach a declaration
+    # unannounced is facts supplied by a CLIENT: chosen outside the server,
+    # bounded by nothing, indistinguishable afterwards from something read off
+    # the paper.  A fixture the server loads from its own backend/sample_data
+    # is none of those things — it ships with the code, no request can alter
+    # it, and it is the entire content of the demo.  Gating both as one turned
+    # "reject unverified values from the network" into "the sample shipment
+    # button 409s on every deployment that has not opted in", which is how it
+    # was found.  Bundled fixtures are allowed and MARKED (below); client
+    # fixtures still need the flag.
+    if fixture is not None and provenance is ExtractionProvenance.OCR:
+        # A caller that supplies an extraction without saying where it came
+        # from does NOT get the benefit of the doubt: OCR is the default value,
+        # so honouring it here would let a forgotten argument label supplied
+        # facts as read-from-the-document — the one thing this column exists to
+        # prevent.  Fall back to the gated, marked provenance instead, so the
+        # mistake surfaces as a refusal on a default deployment rather than as
+        # a quietly laundered value.
+        provenance = ExtractionProvenance.CLIENT_FIXTURE
+    if (fixture is not None and provenance is ExtractionProvenance.CLIENT_FIXTURE
+            and not get_settings().allow_fixture_uploads):
         raise BlockingValidationError(
             "FIXTURE_UPLOADS_DISABLED",
             "This server does not accept supplied extraction values: a document's facts must "
             "come from its own OCR. Set EASYCUSTOMS_ALLOW_FIXTURE_UPLOADS=true only on a test "
             "or demo deployment.", scope="DOCUMENT")
+    # Nothing was supplied, so the row says what is true regardless of what the
+    # caller asked for.
+    if fixture is None:
+        provenance = ExtractionProvenance.OCR
     # A byte-identical file in the SAME role box is never a legitimate second
     # document.  Several documents per role IS supported (a shipment may carry
     # several invoices), but every extra copy of the *same* file contributes
@@ -408,6 +581,7 @@ def _attach_document(db: Session, job: Job, role: DeclaredRole, filename: str, d
         # envelope survives, so the retry costs no re-OCR.
         twin.status = DocumentStatus.UPLOADED.value
         twin.warnings = []
+        _stamp_provenance(db, job, twin, provenance, actor=actor)
         db.flush()
         _audit(db, job.id, "DOCUMENT_UPLOAD_RETRIED",
                f"{role.value} #{twin.upload_index_within_role} reset for re-extraction "
@@ -426,6 +600,7 @@ def _attach_document(db: Session, job: Job, role: DeclaredRole, filename: str, d
                    original_file_name=filename, byte_size=len(data),
                    sha256=digest, status=DocumentStatus.UPLOADED.value)
     db.add(doc)
+    _stamp_provenance(db, job, doc, provenance, actor=actor)
     db.flush()
     # A converted photo keeps its camera filename for display, but the stored
     # file IS a PDF — name it as one so the storage directory tells the truth.
@@ -560,7 +735,7 @@ def run_extraction(db: Session, doc: Document, fixture: dict | None = None, *,
     # is not held across them, and the SPA extracts documents in parallel.  It
     # covers the one window that matters — this delete racing a concurrent
     # finalize writing the very artifact being deleted.
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         superseded = job.critical_review is not None or job.declaration is not None
         _invalidate_derived(db, job)
@@ -732,7 +907,7 @@ def resolve_document_role(db: Session, job: Job, doc: Document, *, accept: bool,
     changes what the declaration is built from, so everything derived is
     invalidated and the reviewer goes back through Critical Review.
     """
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         if doc.status != DocumentStatus.ROLE_REVIEW_REQUIRED.value:
             raise BlockingValidationError(
@@ -773,7 +948,7 @@ def remove_document(db: Session, job: Job, doc: Document, *, actor: str = SYSTEM
     same way a role decision does it.  The stored file is deleted best-effort;
     the audit trail records the removal.
     """
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         if doc.status == DocumentStatus.EXTRACTING.value:
             raise BlockingValidationError(
@@ -806,7 +981,7 @@ def remove_document(db: Session, job: Job, doc: Document, *, actor: str = SYSTEM
 
 def critical_review(db: Session, job: Job, *, actor: str = SYSTEM_ACTOR) -> dict:
     _require_extracted(job)
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         docs = declarable_documents(job)
         ctx = resolve_context(docs, _rate(job), item_mutations=job.item_mutations,
@@ -827,7 +1002,7 @@ _LEGACY_BODY_KEYS = {"insurance_national": "manual_insurance_amount",
 
 def finalize_job(db: Session, job: Job, body: dict, *, actor: str = SYSTEM_ACTOR) -> dict:
     _require_extracted(job)
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         result = _finalize_job_locked(db, job, body, actor=actor)
         db.commit()                      # persist before the lock is released
@@ -1138,7 +1313,7 @@ def edit_item_bms(db: Session, job: Job, body: dict, actor: str = SYSTEM_ACTOR) 
     artifact and the job status all survive.  The override is stored, the review
     preview is refreshed, and only the .xls is rebuilt (user rule 2026-07-21).
     """
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_extracted(job)
         ctx = resolve_context(declarable_documents(job), _rate(job), item_mutations=job.item_mutations,
@@ -1173,7 +1348,7 @@ def _recompute_after_mutation(db: Session, job: Job) -> dict:
 
 
 def add_job_item(db: Session, job: Job, body: dict, actor: str = SYSTEM_ACTOR) -> dict:
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_item_mutable(job)
         ctx = resolve_context(declarable_documents(job), _rate(job), item_mutations=job.item_mutations,
@@ -1205,7 +1380,7 @@ def review_item_hs(db: Session, job: Job, body: dict, actor: str = SYSTEM_ACTOR)
     declaration, XML) is invalidated and recomputed deterministically."""
     from .reference.store import get_reference
 
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_item_mutable(job)
         ctx = resolve_context(declarable_documents(job), _rate(job), item_mutations=job.item_mutations,
@@ -1235,7 +1410,7 @@ def review_item_hs_range(db: Session, job: Job, body: dict, actor: str = SYSTEM_
     not a replacement; a later per-row pick still overrides any one row."""
     from .reference.store import get_reference
 
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_item_mutable(job)
         ctx = resolve_context(declarable_documents(job), _rate(job), item_mutations=job.item_mutations,
@@ -1264,7 +1439,7 @@ def edit_job_item(db: Session, job: Job, item_id: str, body: dict,
     """Reviewer edits of an item's invoice fields (description / COO / qty /
     UOM / total price) — stored by immutable item_id, every derived value
     (HS/COO resolution, allocation, supplementary, totals, XML) recomputed."""
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_item_mutable(job)
         ctx = resolve_context(declarable_documents(job), _rate(job), item_mutations=job.item_mutations,
@@ -1289,7 +1464,7 @@ def set_all_item_coo(db: Session, job: Job, body: dict, actor: str = SYSTEM_ACTO
     """Bulk-apply one reviewer COO to every item (DB-validated), then recompute."""
     from .reference.store import get_reference
 
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_item_mutable(job)
         overlay, event = itemmut.set_all_coo(
@@ -1312,7 +1487,7 @@ def review_shipment_totals(db: Session, job: Job, body: dict,
     """Reviewer-corrected gross weight / cartons become the durable shipment
     authority: stored in the overlay, every recompute reconciles item sums
     exactly to them, and stale declaration/XML are invalidated."""
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_item_mutable(job)
         overlay, event = itemmut.set_shipment_totals(
@@ -1393,7 +1568,7 @@ def review_regime_selections(db: Session, job: Job, body: dict,
                                             f"Nationality {v!r} is not a valid alpha-2 country code.")
         return v
 
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_extracted(job)
         stored = dict(job.review_selections or {})
@@ -1435,7 +1610,7 @@ def review_regime_selections(db: Session, job: Job, body: dict,
 
 def delete_job_item(db: Session, job: Job, item_id: str, body: dict,
                     actor: str = SYSTEM_ACTOR) -> dict:
-    with job_lock(job.id):
+    with job_lock(db, job.id):
         _fresh_under_lock(db, job)
         _require_item_mutable(job)
         ctx = resolve_context(declarable_documents(job), _rate(job), item_mutations=job.item_mutations,
@@ -1525,6 +1700,10 @@ def list_jobs(db: Session, limit: int = 50, offset: int = 0, *, principal: str) 
             "declaration_type": " ".join(x for x in (cr.get("declaration_type"),
                                                      cr.get("gen_procedure_code")) if x),
             "has_xml": j.id in with_xml,
+            # Demo jobs sit in the real dashboard beside real ones (that is the
+            # point — the demo shows the actual workspace), so the listing has
+            # to say which is which.
+            "is_demo": is_demo_job(j),
         })
     return {"jobs": out, "total": total}
 

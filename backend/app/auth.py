@@ -35,6 +35,10 @@ import secrets
 import time
 import unicodedata
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy import delete as sql_delete
+from sqlalchemy import select
 
 from .config import get_settings
 
@@ -206,44 +210,139 @@ def authenticate_request(request) -> Session | None:
 
 
 # --------------------------------------------------------------------------- #
-# Login throttle — a single account with no lockout is one long guessing run.
-# In-process and best effort (per worker, cleared by a restart): enough to make
-# online guessing impractically slow without adding a store to a stateless app.
+# Who is asking — the key the throttle counts against.
+#
+# The socket peer is the honest answer only when nothing sits in front of this
+# process.  Behind a load balancer every request arrives from the balancer, so
+# keying on it collapses every caller into ONE bucket: ten failed sign-ins from
+# anywhere lock out everybody, and an unauthenticated attacker can do that on
+# purpose.  That is a denial of service built out of a security control.
+#
+# X-Forwarded-For fixes it and cannot simply be trusted: a caller that can set
+# the header would otherwise pick its own throttle key and reset its count at
+# will.  What makes it safe is knowing how many hops in front of us are OURS.
+# Each trusted proxy APPENDS the address it received the request from, so with
+# `hops` trusted proxies the real client is the hops-th entry FROM THE RIGHT;
+# everything to the left of it is caller-supplied and worthless.
+# --------------------------------------------------------------------------- #
+def client_key(request) -> str:
+    """The throttle identity of a caller: an IP, from a source we trust."""
+    peer = (request.client.host if request.client else "") or "unknown"
+    hops = get_settings().trusted_proxy_hops
+    if hops <= 0:
+        # Nothing trusted in front: the socket peer is the only truthful answer,
+        # and the header is entirely attacker-controlled.
+        return peer
+    forwarded = request.headers.get("x-forwarded-for") or ""
+    parts = [p.strip() for p in forwarded.split(",") if p.strip()]
+    if len(parts) < hops:
+        # Fewer entries than there are trusted proxies: this request did not
+        # come through them (a direct hit on the app port, or a misconfigured
+        # hop count). Falling back to the peer is the safe read — believing a
+        # short list would let a caller supply its own key.
+        return peer
+    return parts[-hops]
+
+
+# --------------------------------------------------------------------------- #
+# Login throttle — a public endpoint with no lockout is one long guessing run.
+#
+# Stored in the database, not in a dict, because a per-process count is not a
+# rate limit on a deployment with more than one process: N processes allow N
+# times the intended rate, and whichever one a load balancer happens to pick
+# decides whether the caller is blocked.
 # --------------------------------------------------------------------------- #
 _MAX_FAILURES = 10
 _FAILURE_WINDOW_SECONDS = 300
 
-_failures: dict[str, list[float]] = {}
+
+class ThrottleUnavailable(RuntimeError):
+    """The failure count could not be read, so the limit cannot be enforced."""
 
 
-def _recent(client: str, now: float) -> list[float]:
-    stamps = [t for t in _failures.get(client, []) if now - t < _FAILURE_WINDOW_SECONDS]
-    if stamps:
-        _failures[client] = stamps
-    else:
-        _failures.pop(client, None)
-    return stamps
+def _aware(value: datetime) -> datetime:
+    """Timestamps are written in UTC; SQLite hands them back without a tzinfo."""
+    return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
 
 
-def throttle_retry_after(client: str) -> int:
-    """Seconds the caller must wait, or 0 when it may attempt a login now."""
-    now = time.time()
-    stamps = _recent(client, now)
+def throttle_retry_after(db, client: str) -> int:
+    """Seconds the caller must wait, or 0 when it may attempt a login now.
+
+    Raises ThrottleUnavailable rather than returning 0 when the store cannot be
+    read.  Answering "go ahead" on a database fault would turn an outage into
+    unlimited password guessing against a public endpoint — and this app cannot
+    serve a signed-in user without the database anyway, so there is nothing to
+    protect by letting the login through.
+    """
+    from .models import LoginAttempt
+
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(seconds=_FAILURE_WINDOW_SECONDS)
+    try:
+        stamps = list(db.scalars(
+            select(LoginAttempt.created_at)
+            .where(LoginAttempt.client_key == client, LoginAttempt.created_at >= cutoff)
+            .order_by(LoginAttempt.created_at)))
+    except Exception as e:
+        raise ThrottleUnavailable(str(e)) from e
     if len(stamps) < _MAX_FAILURES:
         return 0
-    return max(1, int(_FAILURE_WINDOW_SECONDS - (now - stamps[0])))
+    # Time until the OLDEST failure in the window ages out, which is when the
+    # caller drops back below the limit.
+    elapsed = (now - _aware(stamps[0])).total_seconds()
+    return max(1, int(_FAILURE_WINDOW_SECONDS - elapsed))
 
 
-def record_failure(client: str) -> None:
-    now = time.time()
-    _failures.setdefault(client, []).append(now)
-    _recent(client, now)
+def record_failure(db, client: str) -> None:
+    """Count one failed attempt, and prune the window while we are here.
+
+    Never raises: the caller is being told 401 either way, and a failure to
+    write the counter must not turn a wrong password into a 500.  It is logged,
+    because a throttle that has silently stopped counting is worth knowing about.
+    """
+    from .models import LoginAttempt
+
+    try:
+        db.add(LoginAttempt(client_key=client))
+        # Anything older than the window can never affect a decision again.
+        # Pruning on write keeps the table a sliding window instead of a
+        # permanent log of every failed sign-in anyone has ever made.
+        db.execute(sql_delete(LoginAttempt).where(
+            LoginAttempt.created_at
+            < datetime.now(timezone.utc) - timedelta(seconds=_FAILURE_WINDOW_SECONDS)))
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        log.error("could not record a failed sign-in for %s — the login throttle is "
+                  "not counting: %s", client, e)
 
 
-def clear_failures(client: str) -> None:
-    _failures.pop(client, None)
+def clear_failures(db, client: str) -> None:
+    """Forget this caller's failures after a correct password.  Never raises:
+    the sign-in has already succeeded and must not be undone by a cleanup."""
+    from .models import LoginAttempt
+
+    try:
+        db.execute(sql_delete(LoginAttempt).where(LoginAttempt.client_key == client))
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        log.warning("could not clear failed sign-ins for %s: %s", client, e)
 
 
-def reset_throttle() -> None:
-    """Test hook — the failure memory is process-wide."""
-    _failures.clear()
+def reset_throttle(db=None) -> None:
+    """Empty the window — a test hook, and the manual unlock for an operator who
+    has locked themselves out.  Opens its own session when not given one."""
+    from .database import SessionLocal
+    from .models import LoginAttempt
+
+    session = db or SessionLocal()
+    try:
+        session.execute(sql_delete(LoginAttempt))
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        if db is None:
+            session.close()

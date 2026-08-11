@@ -28,12 +28,15 @@ D = Decimal
 
 
 @pytest.fixture(autouse=True)
-def _isolate_layout_store(tmp_path, monkeypatch):
-    from app import config as config_mod
-    from app.extraction import layout_memory
-    s = config_mod.get_settings_uncached()
-    s.storage_dir = tmp_path
-    monkeypatch.setattr(layout_memory, "get_settings", lambda: s)
+def _isolate_layout_store(isolated_vendor_stores):
+    """Vendor layout memory starts empty for every test in this file.
+
+    A remembered layout is keyed by role + header signature and is offered
+    to any later document whose own header is unreadable — so one test
+    recording a layout would feed it into another test's headerless-page
+    case, which is exactly the parse those tests assert stands down.
+    (Was a tmp storage_dir; the store is a database table now.)
+    """
 
 
 def _item(seq, desc, qty="1", total="100"):

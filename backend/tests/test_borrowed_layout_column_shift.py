@@ -228,18 +228,10 @@ def test_no_printed_total_leaves_the_parse_alone():
 
 # --- layer 7: memory must not confirm itself -------------------------------- #
 
-def test_a_layout_without_a_header_signature_is_never_recorded(tmp_path, monkeypatch):
+def test_a_layout_without_a_header_signature_is_never_recorded(isolated_vendor_stores):
     """A parse with no signature CAME from the store; storing it again scores a
     borrowed map on the rows it got wrong and keys it to match every headerless
     document of the role."""
-    from app import config
-
-    settings = config.get_settings()
-    monkeypatch.setattr(settings, "storage_dir", tmp_path, raising=False)
-    config.get_settings.cache_clear()
-    monkeypatch.setattr(config, "get_settings", lambda: settings)
-    monkeypatch.setattr("app.extraction.layout_memory.get_settings", lambda: settings)
-
     record_layout(DeclaredRole.INVOICE, BORROWED, None, "P3S INTERNATIONAL LIMITED", 15)
     assert stored_layouts(DeclaredRole.INVOICE) == []
 
@@ -248,17 +240,23 @@ def test_a_layout_without_a_header_signature_is_never_recorded(tmp_path, monkeyp
     assert stored_layouts(DeclaredRole.INVOICE) == [BORROWED]
 
 
-def test_positional_entries_already_in_the_store_are_retired(tmp_path, monkeypatch):
-    import json
+def test_positional_entries_already_in_the_store_are_retired(isolated_vendor_stores):
+    """The read-side filter, tested against a row the writer would now refuse.
 
-    from app import config
+    Written straight to the table rather than through record_layout, because
+    that is the only way such a row can exist: the writer requires a signature
+    and the legacy importer skips POSITIONAL. The filter stays because retiring
+    entries on READ is what clears the ones a previous build already wrote.
+    """
+    from app.database import SessionLocal
+    from app.models import VendorLayout
 
-    settings = config.get_settings()
-    monkeypatch.setattr(settings, "storage_dir", tmp_path, raising=False)
-    monkeypatch.setattr("app.extraction.layout_memory.get_settings", lambda: settings)
-    (tmp_path / "vendor_layouts.json").write_text(json.dumps({
-        "version": 1,
-        "layouts": [{"role": "INVOICE", "header_signature": "POSITIONAL",
-                     "mapping": BORROWED, "confirmed_rows": 15, "docs": 2}],
-    }), encoding="utf-8")
+    db = SessionLocal()
+    try:
+        db.add(VendorLayout(role="INVOICE", header_signature="POSITIONAL",
+                            mapping=BORROWED, confirmed_rows=15, docs=2))
+        db.commit()
+    finally:
+        db.close()
+
     assert stored_layouts(DeclaredRole.INVOICE) == []

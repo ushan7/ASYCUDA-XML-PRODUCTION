@@ -594,7 +594,21 @@
        padding:2px 9px;font-size:10px;cursor:pointer;color:var(--ink2);font-family:inherit;font-weight:600}
   .docchip.act{background:var(--brand2);border-color:var(--brand2);color:#fff}
   .docchip:hover:not(.act){border-color:var(--brand2);color:var(--brand2)}
+  /* Demo marking. Amber rather than red: a demo job is not an error, it just
+     must never be read as a shipment. */
+  .demopill{display:inline-block;margin-left:7px;padding:1px 7px;border-radius:999px;
+       background:#fef3c7;color:#78350f;border:1px solid #fcd34d;
+       font-size:9.5px;font-weight:800;letter-spacing:.6px;vertical-align:middle}
+  .demobanner{margin:0 0 14px;padding:10px 13px;border-radius:10px;font-size:12.5px;
+       line-height:1.5;background:#fffbeb;border:1px solid #fcd34d;color:#78350f}
+  .demobanner b{letter-spacing:.3px}
   .docframe{flex:1;border:0;width:100%;background:#4a4e57}
+  /* Shown INSTEAD of the frame when the stored file cannot be served — a blank
+     panel is indistinguishable from a slow one, so the reason goes on screen. */
+  .docerr{flex:1;display:flex;flex-direction:column;justify-content:center;gap:9px;
+       padding:22px 20px;background:#4a4e57;color:#f2f4f7;font-size:12px;line-height:1.5}
+  .docerr .dehead{font-weight:700;font-size:12.5px}
+  .docerr .decode{font-size:10px;opacity:.72;font-family:ui-monospace,Menlo,Consolas,monospace}
   .docnote{font-size:10px;color:var(--muted);padding:6px 11px;border-top:1px solid var(--line);
        background:#fff;flex:none;line-height:1.45}
   main.with-viewer{max-width:none;margin-left:14px;margin-right:calc(min(38vw,600px) + 14px)}
@@ -1263,8 +1277,61 @@ function RefCombo({items, value, onPick, onRaw, placeholder, listId, disabled}){
 // --------------------------------------------------------------------------- //
 const ROLE_SHORT = {INVOICE:"Invoice", PACKING_LIST:"Packing", AIR_WAYBILL:"AWB/BL",
                     BANKING:"Banking", INSURANCE:"Insurance", CERTIFICATE_OF_ORIGIN:"COO cert"};
+// What to say when the server refused the file but sent no sentence of its own.
+const DOC_ERR_FALLBACK = {
+  403: "This server refused to serve the stored file.",
+  404: "The server has no record of this document on this job.",
+  410: "The stored file is no longer on this server.",
+};
+
 function DocViewer({job, docs, viewer, onSwitch, onClose}){
   const doc = docs.find(d=>d.document_id===viewer.docId);
+  const page = viewer.page || 1;
+  const fileUrl = doc ? `${API}/api/jobs/${job.job_id}/documents/${doc.document_id}/file` : "";
+  // ASK BEFORE FRAMING.  The iframe below fetches by navigation, where no
+  // JavaScript runs and nothing reports back: its load event fires for an
+  // error response exactly as it does for a PDF, so a refusal renders as an
+  // empty grey panel and nothing else.  That one silent failure mode made two
+  // unrelated causes — a response header the browser would not frame, and a
+  // stored file missing off disk — look identical from the reviewer's chair,
+  // and identical to a slow load.  One HEAD first, then either the document or
+  // the server's own reason on screen.
+  const [avail, setAvail] = useState({state:"checking"});
+  useEffect(()=>{
+    if(!fileUrl) return;
+    let live = true;
+    setAvail({state:"checking"});
+    (async()=>{
+      try{
+        const r = await fetch(fileUrl, {method:"HEAD"});
+        if(!live) return;
+        if(r.ok){ setAvail({state:"ok"}); return; }
+        if(r.status === 401){
+          // One cause, one answer: the shell swaps in the sign-in screen rather
+          // than this panel inventing its own dead end (see api()).
+          window.dispatchEvent(new CustomEvent("ec-auth-expired"));
+          setAvail({state:"error", status:401,
+                    detail:"Your session has ended. Sign in to continue."});
+          return;
+        }
+        // HEAD carries no body — re-ask with GET purely to read the reason the
+        // server gave, which is written for the reviewer and names the file.
+        let detail = "";
+        try{
+          const g = await fetch(fileUrl);
+          if((g.headers.get("content-type")||"").includes("json")){
+            const b = await g.json();
+            detail = (b && b.detail) || "";
+          }
+        }catch(e){}
+        if(live) setAvail({state:"error", status:r.status, detail});
+      }catch(e){
+        if(live) setAvail({state:"error", status:0,
+                           detail:"The server could not be reached. Check that it is still running."});
+      }
+    })();
+    return ()=>{ live = false; };
+  },[fileUrl]);
   // Esc closes — the same reflex every other panel on the page answers to
   useEffect(()=>{
     const onKey = e=>{ if(e.key==="Escape") onClose(); };
@@ -1272,8 +1339,6 @@ function DocViewer({job, docs, viewer, onSwitch, onClose}){
     return ()=>document.removeEventListener("keydown", onKey);
   },[onClose]);
   if(!doc) return null;
-  const page = viewer.page || 1;
-  const fileUrl = `${API}/api/jobs/${job.job_id}/documents/${doc.document_id}/file`;
   // key forces the iframe to re-navigate when the target page changes — PDF
   // viewers ignore a pure fragment change on an already-loaded document
   return (
@@ -1296,9 +1361,18 @@ function DocViewer({job, docs, viewer, onSwitch, onClose}){
             {ROLE_SHORT[d.role]||d.role}{d.status==="ROLE_REJECTED"?" ⛔":""}
           </button>))}
       </div>
-      <iframe key={doc.document_id+"@"+page} className="docframe"
-              src={`${fileUrl}#page=${page}`}
-              title={`document ${doc.file}, page ${page}`}/>
+      {avail.state === "error"
+        ? <div className="docerr" role="alert">
+            <div className="dehead">This document cannot be shown.</div>
+            <div>{avail.detail || DOC_ERR_FALLBACK[avail.status] ||
+                  "The server refused to serve the stored file."}</div>
+            <div className="decode">{doc.file}{avail.status ? ` — HTTP ${avail.status}` : ""}</div>
+            <div>The extracted values on the left are unaffected: they were read when the document
+              was uploaded and are stored with the job, not with the file.</div>
+          </div>
+        : <iframe key={doc.document_id+"@"+page} className="docframe"
+                  src={`${fileUrl}#page=${page}`}
+                  title={`document ${doc.file}, page ${page}`}/>}
       <div className="docnote">Evidence view — the stored upload, exactly as received. Values on the
         declaration come only from the extracted, reviewed data on the left.</div>
     </div>);
@@ -1915,6 +1989,11 @@ const JOB_STATUS_LABEL = {
   CRITICAL_REVIEW_REQUIRED:"in review", VALIDATION_BLOCKED:"XML with blockers",
   XML_READY:"XML ready",
 };
+// The demo runs the REAL pipeline over bundled sample facts, which is what
+// makes it worth having and also what makes it worth labelling: what comes out
+// the far end is a genuine, downloadable ASYCUDA XML.
+const DEMO_TITLE = "Sample shipment: values seeded from the bundled demo data, "
+                 + "not read from the attached documents.";
 function JobsDashboard({onOpen, onNew, onDemo, busy}){
   const [data,setData] = useState(null);       // {jobs,total}; null while loading
   const [lerr,setLerr] = useState("");
@@ -1956,6 +2035,9 @@ function JobsDashboard({onOpen, onNew, onDemo, busy}){
                       style={j.status==="EXTRACTION_RUNNING"?{background:"var(--warnbg)",color:"#78350f"}:undefined}>
                     {JOB_STATUS_LABEL[j.status]||j.status}</span></td>
                 <td>{inv ? <b>{inv}</b> : <span className="muted">no invoice yet</span>}
+                    {/* A demo job is a REAL job — same pipeline, same downloadable XML — so
+                        the dashboard has to be the place it stops looking like a shipment. */}
+                    {j.is_demo && <span className="demopill" title={DEMO_TITLE}>DEMO</span>}
                     {who && <div className="muted" style={{fontSize:11}}>{who}</div>}</td>
                 <td>{j.customs_office_code||"—"}{j.declaration_type ? <span className="muted"> · {j.declaration_type}</span> : null}</td>
                 <td>{j.item_count||""}</td>
@@ -3521,6 +3603,16 @@ function App({session, onSignOut}){
       {view==="jobs" && <JobsDashboard onOpen={openJob} onNew={freshJob} onDemo={loadDemo} busy={busy}/>}
 
       {view==="job" && <React.Fragment>
+      {/* Stays on screen for the whole job, not just at load: the reviewer who
+          reaches finalize twenty minutes later is the one who has to know these
+          numbers were never read off a document. */}
+      {job && job.is_demo &&
+        <div className="demobanner" role="note">
+          <b>DEMO — sample shipment.</b> The facts on this job were seeded from the bundled
+          sample data, not extracted from the attached PDFs. Every step after that is the real
+          pipeline, so the XML this produces is a real file — use it to try ASYCUDA, never to
+          file a declaration.
+        </div>}
       {/* STEP 1 */}
       <div className="card">
         <h2><span className="htxt"><span className="step">1</span> Upload role-specific documents</span>

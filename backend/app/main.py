@@ -26,7 +26,7 @@ from . import auth, queueing, services
 from .config import get_settings
 from .database import SessionLocal, get_session, init_db
 from .demo import seed_demo_job
-from .domain.enums import DeclaredRole, DocumentStatus
+from .domain.enums import DeclaredRole, DocumentStatus, ExtractionProvenance
 from .domain.errors import BlockingValidationError
 from .reference.store import get_reference, hs_query_error
 from .review.item_mutations import ItemMutationError
@@ -270,11 +270,23 @@ def _security_headers(resp) -> None:
     'unsafe-eval' because Babel standalone COMPILES the application in the
     browser.  Both are concessions to the current frontend, not endorsements —
     vendoring those bundles locally is what lets this tighten to 'self'.
+
+    The framing rule is split by content type, because this app is BOTH the
+    thing that must never be framed and the thing that frames.  The workspace
+    is HTML and carries the clickjackable finalize button, so it stays at
+    `DENY`/`frame-ancestors 'none'`.  Everything else is evidence and payload —
+    above all the stored PDF the reviewer's document panel loads in an
+    `<iframe>` FROM THIS ORIGIN.  Sending `DENY` there too blanked that panel
+    in every browser (`X-Frame-Options: DENY` refuses same-origin framing as
+    firmly as cross-origin), which is the whole reason a reviewer could not see
+    the document behind a 📄 link.  `SAMEORIGIN`/'self' keeps a third-party
+    page from embedding an importer's invoice while letting the app frame its
+    own; a PDF or JSON response has no control to clickjack in the first place.
     """
     resp.headers.setdefault("X-Content-Type-Options", "nosniff")
     resp.headers.setdefault("Referrer-Policy", "same-origin")
-    resp.headers.setdefault("X-Frame-Options", "DENY")
     if resp.headers.get("content-type", "").startswith("text/html"):
+        resp.headers.setdefault("X-Frame-Options", "DENY")
         resp.headers.setdefault("Content-Security-Policy", "; ".join((
             "default-src 'self'",
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com",
@@ -286,10 +298,43 @@ def _security_headers(resp) -> None:
             "form-action 'self'",
             "frame-ancestors 'none'",
         )))
+    else:
+        resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        # Modern browsers prefer frame-ancestors over X-Frame-Options; both are
+        # sent so the rule holds either way it is read.
+        resp.headers.setdefault("Content-Security-Policy", "frame-ancestors 'self'")
+
+
+def _widen_threadpool() -> None:
+    """Lift Starlette's 40-thread default to the configured ceiling.
+
+    Every `def` route runs there, and so does every explicit run_in_threadpool
+    call — which is to say uploads, extraction and finalize, the three slowest
+    things this app does.  40 is therefore the per-process concurrency limit on
+    exactly the routes that hold a thread for seconds to minutes, and it is
+    reached long before CPU is: 41 reviewers pressing Finalize means the 41st
+    waits for a thread before it waits for anything real.
+
+    Never fatal.  A failure to widen the pool is a slower app, not a broken one,
+    and refusing to boot over it would trade a throughput ceiling for an outage.
+    """
+    target = get_settings().threadpool_max_threads
+    try:
+        import anyio.to_thread
+
+        limiter = anyio.to_thread.current_default_thread_limiter()
+        if limiter.total_tokens < target:
+            limiter.total_tokens = target
+            log.info("threadpool limiter raised to %s threads", target)
+    except Exception as e:                    # pragma: no cover - defensive
+        log.warning("could not raise the threadpool limiter to %s (%s: %s) — the "
+                    "process keeps AnyIO's default of 40 concurrent threadpool "
+                    "requests", target, type(e).__name__, e)
 
 
 @app.on_event("startup")
 def _startup() -> None:
+    _widen_threadpool()
     if not auth.credentials_configured():
         # Loud, because the symptom otherwise reads as a broken app: every
         # screen is a login form that rejects every password.
@@ -363,9 +408,14 @@ class LoginRequest(BaseModel):
 
 
 def _client_id(request: Request) -> str:
-    """Throttle key.  Proxy headers are NOT trusted: a caller that can forge
-    X-Forwarded-For could otherwise reset its own failure count at will."""
-    return request.client.host if request.client else "unknown"
+    """Throttle key — see auth.client_key.
+
+    X-Forwarded-For is read only as far as EASYCUSTOMS_TRUSTED_PROXY_HOPS says
+    the proxies in front of this app are ours; at the default of 0 it is ignored
+    entirely and the socket peer is used, because a caller that can set the
+    header would otherwise pick its own key and reset its failure count.
+    """
+    return auth.client_key(request)
 
 
 def _actor(request: Request) -> str:
@@ -410,30 +460,43 @@ def _session_payload(session: auth.Session, token: str | None = None) -> dict:
 
 
 @app.post("/api/auth/login")
-def login(body: LoginRequest, request: Request):
+def login(body: LoginRequest, request: Request, db: Session = Depends(db_dep)):
     """Exchange the configured username + password for a token valid for
     ``auth_token_ttl_hours`` (24h).  The token comes back in the body (for API
     clients and the SPA's fetches) AND as an HttpOnly cookie (for the evidence
-    iframe and the XML/.xls download links, which are plain navigations)."""
+    iframe and the XML/.xls download links, which are plain navigations).
+
+    The session itself stays stateless; the database is here only for the
+    failure counter, which cannot live in this process (see app/auth.py).
+    """
     if not auth.credentials_configured():
         raise HTTPException(503, "This server has no login account configured. Set "
                                  "EASYCUSTOMS_AUTH_USERNAME and EASYCUSTOMS_AUTH_PASSWORD in "
                                  "backend/.env and restart it.")
     client = _client_id(request)
-    retry_after = auth.throttle_retry_after(client)
+    try:
+        retry_after = auth.throttle_retry_after(db, client)
+    except auth.ThrottleUnavailable as e:
+        # FAIL CLOSED. Letting the attempt through because the counter is
+        # unreadable would turn a database fault into unlimited password
+        # guessing against a public endpoint — and a signed-in user could not do
+        # anything without that database anyway, so nothing is gained by it.
+        log.error("refusing sign-in: the failure counter is unreadable (%s)", e)
+        raise HTTPException(503, "This server cannot verify sign-in attempts right now. "
+                                 "Try again shortly.")
     if retry_after:
         return JSONResponse(status_code=429, headers={"Retry-After": str(retry_after)}, content={
             "status": "THROTTLED", "code": "TOO_MANY_ATTEMPTS",
             "detail": f"Too many failed sign-in attempts. Try again in {retry_after} second(s)."})
     if not auth.verify_credentials(body.username, body.password):
-        auth.record_failure(client)
+        auth.record_failure(db, client)
         log.warning("failed sign-in attempt from %s", client)
         # One message for both halves: which of the two was wrong is not the
         # caller's business.
         return JSONResponse(status_code=401, content={
             "status": "UNAUTHENTICATED", "code": "BAD_CREDENTIALS",
             "detail": "Incorrect username or password."})
-    auth.clear_failures(client)
+    auth.clear_failures(db, client)
     # The token names the CONFIGURED username, not the typed one: the login
     # comparison is case-insensitive, and a token has to keep matching the
     # account it was issued for (verify_token re-checks that).
@@ -668,9 +731,13 @@ async def upload_document(job_id: str, role: str, request: Request, file: Upload
     # file.content_type is NOT forwarded: it is the browser's guess from the
     # file extension, i.e. attacker-influenced, and storing it once meant the
     # evidence viewer served it back as the response media type.
-    doc = await run_in_threadpool(services.add_document, db, job, declared,
-                                  file.filename or "upload.pdf", data, fixture_obj,
-                                  actor=_actor(request))
+    doc = await run_in_threadpool(partial(services.add_document, db, job, declared,
+                                          file.filename or "upload.pdf", data, fixture_obj,
+                                          actor=_actor(request),
+                                          # Anything arriving on THIS route came from the
+                                          # request, whatever it claims — the one provenance
+                                          # that stays behind allow_fixture_uploads.
+                                          provenance=ExtractionProvenance.CLIENT_FIXTURE))
     return {"document_id": doc.id, "role": doc.declared_role, "role_match": doc.role_match,
             "status": doc.status, "warnings": doc.warnings}
 
@@ -699,13 +766,21 @@ async def upload_photo_document(job_id: str, role: str, request: Request,
             "status": doc.status, "warnings": doc.warnings}
 
 
-@app.get("/api/jobs/{job_id}/documents/{document_id}/file")
+@app.api_route("/api/jobs/{job_id}/documents/{document_id}/file", methods=["GET", "HEAD"])
 def get_document_file(job_id: str, document_id: str, db: Session = Depends(db_dep),
                       principal: str = Depends(principal_dep)):
     """Serve the stored upload inline — the evidence the review's document
     viewer shows next to the extracted values.  Read-only in every job state:
     a finalized declaration's documents stay viewable (post-clearance audits
-    arrive months later), they just can't be changed."""
+    arrive months later), they just can't be changed.
+
+    HEAD is answered as well as GET, and is not decoration: the viewer panel
+    frames this URL, and a frame reports nothing back — its load event fires
+    for a refusal exactly as for a PDF.  The panel therefore asks HEAD first
+    and renders the reason instead of an empty grey rectangle.  FileResponse
+    sends headers only for HEAD, so the probe costs no bytes; without the
+    method here it answered 404 (the SPA mount at "/" swallows the 405) and
+    every document would have been reported unavailable."""
     job = services.get_job(db, job_id, principal=principal)
     if not job:
         raise HTTPException(404, "job not found")
@@ -829,9 +904,15 @@ def get_job(job_id: str, db: Session = Depends(db_dep),
     return {
         "job_id": job.id, "status": job.status, "exchange_rate": job.exchange_rate,
         "rule_set_version": job.rule_set_version,
+        # Whether this job's facts were seeded from the bundled samples rather
+        # than read off the attached documents. The SPA marks it everywhere the
+        # job appears: a demo declaration is a real, downloadable XML, so the
+        # one thing that must not happen is mistaking it for a shipment.
+        "is_demo": services.is_demo_job(job),
         "documents": [
             {"document_id": d.id, "role": d.declared_role, "file": d.original_file_name,
-             "status": d.status, "role_match": d.role_match, "warnings": d.warnings or []}
+             "status": d.status, "role_match": d.role_match, "warnings": d.warnings or [],
+             "provenance": d.extraction_provenance}
             for d in sorted(job.documents, key=lambda x: x.declared_role)
         ],
         "critical_review": job.critical_review,

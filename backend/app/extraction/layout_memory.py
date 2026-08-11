@@ -8,41 +8,31 @@ every row still has to arithmetic-verify (qty x price == total), so a wrong
 remembered layout can never fabricate rows — it simply fails to confirm and
 the LLM path takes over.
 
-Storage: ``<storage_dir>/vendor_layouts.json`` — tiny, human-inspectable,
-written atomically.  Any store failure degrades to "no memory", never breaks
-extraction.
+Storage: the ``vendor_layout`` table, one row per (role, header signature).
+
+It was ``<storage_dir>/vendor_layouts.json`` until the store had to survive a
+second process.  The file was read whole, edited in memory and rewritten whole,
+so two processes recording a layout at the same moment each started from the
+same snapshot and the second `os.replace` silently discarded what the first had
+learned.  Atomic for one writer, lossy for two — and a local file is invisible
+to another container regardless.  A row per key makes writers independent, and
+the read-modify-write that genuinely remains (the counters) happens under a row
+lock.  Any store failure still degrades to "no memory", never breaks extraction.
 """
 from __future__ import annotations
 
-import json
 import logging
-import os
-import tempfile
-from datetime import datetime, timezone
 
-from ..config import get_settings
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+
+from ..database import side_store_session
 from ..domain.enums import DeclaredRole
+from ..models import VendorLayout
 
 log = logging.getLogger("easycustoms.extraction")
 
 _MIN_ROWS_TO_RECORD = 3
-
-
-def _store_path():
-    return get_settings().storage_dir / "vendor_layouts.json"
-
-
-def _load() -> dict:
-    try:
-        with open(_store_path(), encoding="utf-8") as fh:
-            data = json.load(fh)
-        if isinstance(data, dict) and isinstance(data.get("layouts"), list):
-            return data
-    except FileNotFoundError:
-        pass
-    except Exception as e:
-        log.warning("vendor layout store unreadable (%s) — starting empty", e)
-    return {"version": 1, "layouts": []}
 
 
 def stored_layouts(role: DeclaredRole) -> list[dict]:
@@ -55,11 +45,14 @@ def stored_layouts(role: DeclaredRole) -> list[dict]:
     wrong.  Skipping on READ retires the ones already in the store.
     """
     try:
-        layouts = [l for l in _load()["layouts"]
-                   if l.get("role") == role.value and l.get("mapping")
-                   and l.get("header_signature") not in (None, "", "POSITIONAL")]
-        layouts.sort(key=lambda l: (-int(l.get("confirmed_rows", 0)), -int(l.get("docs", 0))))
-        return [l["mapping"] for l in layouts]
+        with side_store_session() as db:
+            rows = db.scalars(
+                select(VendorLayout)
+                .where(VendorLayout.role == role.value,
+                       VendorLayout.header_signature.notin_(("", "POSITIONAL")))
+                .order_by(VendorLayout.confirmed_rows.desc(), VendorLayout.docs.desc())
+            ).all()
+            return [r.mapping for r in rows if r.mapping]
     except Exception as e:                            # memory must never break extraction
         log.warning("vendor layout store read failed (%s)", e)
         return []
@@ -78,26 +71,104 @@ def record_layout(role: DeclaredRole, mapping: dict | None, header_signature: st
     """
     if not mapping or not header_signature or confirmed_rows < _MIN_ROWS_TO_RECORD:
         return
-    try:
-        data = _load()
-        sig = header_signature
-        entry = next((l for l in data["layouts"]
-                      if l.get("role") == role.value and l.get("header_signature") == sig), None)
-        if entry is None:
-            entry = {"role": role.value, "header_signature": sig, "mapping": mapping,
-                     "vendor_hint": vendor_hint, "confirmed_rows": 0, "docs": 0}
-            data["layouts"].append(entry)
-        entry["mapping"] = mapping
-        entry["confirmed_rows"] = max(int(entry.get("confirmed_rows", 0)), int(confirmed_rows))
-        entry["docs"] = int(entry.get("docs", 0)) + 1
-        if vendor_hint and not entry.get("vendor_hint"):
-            entry["vendor_hint"] = vendor_hint
-        entry["last_seen"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    # Two attempts, because SELECT-then-INSERT is a race a row lock cannot
+    # close: `FOR UPDATE` locks a row, and for a layout nobody has recorded yet
+    # there is no row to lock — so two extractions of the same new vendor both
+    # find nothing and both insert.  One wins the unique constraint and the
+    # other's evidence would just be dropped, which is the same silent loss the
+    # JSON file had.  On the retry the row exists and takes the locked path.
+    for attempt in (1, 2):
+        try:
+            with side_store_session(write=True) as db:
+                entry = _locked_layout(db, role.value, header_signature)
+                if entry is None:
+                    db.add(VendorLayout(
+                        role=role.value, header_signature=header_signature, mapping=mapping,
+                        vendor_hint=vendor_hint, confirmed_rows=int(confirmed_rows), docs=1))
+                else:
+                    entry.mapping = mapping
+                    # max(), not assignment: a later parse that confirmed fewer
+                    # rows saw a shorter document, not a worse layout.
+                    entry.confirmed_rows = max(int(entry.confirmed_rows or 0),
+                                               int(confirmed_rows))
+                    entry.docs = int(entry.docs or 0) + 1
+                    if vendor_hint and not entry.vendor_hint:
+                        entry.vendor_hint = vendor_hint
+            return
+        except IntegrityError:
+            if attempt == 2:                          # pragma: no cover - defensive
+                log.warning("vendor layout write lost a race twice for %s/%s",
+                            role.value, header_signature)
+                return
+            continue
+        except Exception as e:
+            log.warning("vendor layout store write failed (%s)", e)
+            return
 
-        path = _store_path()
-        fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
-        with os.fdopen(fd, "w", encoding="utf-8") as fh:
-            json.dump(data, fh, indent=1, ensure_ascii=False)
-        os.replace(tmp, path)                          # atomic on the same volume
+
+def _locked_layout(db, role: str, signature: str) -> VendorLayout | None:
+    """The row for this key, locked for update where the database can.
+
+    The counters are a read-modify-write, so two writers recording the same
+    layout at the same time would otherwise both read `docs=4` and both write
+    `docs=5`.  `with_for_update` is what holds the row across both statements on
+    Postgres; SQLite has no row lock to take and is covered instead by the
+    process-local write lock in database.side_store_session — which is the whole
+    scope there, SQLite being the single-process deployment by definition.
+    """
+    stmt = select(VendorLayout).where(VendorLayout.role == role,
+                                      VendorLayout.header_signature == signature)
+    if db.get_bind().dialect.name != "sqlite":
+        stmt = stmt.with_for_update()
+    return db.scalars(stmt).first()
+
+
+def import_legacy_json(path) -> int:
+    """Carry a pre-table ``vendor_layouts.json`` into the database, once.
+
+    Without this the cutover silently forgets every layout a deployment has
+    proven — the store's whole value is that it accumulates, so dropping it is
+    not a clean slate, it is a regression the reviewer notices as documents that
+    used to parse deterministically going back to the LLM path.
+
+    Returns the number of rows imported.  Never raises: a broken legacy file is
+    a reason to start empty, not a reason to fail startup.
+    """
+    import json
+
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+        layouts = data.get("layouts") if isinstance(data, dict) else None
+        if not isinstance(layouts, list):
+            return 0
+    except FileNotFoundError:
+        return 0
     except Exception as e:
-        log.warning("vendor layout store write failed (%s)", e)
+        log.warning("legacy vendor layout file unreadable (%s) — not imported", e)
+        return 0
+
+    imported = 0
+    try:
+        with side_store_session(write=True) as db:
+            for old in layouts:
+                if not isinstance(old, dict):
+                    continue
+                role, sig = old.get("role"), old.get("header_signature")
+                mapping = old.get("mapping")
+                # The same rule the writer applies: a POSITIONAL entry is the
+                # store confirming itself and must not survive the migration.
+                if not role or not mapping or sig in (None, "", "POSITIONAL"):
+                    continue
+                if _locked_layout(db, role, sig) is not None:
+                    continue                          # already carried over
+                db.add(VendorLayout(
+                    role=role, header_signature=sig, mapping=mapping,
+                    vendor_hint=old.get("vendor_hint"),
+                    confirmed_rows=int(old.get("confirmed_rows", 0) or 0),
+                    docs=int(old.get("docs", 0) or 0)))
+                imported += 1
+    except Exception as e:
+        log.warning("legacy vendor layout import failed (%s)", e)
+        return 0
+    return imported

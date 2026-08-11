@@ -26,7 +26,19 @@ from app.database import Base  # noqa: E402
 
 config = context.config
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # disable_existing_loggers=False is NOT cosmetic here, and the default
+    # (True) was actively harmful: this env runs INSIDE the application
+    # process, not only from the `alembic` command line — app/database.py
+    # stamps and upgrades a SQLite database during init_db().  fileConfig's
+    # default disables every logger that already exists and is not named in
+    # alembic.ini, which is all of easycustoms.* — so the app came up and then
+    # ran with its own logging silently dead for the life of the process.
+    #
+    # That happened at exactly the wrong moments: on a deployment's FIRST boot
+    # (fresh database -> stamp) and on the first boot after any schema change
+    # (-> upgrade).  A failed sign-in, an interrupted extraction, an OCR fault —
+    # all logged, none emitted, on the two boots most likely to need them.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = Base.metadata
 
