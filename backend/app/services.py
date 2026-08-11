@@ -59,7 +59,8 @@ from .pipeline import finalize as pipeline_finalize
 from .pipeline import resolve_context, to_critical_review
 from .review import item_mutations as itemmut
 from .review.critical_review import CriticalReviewConfirmation, merge_confirmation
-from .storage import delete_stored_document, sha256_bytes, store_document
+from .storage import (delete_stored_document, load_document, sha256_bytes,
+                      store_document)
 from .xml.bms_export import BMS_TEMPLATE_VERSION, build_bms_xls
 from .xml.bms_export import checksum as bms_checksum
 from .xml.composer import build_xml, checksum
@@ -687,14 +688,19 @@ def run_extraction(db: Session, doc: Document, fixture: dict | None = None, *,
             # Fixture uploads (demo/tests) use offline OCR: deterministic, free,
             # and the fixtures' evidence quotes were built against pypdf text.
             provider = OfflineOcrProvider() if fixture is not None else get_ocr_provider()
+            # Fetched ONCE, here, and handed to both the page gate and the
+            # provider.  This is the only point that knows where a document
+            # lives; on S3 (and therefore on any multi-instance deployment) a
+            # second read would be a second billed GET of the same object.
+            data = load_document(doc.storage_key)
             if fixture is None:
                 # BEFORE the paid call, not after it.  Documents stored before
                 # the upload gate existed still reach here, and this is the last
                 # point at which refusing one costs nothing.
-                enforce_page_ceiling(pdf_page_count(doc.storage_key),
+                enforce_page_ceiling(pdf_page_count(io.BytesIO(data)),
                                      filename=doc.original_file_name or "")
             ocr = provider.run(document_id=doc.id, declared_role=role,
-                               file_path=doc.storage_key, sha256=doc.sha256)
+                               data=data, sha256=doc.sha256)
             doc.ocr = ocr.model_dump(mode="json")
             # Persist the paid OCR envelope immediately: if the LLM phase dies
             # or the process restarts, a retry reuses it instead of re-paying,

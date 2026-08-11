@@ -35,16 +35,16 @@ class MistralOcrProvider:
         self._model = settings.mistral_ocr_model
         self._include_image_base64 = settings.mistral_ocr_include_image_base64
 
-    def run(self, *, document_id: str, declared_role: DeclaredRole, file_path: str, sha256: str) -> OcrDocument:
-        # The vendor is told the DOCUMENT ID, not the path.  file_path is this
-        # server's absolute storage path, so sending it disclosed the deployment's
-        # directory layout and the job UUID to a third party for no benefit — the
-        # name is only a label on their side.
-        with open(file_path, "rb") as fh:
-            uploaded = self._client.files.upload(
-                file={"file_name": f"{document_id}.pdf", "content": fh.read()},
-                purpose="ocr",
-            )
+    def run(self, *, document_id: str, declared_role: DeclaredRole, data: bytes,
+            sha256: str) -> OcrDocument:
+        # The vendor is told the DOCUMENT ID, and nothing else.  This used to
+        # send the server's absolute storage path, which disclosed the
+        # deployment's directory layout and the job UUID to a third party for no
+        # benefit — the name is only a label on their side.
+        uploaded = self._client.files.upload(
+            file={"file_name": f"{document_id}.pdf", "content": data},
+            purpose="ocr",
+        )
         try:
             signed = self._client.files.get_signed_url(file_id=uploaded.id)
             resp = self._client.ocr.process(

@@ -47,5 +47,14 @@ class OcrDocument(BaseModel):
 class OcrProvider(Protocol):
     name: str
 
-    def run(self, *, document_id: str, declared_role: DeclaredRole, file_path: str, sha256: str) -> OcrDocument:
+    def run(self, *, document_id: str, declared_role: DeclaredRole, data: bytes,
+            sha256: str) -> OcrDocument:
+        """OCR the document's BYTES.
+
+        Bytes rather than a path on purpose: a provider that opens a file
+        makes "the document is on this machine's disk" a requirement of the
+        extraction layer, which is false the moment documents live in S3 —
+        and in queue mode the worker that runs this is not even the machine
+        that stored the upload.
+        """
         ...
