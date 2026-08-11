@@ -23,7 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from . import auth, metering, queueing, services, storage
+from . import auth, logging_setup, metering, queueing, services, storage
 from .config import get_settings
 from .database import SessionLocal, get_session, init_db
 from .demo import seed_demo_job
@@ -113,6 +113,10 @@ async def _require_login(request: Request, call_next):
                 "status": "UNAUTHENTICATED", "code": "AUTH_REQUIRED",
                 "detail": "Your session has ended. Sign in to continue."})
         request.state.session = session
+        # Published here because this is where identity is first known;
+        # every log line after it carries the principal without any
+        # emitter having to remember to pass one.
+        logging_setup.principal_var.set(services.principal_of(session) or "")
     return await call_next(request)
 
 
@@ -258,6 +262,59 @@ async def _no_cache_html(request, call_next):
     return resp
 
 
+# --------------------------------------------------------------------------- #
+# Request correlation + the access log.
+#
+# Registered LAST, which makes it the OUTERMOST middleware: a request that is
+# refused by the login gate or the cross-origin check still gets an id and still
+# appears in the access log.  A gate whose refusals are invisible is a gate
+# nobody can debug, and 401s are exactly what an operator calls about.
+# --------------------------------------------------------------------------- #
+REQUEST_ID_HEADER = "X-Request-ID"
+
+
+def _incoming_request_id(request: Request) -> str:
+    """Reuse the edge's id when there is one, so the app's lines join up with
+    the load balancer's.
+
+    Read for CORRELATION ONLY and never for a decision, which is why an
+    unvalidated client-supplied value is acceptable here — the worst a forged id
+    achieves is confusing its own log lines. It is length-capped and stripped of
+    anything unusual so it cannot be used to inject structure into a log record.
+    """
+    for header in (REQUEST_ID_HEADER, "X-Amzn-Trace-Id"):
+        value = (request.headers.get(header) or "").strip()
+        if value:
+            cleaned = "".join(c for c in value if c.isalnum() or c in "-_=;.")[:120]
+            if cleaned:
+                return cleaned
+    return logging_setup.new_request_id()
+
+
+@app.middleware("http")
+async def _request_context(request: Request, call_next):
+    request_id = _incoming_request_id(request)
+    id_token = logging_setup.request_id_var.set(request_id)
+    principal_token = logging_setup.principal_var.set("")
+    started = time.perf_counter()
+    status = 500
+    try:
+        response = await call_next(request)
+        status = response.status_code
+        response.headers[REQUEST_ID_HEADER] = request_id
+        return response
+    finally:
+        elapsed_ms = round((time.perf_counter() - started) * 1000, 1)
+        # PATH ONLY, never the query string: /api/reference/hs carries the
+        # reviewer's search terms, and a full-URL access log is how those end up
+        # in an aggregator nobody thought of as holding customer data.
+        log.info("%s %s -> %s", request.method, request.url.path, status,
+                 extra={"http_method": request.method, "http_path": request.url.path,
+                        "http_status": status, "duration_ms": elapsed_ms})
+        logging_setup.request_id_var.reset(id_token)
+        logging_setup.principal_var.reset(principal_token)
+
+
 def _security_headers(resp) -> None:
     """The second layer under the upload/serving gates.
 
@@ -335,6 +392,9 @@ def _widen_threadpool() -> None:
 
 @app.on_event("startup")
 def _startup() -> None:
+    # First, so every line below is formatted and correlated — including
+    # the fail-closed warning about a missing account.
+    logging_setup.configure_logging()
     _widen_threadpool()
     if not auth.credentials_configured():
         # Loud, because the symptom otherwise reads as a broken app: every

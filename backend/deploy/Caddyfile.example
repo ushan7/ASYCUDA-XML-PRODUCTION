@@ -63,8 +63,17 @@ customs.example.com {
 		output file /var/log/caddy/easycustoms.log
 		# Do NOT raise this to DEBUG on a live box: request bodies carry
 		# commercial invoice contents and the login form carries the password.
+		# (The APP now enforces the equivalent rule for itself — raising its
+		# log level does not raise the libraries that print SQL parameters and
+		# HTTP bodies. Caddy has no such guard, so this one is on you.)
 		level INFO
 	}
+
+	# Pass the app a correlation id if you have one, so its structured logs
+	# join up with this access log. It generates one otherwise, and returns it
+	# in X-Request-ID either way — that is the string to ask a reviewer for
+	# when they report a failure.
+	request_header X-Request-ID {http.request.uuid}
 }
 
 # ---- Rate limiting ---------------------------------------------------------

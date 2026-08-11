@@ -136,6 +136,18 @@ def _payload(job_id, document_id, **over):
     return p
 
 
+def _without_correlation(sent: dict) -> dict:
+    """The message minus its request_id, which is a fresh value per call.
+
+    Correlation only — the worker adopts it for logging and never decides
+    anything with it — so the contract this compares is everything else.
+    """
+    assert sent.get("request_id"), (
+        "the enqueuing request id must travel with the message, or the queued "
+        "half of an extraction cannot be traced back to the upload")
+    return {k: v for k, v in sent.items() if k != "request_id"}
+
+
 # --------------------------------------------------------------------------- #
 # Producer: POST /extract in queue mode
 # --------------------------------------------------------------------------- #
@@ -152,7 +164,7 @@ def test_enqueue_claims_then_sends_and_reports_extracting(client, queue_mode):
     assert _doc_row(doc_id).status == DocumentStatus.EXTRACTING.value
     assert len(queue_mode.sent) == 1
     sent = json.loads(queue_mode.sent[0])
-    assert sent == _payload(job_id, doc_id)
+    assert _without_correlation(sent) == _payload(job_id, doc_id)
     assert "DOCUMENT_EXTRACTION_QUEUED" in _audit_codes(job_id)
 
 
@@ -407,7 +419,15 @@ def test_parse_message_reports_state_and_payload():
         {"v": queueing.MESSAGE_V, "kind": queueing.KIND_EXTRACT_DOCUMENT,
          "job_id": "j", "document_id": "d"}))
     # No actor on the wire: the worker names itself rather than inventing a human.
-    assert ok == ("ok", {"job_id": "j", "document_id": "d", "actor": "worker"})
+    # No request_id either — a message from an older producer still parses, and
+    # the worker falls back to the document id for correlation.
+    assert ok == ("ok", {"job_id": "j", "document_id": "d", "actor": "worker",
+                         "request_id": ""})
+
+    with_id = worker.parse_message(json.dumps(
+        {"v": queueing.MESSAGE_V, "kind": queueing.KIND_EXTRACT_DOCUMENT,
+         "job_id": "j", "document_id": "d", "request_id": "req-abc"}))
+    assert with_id[1]["request_id"] == "req-abc"
 
     assert worker.parse_message("not json") == ("malformed", None)
     assert worker.parse_message(json.dumps(
