@@ -38,7 +38,15 @@ Pillow>=10.0     # decode/verify images, flatten alpha, read dimensions
 
 # ---- Live extraction (Mistral OCR + OpenAI) ----
 # Imported lazily, so the app still boots offline if these are absent.
-openai>=1.40
+# Capped at the major, like mistralai below it. openai 3.0.0 released mid-flight
+# and CI went red with no commit to this repo: it pulls httpx2, which starlette's
+# TestClient then prefers, and whose logger prints the full request URL — failing
+# the test that proves the access log never records a query string. The line 1
+# note about flexible ranges is about Python-version wheels; it is not a reason
+# to take an unreviewed major of the SDK that talks to the model, in a codebase
+# whose one architectural rule is that the model is never the final authority.
+# Raising this bound is a deliberate change with its own test run.
+openai>=1.40,<3
 mistralai>=1.2,<2
 # langroid>=0.30   # optional (set EASYCUSTOMS_EXTRACTION_PROVIDER=langroid)
 
