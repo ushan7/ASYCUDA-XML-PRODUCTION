@@ -1,6 +1,8 @@
 # Plan — self-service signup, password reset, and the admin/member role
 
-**Status: plan only. Nothing here is implemented.**
+**Status: steps 0 and 1 are implemented. Steps 2-4 are plan only.** See the
+"Order of work" table at the end for what each step covers, and "Where step 1
+departed from this plan" below for the two decisions it changed.
 
 Follows `docs/ADR-001-identity-and-tenancy.md`, which decides that the account is
 the tenant and that a platform admin manages accounts and quotas and cannot read
@@ -228,6 +230,55 @@ pressure.
 No backfill is needed for the counter itself: `metering.documents_this_month`
 counts `UsageEvent` rows with `operation == "ocr"`, and a new account has none.
 
+### Where step 1 departed from this plan
+
+Two decisions, taken when the code was read against the plan and approved before
+implementation. Both are now the design of record; this section is what a reader
+of step 3 needs.
+
+**1. The deployment default is per PROVIDER, not one number.**
+`usage_monthly_document_cap` is now `int | None`, where `None` means "take the
+default for the auth provider" (`Settings.resolved_monthly_document_cap`):
+`local` resolves to 0 = unlimited, `supabase` to
+`DEFAULT_MULTI_ACCOUNT_DOCUMENT_CAP` (200). An explicit value overrides either.
+
+Because this plan asserts both *"lower it to a real number"* and *"0 ... Correct
+for a single-operator install"*, and a single number cannot honour both. A flat
+lowered default would cap every existing `local` install on upgrade — and
+**retroactively within the current calendar month**, because
+`documents_this_month` counts `UsageEvent` rows already written since
+`month_start()`. An operator upgrading on the 20th having already extracted more
+than the cap is blocked the instant the process boots, with no admin able to
+raise it until step 2 and only a `.env` edit plus a restart as the remedy. The
+`local` provider also cannot self-register at all (`auth.verify_token` checks the
+token subject against the one configured username), so it never carries the risk
+the cap exists to bound. Per-provider resolution makes the upgrade a no-op for
+every single-operator install while giving the multi-account provider a real
+number.
+
+**2. The boot refusal is gated on `auth_provider == "supabase"`, not on
+`allow_self_signup`.** That flag is **not** added, and step 3 still owes it.
+
+The plan gates the refusal on a new `allow_self_signup` field, but its only
+step-1 reader would be the validator, which lives in `config.py` —
+and `tests/test_config_is_consumed.py` requires a reader *outside* `config.py`.
+The behaviour the flag names is step 3. Adding it here would have meant an
+exemption in that ratchet or a fake reader, both of which are the thing the
+ratchet exists to catch. `supabase` is by this codebase's own description the
+only provider under which the app is multi-user at all, so it is the condition
+the refusal was reaching for. Step 3 adds `allow_self_signup` alongside the route
+that obeys it, and may tighten this refusal to include it.
+
+Note what the refusal can and cannot fire on: only an **explicit** `0` reaches
+it, since unset resolves to 200. It therefore refuses a deliberate choice and
+never an upgrade.
+
+**Still owed by step 2, and worth stating because the code ships without it:**
+`account_quota.updated_by` has no writer. The route that sets a cap and names its
+setter is step 2, so today a row can only be inserted by hand — which is why that
+column is nullable rather than `default=""`. NULL says nobody recorded a setter;
+an empty string would read as a setter whose name was lost.
+
 ---
 
 # b. The admin / member role
@@ -375,11 +426,17 @@ three places someone will be tempted:
   makes ADR-001's position enforceable rather than aspirational.
 - `job_visible_to` takes `(job, principal)` and no role, asserted by signature.
 - A non-admin gets 404 on every `/api/admin/` route.
-- Quota resolution: per-account row wins over the deployment default; absence
-  falls back to it; `<= 0` is unlimited at both levels.
+- ~~Quota resolution: per-account row wins over the deployment default; absence
+  falls back to it; `<= 0` is unlimited at both levels.~~ Landed with step 1 in
+  `tests/test_account_quota.py`, which also asserts that a row's NULL cap and its
+  0 cap are different answers, and that one account's row and one account's usage
+  move nothing about another's.
 - The signup limiter counts successes, and a successful signup does **not**
   clear the login failure window.
-- Boot refuses when self-signup is on and the deployment cap is `<= 0`.
+- ~~Boot refuses when self-signup is on and the deployment cap is `<= 0`.~~
+  Landed with step 1, gated on `auth_provider == "supabase"` instead — see
+  "Where step 1 departed from this plan". Step 3 may tighten it to include
+  `allow_self_signup` when that flag arrives with the route that obeys it.
 
 Note that `test_every_job_scoped_route_is_listed_here` will not fire for the
 admin routes — it keys on `{job_id}` in the path, and none of them have one.
@@ -391,13 +448,13 @@ coverage of the admin router.
 The sequence is not arbitrary; each step exists because the next one is unsafe
 without it.
 
-| # | Step | Why here |
-| --- | --- | --- |
-| 0 | Fix the two unscoped download routes; `test_tenant_isolation.py` green | Registration must not open over a known cross-account read |
-| 1 | `account_quota` + resolution order; lower the deployment default; boot refusal | The spend limit has to exist before accounts can create themselves |
-| 2 | `account_role` + `require_admin` + admin routes | Somebody must be able to *raise* a cap before there are users hitting one |
-| 3 | Signup + confirmation + the success-counting limiter | Only now is a self-registered account both capped and supportable |
-| 4 | Password reset | The smallest piece, and the only one that needs an SPA route; nothing else depends on it |
+| # | Step | Why here | Status |
+| --- | --- | --- | --- |
+| 0 | Fix the two unscoped download routes; `test_tenant_isolation.py` green | Registration must not open over a known cross-account read | **done** (`86bd148`) |
+| 1 | `account_quota` + resolution order; lower the deployment default; boot refusal | The spend limit has to exist before accounts can create themselves | **done** — see "Where step 1 departed from this plan" |
+| 2 | `account_role` + `require_admin` + admin routes | Somebody must be able to *raise* a cap before there are users hitting one | planned |
+| 3 | Signup + confirmation + the success-counting limiter | Only now is a self-registered account both capped and supportable | planned — **also owes `allow_self_signup`** |
+| 4 | Password reset | The smallest piece, and the only one that needs an SPA route; nothing else depends on it | planned |
 
 Doing 3 before 1 and 2 produces a user who registers, hits the cap, and finds
 that nobody in the system has the power to help them.

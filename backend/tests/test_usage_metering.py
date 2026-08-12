@@ -238,9 +238,14 @@ def test_last_months_spend_is_not_counted_this_month():
 # The quota
 # --------------------------------------------------------------------------- #
 def test_no_cap_by_default():
+    """On the `local` provider, which is what the suite runs as and what a
+    single-operator install is.  The raw setting is None ("take the default for
+    the auth provider") and resolves to 0 = unlimited; `supabase` resolves to a
+    real number instead — see tests/test_account_quota.py."""
     db = SessionLocal()
     try:
-        assert get_settings().usage_monthly_document_cap == 0
+        assert get_settings().usage_monthly_document_cap is None
+        assert get_settings().resolved_monthly_document_cap() == 0
         assert metering.quota_exceeded(db, OWNER) is None
     finally:
         db.close()

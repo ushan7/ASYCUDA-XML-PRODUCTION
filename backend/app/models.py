@@ -181,6 +181,57 @@ class UsageEvent(Base):
                                                  default=_now, index=True)
 
 
+class AccountQuota(Base):
+    """One account's OWN monthly document cap, when someone has set it.
+
+    Until this existed the cap was a single deployment-wide number
+    (``Settings.usage_monthly_document_cap``), which has two consequences the
+    moment more than one account can exist: a new account's limit is "the same
+    as everybody else's", recorded nowhere, and there is no way to raise ONE
+    account's limit without raising everyone's — even though the sentence
+    ``metering.quota_exceeded`` already shows the reviewer promises exactly that
+    ("or when an administrator raises the limit").  That sentence was untrue.
+
+    ABSENCE IS THE NORMAL STATE, and is deliberate.  A brand-new account gets no
+    row and therefore the deployment default.  Writing a row at signup would
+    freeze the default at whatever it happened to be on the day each user
+    registered, so it could never be changed for existing accounts again; and it
+    would make signup depend on a second write that can fail AFTER the identity
+    provider has already created the account — a partial state this app cannot
+    roll back, because it does not own the account.  A row appears only when
+    somebody sets a specific cap.
+
+    ``monthly_document_cap`` is nullable for the same reason the row is
+    optional: NULL means "follow the deployment default", which is a different
+    fact from 0, and 0 means unlimited.  A row that exists only to carry a
+    ``note`` must not silently become a cap of zero.
+
+    Deliberately NOT a ledger and NOT usage.  It records what an account is
+    ALLOWED, never what it has spent — ``UsageEvent`` is the measurement, and
+    conflating an allowance with a count is how the two end up disagreeing.
+    """
+
+    __tablename__ = "account_quota"
+
+    # The same key Job.owner_key holds: the Supabase auth.users.id, or the
+    # configured username under the `local` provider.  Primary key outright —
+    # an account has one allowance, not a history of them.
+    owner_key: Mapped[str] = mapped_column(String(160), primary_key=True)
+    # NULL = follow the deployment default.  0 = unlimited, at this level as at
+    # the deployment one.
+    monthly_document_cap: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Why, for the next administrator who reads it.  A cap with no reason
+    # recorded is one nobody can safely change back.
+    note: Mapped[str] = mapped_column(Text, default="")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),
+                                                 default=_now, onupdate=_now)
+    # NULL means no admin route wrote this — it was set out of band, by hand.
+    # Which is the only way a row can exist today: the route that sets a cap and
+    # names its setter is a later step.  Empty-string-as-unknown would read as a
+    # setter whose name was lost; NULL says nobody recorded one.
+    updated_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
+
+
 class LoginAttempt(Base):
     """One FAILED sign-in, kept only long enough to rate-limit the next one.
 

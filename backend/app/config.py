@@ -23,6 +23,21 @@ SAMPLE_DIR = BACKEND_ROOT / "sample_data"
 # anywhere that reports or checks it (see `Settings.net_to_gross_ratio_note`).
 ADR_003_NET_TO_GROSS_RATIO = Decimal("0.7")
 
+# Documents per account per calendar month on a deployment that can hold MORE
+# THAN ONE account and whose operator has not chosen a number
+# (`Settings.resolved_monthly_document_cap`).
+#
+# Named rather than inlined because it is a spend decision, not a tuning
+# constant: it is the ceiling on what one account can cost this deployment at
+# Mistral and OpenAI before anybody looks.  Deliberately a real number and not
+# "unlimited" — the value that is safe for the single-operator install is the
+# value that makes open registration an uncapped vendor bill, which is why the
+# two providers resolve differently rather than sharing one default.
+#
+# 200 is the figure `.env.example` has always carried as the worked example. It
+# is a STARTING POINT for the first month of real traffic, not a finding.
+DEFAULT_MULTI_ACCOUNT_DOCUMENT_CAP = 200
+
 
 def _real_key(value: str | None) -> str | None:
     """Treat blanks and obvious placeholders ('***', 'your_..._here') as unset
@@ -251,6 +266,28 @@ class Settings(BaseSettings):
             # answer every login with a 502 and look like a credential problem.
             raise ValueError("EASYCUSTOMS_AUTH_PROVIDER=supabase requires SUPABASE_URL "
                              "and SUPABASE_ANON_KEY")
+        if self.auth_provider == "supabase" and self.resolved_monthly_document_cap() <= 0:
+            # ENFORCED, not documented.  `supabase` is the only provider under
+            # which this app holds more than one account, and every extraction
+            # spends real money at Mistral and OpenAI.  An unlimited cap there is
+            # an unbounded vendor bill payable by whoever can obtain an account —
+            # and the failure arrives as an invoice weeks later, not as an error
+            # anyone can act on.  A README line asking an operator to remember
+            # this is exactly the control that does not survive a deployment
+            # someone else does at 2am.
+            #
+            # Only an EXPLICIT 0 reaches here: unset resolves to
+            # DEFAULT_MULTI_ACCOUNT_DOCUMENT_CAP.  So this refuses a deliberate
+            # choice, never an upgrade — a deployment that never named the
+            # setting boots with a real cap instead of being stopped.
+            raise ValueError(
+                "EASYCUSTOMS_USAGE_MONTHLY_DOCUMENT_CAP=0 (unlimited) is refused under "
+                "EASYCUSTOMS_AUTH_PROVIDER=supabase, which is the multi-account provider: "
+                "every extraction buys Mistral OCR and OpenAI tokens, so an uncapped "
+                "account is an unbounded vendor bill. Set a number, or leave the setting "
+                f"unset to take the default of {DEFAULT_MULTI_ACCOUNT_DOCUMENT_CAP}. "
+                "Raise it for one account with an account_quota row rather than for "
+                "everyone here.")
         return self
 
     # One operator account, from the environment.  Unset = FAIL CLOSED: no
@@ -376,16 +413,53 @@ class Settings(BaseSettings):
     # what last month appeared to cost.
     usage_price_path: Path = Field(default=BACKEND_ROOT / "vendor_prices.json",
                                    validation_alias=_alias("USAGE_PRICE_PATH"))
-    # Documents one account may have extracted per calendar month.  0 (default)
-    # is unlimited.
+    # Documents one account may have extracted per calendar month — the
+    # DEPLOYMENT-WIDE figure, which an `account_quota` row overrides per account
+    # (metering.resolved_cap).  0 = unlimited.
     #
     # Counted in DOCUMENTS rather than dollars deliberately: it is derived from
     # what actually happened, needs no price table, and so cannot be defeated by
     # a model whose rate nobody configured.  A spend limit in money belongs with
     # the credits ledger, where a balance is the mechanism — this is the blunt
     # stop that keeps one account from running up an unbounded vendor bill.
-    usage_monthly_document_cap: int = Field(
-        default=0, ge=0, validation_alias=_alias("USAGE_MONTHLY_DOCUMENT_CAP"))
+    #
+    # UNSET (None) means "take the default for the auth provider", which is not
+    # the same as 0 and is why this is nullable.  The two providers need
+    # different answers and a single number cannot give both:
+    #
+    #   local    — ONE account, verified against the configured username, and no
+    #              registration.  A second account cannot exist, so there is no
+    #              stranger to bound and unlimited is correct.  A cap here would
+    #              only ever fire on the operator who paid for the deployment.
+    #   supabase — MANY accounts.  Whoever can create one can spend this
+    #              deployment's Mistral and OpenAI budget, so an unbounded
+    #              default is an unbounded vendor bill.
+    #
+    # Set it explicitly to override either, including to 0 for unlimited — but
+    # 0 under `supabase` is refused at boot (_check_auth_provider_config).
+    usage_monthly_document_cap: int | None = Field(
+        default=None, validation_alias=_alias("USAGE_MONTHLY_DOCUMENT_CAP"))
+
+    @field_validator("usage_monthly_document_cap")
+    @classmethod
+    def _cap_is_not_negative(cls, v: int | None) -> int | None:
+        if v is not None and v < 0:
+            raise ValueError(
+                f"EASYCUSTOMS_USAGE_MONTHLY_DOCUMENT_CAP={v} must be 0 or more (0 means "
+                f"unlimited). Leave it unset to take the default for your auth provider.")
+        return v
+
+    def resolved_monthly_document_cap(self) -> int:
+        """The deployment-wide cap actually in force.  0 means unlimited.
+
+        The OPERATOR'S value when they set one, otherwise the provider default
+        above.  This is the second step of the resolution order — an account's
+        own `account_quota` row comes first, and that lookup needs a database
+        session, so it lives in `metering.resolved_cap` rather than here.
+        """
+        if self.usage_monthly_document_cap is not None:
+            return self.usage_monthly_document_cap
+        return 0 if self.auth_provider == "local" else DEFAULT_MULTI_ACCOUNT_DOCUMENT_CAP
 
     # ---- Object storage ----------------------------------------------------
     # WHERE uploaded documents live.
