@@ -34,6 +34,14 @@ The isolation asserted here is PYTHON isolation.  Supabase's row-level security
 does not protect this backend — it connects to Postgres as a privileged role and
 bypasses RLS — so a policy in the database would not catch a regression in any
 of these.
+
+A THIRD account runs the same sweep as a PLATFORM ADMIN.  That is the assertion
+that makes `docs/ADR-001-identity-and-tenancy.md`'s position enforceable rather
+than aspirational: an admin manages accounts, quotas and usage metadata and
+cannot read declarations, so on somebody else's job an admin is exactly as
+refused as a stranger — same route, same 404, no exception anywhere.  It is
+asserted rather than assumed because the failure mode is one sympathetic commit
+("support needs to see this") in one predicate.
 """
 from __future__ import annotations
 
@@ -43,7 +51,7 @@ import types
 import pytest
 from fastapi.testclient import TestClient
 
-from app import auth, metering, services
+from app import accounts, auth, metering, services
 from app.config import get_settings
 from app.database import SessionLocal, init_db
 from app.main import app
@@ -54,9 +62,13 @@ from app.models import BmsArtifact, Job, XmlArtifact
 # module's usage totals depend on whether that module ran first.
 ALICE = "a11ce000-0000-4000-8000-000000000001"
 BOB = "b0b00000-0000-4000-8000-000000000002"
+# The platform administrator.  Holds `account_role.role = 'admin'`, and therefore
+# holds nothing at all over ALICE's declarations.
+CARLA = "ca41a000-0000-4000-8000-000000000003"
 
 ALICE_EMAIL, ALICE_PW = "alice@broker.np", "pw-alice"
 BOB_EMAIL, BOB_PW = "bob@broker.np", "pw-bob"
+CARLA_EMAIL, CARLA_PW = "carla@easycustoms.np", "pw-carla"
 
 PDF = b"%PDF-1.4\nisolation fixture\n"
 
@@ -87,10 +99,11 @@ def supabase():
     """
     import httpx
 
-    accounts = {(ALICE_EMAIL, ALICE_PW): ALICE, (BOB_EMAIL, BOB_PW): BOB}
+    logins = {(ALICE_EMAIL, ALICE_PW): ALICE, (BOB_EMAIL, BOB_PW): BOB,
+              (CARLA_EMAIL, CARLA_PW): CARLA}
 
     def fake_post(url, *, params=None, headers=None, json=None, timeout=None):
-        user_id = accounts.get((json["email"], json["password"]))
+        user_id = logins.get((json["email"], json["password"]))
         if user_id is None:
             return _FakeResponse(400, {"error": "invalid_grant"})
         return _FakeResponse(200, {"access_token": "supabase-jwt",
@@ -140,6 +153,27 @@ def alice(supabase) -> TestClient:
 def bob(supabase) -> TestClient:
     init_db()
     return _signed_in(BOB_EMAIL, BOB_PW)
+
+
+@pytest.fixture(scope="module")
+def carla_the_admin(supabase) -> TestClient:
+    """A signed-in PLATFORM ADMIN — the real role, from the real table.
+
+    Granted through `accounts.grant_admin`, the same call the bootstrap script
+    makes, so this is not a test-only shape of privilege: if the role were ever
+    honoured by an ownership check, this client is the one that would get in.
+    """
+    init_db()
+    db = SessionLocal()
+    try:
+        accounts.grant_admin(db, CARLA, granted_by="tests/test_tenant_isolation.py")
+        db.commit()
+    finally:
+        db.close()
+    client = _signed_in(CARLA_EMAIL, CARLA_PW)
+    assert client.get("/api/auth/session").json()["role"] == "admin", (
+        "this fixture is worthless unless the role actually took")
+    return client
 
 
 def _job_with_everything(client: TestClient) -> dict:
@@ -272,6 +306,62 @@ def test_another_user_is_refused_every_job_route(bob, alice_job, path, method, k
 
 
 @pytest.mark.parametrize("path,method,kwargs", _ROUTES, ids=_IDS)
+def test_a_platform_admin_is_refused_every_job_route_too(carla_the_admin, alice_job,
+                                                         path, method, kwargs):
+    """The SAME sweep, run by an account holding `role = 'admin'`.
+
+    `docs/ADR-001-identity-and-tenancy.md`: an admin manages accounts and quotas
+    and cannot read customer declarations, documents, extractions, XML artifacts
+    or audit trails.  The data is not ours — a declaration is assembled from an
+    importer's commercial invoice, and that importer is not a user of this
+    platform, was never shown a privacy notice by us, and cannot object.
+
+    So an admin gets the same 404 a stranger gets, on every one of these, and it
+    is asserted rather than assumed: `if role == "admin": return True` in
+    `job_visible_to` would be the "unowned job is visible to everybody" branch
+    with a different condition, and this parametrization is the only thing that
+    would notice.
+    """
+    r = carla_the_admin.request(method, _url(path, alice_job["job"], alice_job["doc"]), **kwargs)
+    assert r.status_code == 404, (
+        f"{method} {path} answered {r.status_code} to a PLATFORM ADMIN who does not own "
+        f"the job — ADR-001 says an admin cannot read a declaration"
+        f"{': ' + r.text[:400] if method != 'HEAD' and r.content else ''}")
+
+
+def test_the_admin_can_reach_the_admin_routes_at_all(carla_the_admin):
+    """The control for the sweep above.  Without it, a role that silently failed
+    to apply would make those 404s prove nothing at all."""
+    assert carla_the_admin.get("/api/admin/accounts").status_code == 200
+
+
+def test_the_admin_download_links_are_scoped_even_with_only_the_cookie(carla_the_admin,
+                                                                      alice_job):
+    """The cookie paths, as an admin.  These are the shapes a leak would take —
+    the XML and .xls links are plain navigations carrying no header, and the whole
+    finished declaration is in them."""
+    client = TestClient(app, raise_server_exceptions=False)
+    client.headers.pop("Authorization", None)
+    client.cookies.clear()
+    client.cookies.set(auth.COOKIE_NAME, carla_the_admin.cookies.get(auth.COOKIE_NAME))
+    job, doc = alice_job["job"], alice_job["doc"]
+    assert client.get(f"/api/jobs/{job}/xml").status_code == 404
+    assert client.get(f"/api/jobs/{job}/brand-model-size.xls").status_code == 404
+    assert client.get(f"/api/jobs/{job}/documents/{doc}/file").status_code == 404
+    assert client.head(f"/api/jobs/{job}/documents/{doc}/file").status_code == 404
+
+
+def test_the_admin_dashboard_listing_shows_only_the_admins_own_jobs(carla_the_admin,
+                                                                   alice_job):
+    """`list_jobs` mirrors the predicate in SQL and is a separate query from the
+    per-job check.  An admin whose dashboard listed everybody's jobs would be
+    reading party names and shipment totals out of the summary while every route
+    above refused to open them."""
+    theirs = {row["job_id"] for row in carla_the_admin.get("/api/jobs").json()["jobs"]}
+    assert alice_job["job"] not in theirs
+
+
+@pytest.mark.parametrize("path,method,kwargs", _ROUTES, ids=_IDS)
 def test_the_same_routes_are_not_404_for_their_owner(alice, path, method, kwargs):
     """The control.  Without it a typo in a URL passes the sweep above.
 
@@ -360,7 +450,27 @@ def test_an_unowned_job_is_visible_to_nobody():
     assert services.job_visible_to(unowned, ALICE) is False
     assert services.job_visible_to(unowned, BOB) is False
     assert services.job_visible_to(unowned, "") is False
+    assert services.job_visible_to(unowned, CARLA) is False
     assert services.job_visible_to(unowned, services.SYSTEM_PRINCIPAL) is True
+
+
+def test_the_predicate_cannot_be_told_about_a_role(carla_the_admin, alice_job):
+    """The predicate itself, called directly with the admin's principal.
+
+    Separate from the route sweep because a route could be refusing for the wrong
+    reason.  This is the one function ADR-001 names, answering the one question it
+    is allowed to answer: does this principal own this job.
+    """
+    db = SessionLocal()
+    try:
+        job = db.get(Job, alice_job["job"])
+        assert services.job_visible_to(job, ALICE) is True
+        assert services.job_visible_to(job, CARLA) is False
+        assert accounts.role_of(db, CARLA) == accounts.ADMIN, (
+            "...and CARLA really is an admin, so the False above is the point")
+        assert services.get_job(db, alice_job["job"], principal=CARLA) is None
+    finally:
+        db.close()
 
 
 def test_the_listing_does_not_leak_the_other_account(alice, bob, alice_job):

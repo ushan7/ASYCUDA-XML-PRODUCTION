@@ -198,6 +198,57 @@ In the test suite, `tests/conftest.py` configures an account and makes every
 `TestClient` authenticated; a test that wants an anonymous client does
 `client.headers.pop("Authorization", None)`.
 
+### Roles — `admin` and `member`
+
+There are exactly two, they are decided by
+`docs/ADR-001-identity-and-tenancy.md`, and the scope is narrow:
+
+**An admin manages accounts, quotas and usage metadata. An admin cannot read
+customer declarations, documents, extractions, XML artifacts or job audit
+trails.** `admin` is a *platform* role — the service operator — never a firm
+role: it does not mean "senior broker", and nobody inside a customer's business
+has any standing over anybody else inside it, because the system has no concept
+of "inside a business" at all.
+
+* The role lives in this app's own `account_role` table, not in Supabase
+  `app_metadata` — writing that needs the service-role key, which is
+  deliberately absent from this process. A row means `admin`; **absence means
+  `member`**, so ordinary accounts have no row and nothing to migrate.
+* It is read **server-side, per request**, on the `/api/admin/*` routes only
+  (`Depends(require_admin)`). It is never accepted from a request body, a header
+  or a token claim, and it is deliberately *not* stamped into the session token:
+  a stateless 24h token cannot be revoked, and revoking late is the direction
+  that matters for a privilege. Revocation therefore takes effect on the
+  account's next request.
+* `GET /api/auth/session` reports the role so the SPA knows whether to draw an
+  admin nav item. That is a display hint; every admin route re-reads the table.
+* `services.job_visible_to` **does not know the role exists.**
+  `tests/test_tenant_isolation.py` runs its whole per-route sweep as an admin and
+  asserts the same `404` a stranger gets, on every job-scoped route.
+
+The **first admin is granted out of band**, because a route that could mint the
+first administrator would not need an administrator to exist:
+
+```bash
+cd backend
+python scripts/grant_admin.py --list                    # who is one now
+python scripts/grant_admin.py --grant <owner_key>       # dry run
+python scripts/grant_admin.py --grant <owner_key> --apply
+python scripts/grant_admin.py --revoke <owner_key> --apply
+```
+
+`<owner_key>` is the Supabase `auth.users.id` (Authentication → Users, the `id`
+column — not the email), or the configured username under the `local` provider.
+There is no HTTP route that grants or revokes a role, by design.
+
+**Disabling an account** (`POST /api/admin/accounts/{owner_key}/disable`) writes
+a local deny-list row — not a Supabase user-disable, which would need the
+service-role key. It is checked at sign-in, on the extraction route (the one
+route that is about to buy OCR) and by `require_admin`. It is **not** checked on
+every request, so a session already issued keeps reading its own jobs until its
+24h token expires; rotating `EASYCUSTOMS_AUTH_SECRET` is what ends every open
+session at once. `POST …/enable` lifts it.
+
 ---
 
 ## Live extraction — Mistral OCR + OpenAI (default)
@@ -287,7 +338,20 @@ cookie or `Authorization: Bearer <token>`.
 | `GET  /api/jobs/{id}/declaration` | Canonical merged declaration JSON. |
 | `GET  /api/jobs/{id}/xml` | Download the ASYCUDA XML. |
 | `GET  /api/jobs/{id}/audit` | Provenance timeline. |
+| `GET  /api/usage` | What THIS account has spent this calendar month, and its own document cap. |
 | `GET  /api/config` | Providers, reference counts, ADR flags. |
+
+Platform administration — **`admin` role required** (see **Roles** above); every
+one answers `404` to a member, and none of them reads a declaration, a document,
+an extraction, an XML artifact or a job audit trail:
+
+| Method & path | Purpose |
+| --- | --- |
+| `GET  /api/admin/accounts` | Accounts this deployment has *seen*, busiest month first: role, job **counts** by status, documents this month, estimated spend, current cap. Not "every account" — identity lives with the auth provider. |
+| `GET  /api/admin/accounts/{owner_key}/usage` | One account's month-to-date usage — the same shape `/api/usage` returns to the account itself. |
+| `PUT  /api/admin/accounts/{owner_key}/quota` | `{"monthly_document_cap": n\|null, "note": "…"}` — set or clear that account's cap, recording who set it. `null` = follow the deployment default, `0` = unlimited. **This is what makes "or when an administrator raises the limit" true.** |
+| `POST /api/admin/accounts/{owner_key}/disable` | Add the account to the local deny-list (`{"reason": "…"}`). Refuses your own account. |
+| `POST /api/admin/accounts/{owner_key}/enable` | Lift it. |
 
 `roles`: `INVOICE`, `PACKING_LIST`, `AIR_WAYBILL`, `BANKING`, `INSURANCE`,
 `CERTIFICATE_OF_ORIGIN`. Interactive docs at `/docs`.

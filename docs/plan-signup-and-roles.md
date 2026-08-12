@@ -1,8 +1,8 @@
 # Plan — self-service signup, password reset, and the admin/member role
 
-**Status: steps 0 and 1 are implemented. Steps 2-4 are plan only.** See the
-"Order of work" table at the end for what each step covers, and "Where step 1
-departed from this plan" below for the two decisions it changed.
+**Status: steps 0, 1 and 2 are implemented. Steps 3-4 are plan only.** See the
+"Order of work" table at the end for what each step covers, and the two
+"Where step N departed from this plan" sections for the decisions each changed.
 
 Follows `docs/ADR-001-identity-and-tenancy.md`, which decides that the account is
 the tenant and that a platform admin manages accounts and quotas and cannot read
@@ -278,6 +278,7 @@ never an upgrade.
 setter is step 2, so today a row can only be inserted by hand — which is why that
 column is nullable rather than `default=""`. NULL says nobody recorded a setter;
 an empty string would read as a setter whose name was lost.
+*(Closed by step 2: `PUT /api/admin/accounts/{owner_key}/quota` is the writer.)*
 
 ---
 
@@ -378,10 +379,11 @@ returning 404 (not 403) to a non-admin, for the same reason job routes do:
 
 | Route | What it returns |
 | --- | --- |
-| `GET /api/admin/accounts` | one row per account: `owner_key`, display email, job **count**, status counts, documents this month, spend, current cap |
+| `GET /api/admin/accounts` | one row per account: `owner_key`, display email, job **count**, status counts, documents this month, spend, current cap — *see departure 1: there is no account list and no email column, so this is "accounts this deployment has seen" with a derived label* |
 | `GET /api/admin/accounts/{owner_key}/usage` | `metering.summary(db, owner_key)` — the same shape `/api/usage` returns to the account itself |
-| `PUT /api/admin/accounts/{owner_key}/quota` | set or clear the `account_quota` row; writes an audit record naming the admin |
-| `POST /api/admin/accounts/{owner_key}/disable` | adds the account to a **local** deny-list checked at login. Not a Supabase user-disable, which needs the service-role key |
+| `PUT /api/admin/accounts/{owner_key}/quota` | set or clear the `account_quota` row; writes an audit record naming the admin — *see departure 2: `AuditEvent.job_id` is a non-nullable FK, so the record is the row plus a structured log line* |
+| `POST /api/admin/accounts/{owner_key}/disable` | adds the account to a **local** deny-list checked at login. Not a Supabase user-disable, which needs the service-role key — *see departure 3: also checked before an extraction, because a login-only check does not stop a session that already exists* |
+| `POST /api/admin/accounts/{owner_key}/enable` | *added by step 2 (departure 4): a deny-list that can only be added to is a trap* |
 
 Every one of those reads account and usage metadata. **None reads a
 declaration, a document, an extraction, an XML artifact or a job audit trail.**
@@ -420,12 +422,25 @@ three places someone will be tempted:
 
 ## Tests that must land with it
 
-- Extend `tests/test_tenant_isolation.py` with a third account holding
+- ~~Extend `tests/test_tenant_isolation.py` with a third account holding
   `role='admin'` and run the **same parametrized sweep**: every job-scoped route
   answers 404 to an admin who does not own the job. This is the assertion that
-  makes ADR-001's position enforceable rather than aspirational.
-- `job_visible_to` takes `(job, principal)` and no role, asserted by signature.
-- A non-admin gets 404 on every `/api/admin/` route.
+  makes ADR-001's position enforceable rather than aspirational.~~ Landed with
+  step 2 — `carla_the_admin`, 24 routes, plus the cookie-only download paths and
+  the dashboard listing.
+- ~~`job_visible_to` takes `(job, principal)` and no role, asserted by
+  signature.~~ Landed, and with it a source scan of `job_visible_to`, `get_job`
+  and `list_jobs` for any reference to the role at all.
+- ~~A non-admin gets 404 on every `/api/admin/` route.~~ Landed, route by route,
+  against a table checked against the app's own routing table — plus the control
+  (an admin gets 200 on each) and the anonymous case (401 from the middleware,
+  which never reaches the role check).
+- Landed with step 2 and worth naming, because each is a property rather than a
+  case: the role is **not** a claim in the session token (the payload's key set is
+  asserted); revoking it takes effect on the **next request** with the same token;
+  reading it costs **one** `account_role` lookup that does **not grow with the
+  page**; a job route reads that table **zero** times; and the listing carries no
+  declaration content even for an account whose job has one.
 - ~~Quota resolution: per-account row wins over the deployment default; absence
   falls back to it; `<= 0` is unlimited at both levels.~~ Landed with step 1 in
   `tests/test_account_quota.py`, which also asserts that a row's NULL cap and its
@@ -441,7 +456,108 @@ three places someone will be tempted:
 Note that `test_every_job_scoped_route_is_listed_here` will not fire for the
 admin routes — it keys on `{job_id}` in the path, and none of them have one.
 That is correct, and worth knowing before someone reads a green suite as
-coverage of the admin router.
+coverage of the admin router. *(Step 2 closed that gap the same way: the admin
+routes have their own closed table in `tests/test_admin_role.py`, checked against
+the app's routing table, plus `test_no_admin_route_is_job_scoped` — which is the
+note explaining why the two sweeps are not the same sweep.)*
+
+## Where step 2 departed from this plan
+
+Five decisions, taken when the code was read against the plan and reported before
+implementation. All are now the design of record; this section is what a reader of
+step 3 needs.
+
+**1. `GET /api/admin/accounts` cannot list accounts, and "display email" does not
+exist.** The plan asks for "one row per account: `owner_key`, display email, job
+count, …". There is no account list in this app: identity lives in Supabase and
+enumerating it needs the admin API, i.e. the service-role key this plan rules out
+in part (a). And no column holds an email — `Job.created_by` is `""` for every job
+the API creates (`main.create_job` passes only `actor` and `owner_key`) and
+`"demo"` for a seeded one; the display name reaches the database in exactly one
+place, `AuditEvent.actor`.
+
+So the route reports **accounts this deployment has seen** — the union of the
+`owner_key` values in its own tables — and says so in a `scope` field of the
+payload rather than only in a docstring. `display_label` is derived best-effort
+from the most recent human audit actor of that account's jobs and is `null` when
+nothing named a person. **An account that registers and never uploads anything is
+invisible to this route**, which step 3 should know before it opens registration:
+the first question after a signup ("did X register?") is not one this API can
+answer. What it *can* answer is the question that matters for a quota: an account
+that has hit its cap has `usage_event` rows, so it is always listed — and is on
+the first page, because the listing is ordered by documents extracted this month
+rather than by `owner_key`.
+
+**2. There is nowhere to write "an audit record naming the admin".** The plan's
+route table says the quota route "writes an audit record naming the admin".
+`AuditEvent.job_id` is a **non-nullable foreign key** to `customs_job`, and an
+account-level action has no job — and SQLite does not enforce foreign keys (no
+`PRAGMA foreign_keys=ON`), so a fabricated job id would have passed the whole test
+suite and failed on Postgres.
+
+What ships instead: attribution on the rows themselves —
+`account_quota.updated_by`/`updated_at`/`note`, `account_role.granted_by`,
+`account_disabled.disabled_by`/`reason` — plus a `WARNING`-level structured log
+line per admin action carrying the request id and the acting principal's stable
+id. The row names the human (matching `AuditEvent.actor`, because the column
+exists to be read by the next administrator); the log line names the account.
+
+**Stated limitation, not a silent one: that is current-state attribution, not an
+action history.** A second quota change overwrites who set the first. A history
+needs its own table with its own integrity rules, and inventing one was not part
+of this step.
+
+**3. A deny-list checked only at login does not stop a disabled account.**
+Sessions are stateless HMAC tokens with a 24h lifetime — `auth.verify_token`'s own
+docstring already records that a deactivated Supabase user keeps access until its
+token expires. A login-only check would therefore do nothing about the account
+that is *currently* burning the Mistral and OpenAI budget, which is the case the
+route exists for.
+
+So the deny-list is consulted in three places: at sign-in, on
+`POST /api/jobs/{id}/documents/{doc}/extract` (one primary-key read on the one
+route that is about to buy OCR), and in `require_admin`. It is deliberately **not**
+consulted on every request — that is the per-request database read this plan
+rejects for the role in the very next section, and taking it for the deny-list
+while refusing it for the role would be incoherent. The remaining window is
+documented on `models.AccountDisabled`, asserted by
+`test_a_disabled_account_keeps_its_existing_session_on_other_routes`, and the
+remedy for an urgent revocation is rotating `EASYCUSTOMS_AUTH_SECRET`, which ends
+every open session at once.
+
+At sign-in the deny-list is read **only after the credentials verify**, so the
+public login route does not become an account-existence oracle, and a caller who
+has proved the password is told `403 ACCOUNT_DISABLED` with the reason rather than
+being left to retry a password that was never wrong. That refusal is not counted
+against the failure throttle — nothing was guessed — and an unreadable deny-list
+answers 503, fail-closed, exactly as `throttle_retry_after` does.
+
+**4. `POST …/enable` was added.** The plan lists only `disable`. A deny-list that
+can only be added to turns one mis-click into a permanently barred paying
+customer, fixable only with SQL against a live database. Disabling your **own**
+account is refused for the same reason: there may be no second administrator to
+undo it, and under the `local` provider there certainly is not.
+
+**5. No route grants a role, and there is a script instead.** The plan says the
+first admin is inserted by hand "documented in the deployment runbook"; there is
+no runbook in `docs/`. `backend/scripts/grant_admin.py` is that documentation —
+`--list`, a dry run, `--apply`, and `--revoke` — following
+`scripts/reassign_job_owner.py`, the other operation that changes who may see
+what. Deliberately no `PUT /api/admin/accounts/{owner_key}/role`: the first
+administrator cannot be granted through a route that requires an administrator,
+and once the bootstrap is out of band, an HTTP path that lets one admin session
+mint another has no reason to exist. `tests/test_admin_role.py` asserts that
+`app/main.py` never references the grant at all.
+
+**Not built, and not owed by this step:** an admin SCREEN in the SPA. Step 2's
+scope is the role, the gate and the routes; `GET /api/auth/session` reports the
+role so a later nav item has something to read. The administrative surface today
+is the API.
+
+**No new `Settings` field was added**, so `tests/test_config_is_consumed.py` needed
+no exemption. Nothing about the role is configurable: a deployment-wide
+`admin_owner_keys` env var would be a role that cannot be revoked without a
+restart, and a role in config is a role no test of the table can cover.
 
 ## Order of work
 
@@ -452,7 +568,7 @@ without it.
 | --- | --- | --- | --- |
 | 0 | Fix the two unscoped download routes; `test_tenant_isolation.py` green | Registration must not open over a known cross-account read | **done** (`86bd148`) |
 | 1 | `account_quota` + resolution order; lower the deployment default; boot refusal | The spend limit has to exist before accounts can create themselves | **done** — see "Where step 1 departed from this plan" |
-| 2 | `account_role` + `require_admin` + admin routes | Somebody must be able to *raise* a cap before there are users hitting one | planned |
+| 2 | `account_role` + `require_admin` + admin routes | Somebody must be able to *raise* a cap before there are users hitting one | **done** — see "Where step 2 departed from this plan" |
 | 3 | Signup + confirmation + the success-counting limiter | Only now is a self-registered account both capped and supportable | planned — **also owes `allow_self_signup`** |
 | 4 | Password reset | The smallest piece, and the only one that needs an SPA route; nothing else depends on it | planned |
 

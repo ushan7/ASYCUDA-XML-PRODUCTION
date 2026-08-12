@@ -23,7 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from . import auth, logging_setup, metering, queueing, services, storage
+from . import accounts, auth, logging_setup, metering, queueing, services, storage
 from .config import get_settings
 from .database import SessionLocal, get_session, init_db
 from .demo import seed_demo_job
@@ -452,6 +452,50 @@ def principal_dep(request: Request) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# The admin gate — a DEPENDENCY on the admin routes, and nowhere else.
+#
+# Three layers, one job each, and keeping them apart is the whole design:
+#
+#   `_require_login`   IS THERE A SESSION.  Middleware, so a new route is
+#                      protected by the fact that it exists.
+#   `principal_dep`    WHOSE DATA IS THIS.  Per route, so a job-scoped endpoint
+#                      cannot be written without stating what it scopes to.
+#   `require_admin`    WHAT MAY THEY DO.  Per route, on the admin router only.
+#
+# The role deliberately does NOT travel on `request.state` or on `principal_dep`.
+# A role in scope at every job route is a role available to a predicate that
+# ADR-001 says must never see one — and it would make all ~1500 reviewers pay a
+# lookup per request for a capability that matters on five routes.
+#
+# It is equally deliberately not a claim in the session token.  That would be
+# free at request time and stale for up to the 24h TTL: granting late is
+# harmless, revoking late is not, and revocation is the direction that matters
+# for a privilege.  A stateless token has no revocation story.
+# --------------------------------------------------------------------------- #
+def require_admin(db: Session = Depends(db_dep),
+                  principal: str = Depends(principal_dep)) -> str:
+    """The caller's principal if they administer this platform, else 404.
+
+    404 and never 403, for the same reason every job route answers 404: a 403
+    confirms the route is there to be found, and an admin surface is the one
+    worth not confirming to a signed-in stranger.  (An anonymous caller never
+    reaches here at all — the login middleware answers 401 for every /api path,
+    real or not, so the refusal reveals nothing either way.)
+
+    A disabled account is refused even while its 24h token is still valid, which
+    is one of the three places the deny-list is consulted; see
+    `app.models.AccountDisabled` for why it is not all of them.
+    """
+    if accounts.disabled_reason(db, principal) is not None:
+        log.warning("refused an admin route to a disabled account")
+        raise HTTPException(404, "not found")
+    if not accounts.is_admin(db, principal):
+        log.warning("refused an admin route to a member account")
+        raise HTTPException(404, "not found")
+    return principal
+
+
+# --------------------------------------------------------------------------- #
 # Meta
 # --------------------------------------------------------------------------- #
 @app.get("/api/health")
@@ -510,8 +554,23 @@ def _cookie_secure(request: Request) -> bool:
     return request.url.scheme == "https"
 
 
-def _session_payload(session: auth.Session, token: str | None = None) -> dict:
+def _session_payload(session: auth.Session, token: str | None = None, *,
+                     role: str = accounts.MEMBER) -> dict:
+    """What the SPA is told about the session it holds.
+
+    `role` is passed in rather than looked up here, and that is the point: it is
+    read from the local `account_role` table by the caller that has a database
+    session, on the two routes a page load actually uses (sign-in and
+    `GET /api/auth/session`).  One read per page load, always current.
+
+    It is a DISPLAY HINT — whether to draw the admin nav item — and nothing on the
+    server ever trusts it back.  Every admin route reads the table again through
+    `require_admin`, because a value that is present and looks authoritative will
+    eventually be treated as authoritative by someone reading the code later, and
+    this one arrives from a client.
+    """
     body = {"username": session.username,
+            "role": role,
             "issued_at": session.issued_at,
             "expires_at": session.expires_at,
             "expires_in_seconds": max(0, session.expires_at - int(time.time()))}
@@ -567,11 +626,39 @@ def login(body: LoginRequest, request: Request, db: Session = Depends(db_dep)):
         return JSONResponse(status_code=401, content={
             "status": "UNAUTHENTICATED", "code": "BAD_CREDENTIALS",
             "detail": "Incorrect username or password."})
+    # The credentials are RIGHT and only then is the deny-list consulted.  That
+    # order matters: refusing an unknown address with "this account is disabled"
+    # would turn the public login route into an account-existence oracle, and a
+    # caller who has already proved the password is the account holder, who is
+    # owed a reason rather than a password they will keep retrying.
+    #
+    # Keyed on the same value the token is about to carry as its subject
+    # (auth.issue_token: `(user_id or username).strip()`), because that is what
+    # `owner_key`, the deny-list and the role are all stated in.  Reading the
+    # deny-list under a different spelling than the session would use is how a
+    # barred account keeps working.
+    principal = (identity.user_id or identity.display).strip()
+    try:
+        barred = accounts.disabled_reason(db, principal)
+    except Exception as e:
+        # FAIL CLOSED, exactly as the throttle above does: a deny-list that
+        # cannot be read must not admit the account it was written to bar.
+        log.error("refusing sign-in: the account deny-list is unreadable (%s)", e)
+        raise HTTPException(503, "This server cannot verify sign-in attempts right now. "
+                                 "Try again shortly.")
+    if barred:
+        # NOT counted against the failure throttle — nothing was guessed.  403
+        # rather than 401 so a client can tell "your password is wrong" from
+        # "your password is right and the door is locked".
+        log.warning("refused a sign-in for a disabled account")
+        return JSONResponse(status_code=403, content={
+            "status": "REFUSED", "code": "ACCOUNT_DISABLED", "detail": barred})
     auth.clear_failures(db, client)
     # sub is the account ID and dsp is what to call them — see auth.Session for
     # why those must not be the same field.
     token, session = auth.issue_token(identity.display, user_id=identity.user_id)
-    resp = JSONResponse(_session_payload(session, token))
+    resp = JSONResponse(_session_payload(session, token,
+                                         role=accounts.role_of(db, principal)))
     resp.set_cookie(auth.COOKIE_NAME, token, max_age=auth.token_ttl_seconds(),
                     httponly=True, samesite="lax",
                     secure=_cookie_secure(request), path="/")
@@ -579,10 +666,17 @@ def login(body: LoginRequest, request: Request, db: Session = Depends(db_dep)):
 
 
 @app.get("/api/auth/session")
-def whoami(request: Request):
-    """Who is signed in and until when.  Protected like everything else, so a
-    401 here is exactly the SPA's "show the login form" signal."""
-    return _session_payload(request.state.session)
+def whoami(request: Request, db: Session = Depends(db_dep),
+           principal: str = Depends(principal_dep)):
+    """Who is signed in, until when, and what they may administer.  Protected
+    like everything else, so a 401 here is exactly the SPA's "show the login
+    form" signal.
+
+    The role is read from the table on every call rather than carried in the
+    token: one lookup per page load, always current, and a revoked admin loses
+    the nav item on their next reload instead of at the end of a 24h TTL."""
+    return _session_payload(request.state.session,
+                            role=accounts.role_of(db, principal))
 
 
 @app.post("/api/auth/logout")
@@ -949,6 +1043,17 @@ async def extract_uploaded_document(job_id: str, document_id: str, request: Requ
     # BEFORE the claim and before anything is bought. This is the last point at
     # which refusing costs nothing — past it the OCR is paid for whether or not
     # the account was over its limit.
+    #
+    # The deny-list is consulted HERE as well as at sign-in, and this is the
+    # reason it is worth a second lookup: a session already issued keeps working
+    # until its 24h token expires, so a disable that only took effect at the next
+    # sign-in would do nothing about the account that is spending this
+    # deployment's Mistral and OpenAI budget right now — which is the case the
+    # button exists for.  One primary-key read on the one route about to buy OCR.
+    barred = accounts.disabled_reason(db, principal)
+    if barred:
+        return JSONResponse(status_code=403, content={
+            "status": "REFUSED", "code": "ACCOUNT_DISABLED", "detail": barred})
     over_quota = metering.quota_exceeded(db, principal)
     if over_quota:
         return JSONResponse(status_code=429, content={
@@ -1353,6 +1458,187 @@ def audit(job_id: str, db: Session = Depends(db_dep),
     return [{"code": e.event_code, "actor": e.actor, "detail": e.detail,
              "at": e.created_at.isoformat(), "payload": e.payload}
             for e in sorted(job.events, key=lambda x: x.created_at)]
+
+
+# --------------------------------------------------------------------------- #
+# Platform administration — accounts, quotas and usage METADATA.
+#
+# Scope is `docs/ADR-001-identity-and-tenancy.md` and is not negotiable here:
+# **an admin manages accounts and quotas and cannot read customer
+# declarations.**  Every route below reads counts, statuses, usage rows and
+# allowances.  NONE of them loads a declaration, a document, an extraction, an
+# XML artifact or a job's audit trail, and none of them touches
+# `services.job_visible_to`, `services.get_job` or the `list_jobs` predicate —
+# an admin gets exactly the same 404 as any other stranger on another account's
+# job, which `tests/test_tenant_isolation.py` asserts route by route.
+#
+# The residual disclosure, stated rather than waved away: an admin learns how
+# many declarations an account holds, what states they are in, what it has
+# extracted this month and what that cost.  That is the minimum quota and abuse
+# work needs, and it is not nothing.
+#
+# Why there is no "open this user's job to debug it" route: ADR-001 specifies
+# what that would have to be instead — an explicit, customer-granted, time-boxed,
+# per-job grant, audited on the read and visible to the customer, implemented as
+# a grant ROW that `job_visible_to` looks up, never a role test.  And why there is
+# no "make this account an admin" route: the first admin cannot be granted
+# through a route that requires an admin, so the bootstrap is out of band
+# (`scripts/grant_admin.py`) — and once it is, a privileged HTTP path that widens
+# what an admin session can do has no reason to exist.
+# --------------------------------------------------------------------------- #
+_MAX_OWNER_KEY = 160          # models.AccountQuota.owner_key / Job.owner_key
+
+
+def _admin_target(owner_key: str) -> str:
+    """The account an admin route acts on.
+
+    Length-checked against the column rather than trusted: a longer key would be
+    silently truncated by some backends and would then govern a DIFFERENT account
+    than the one named in the request.
+    """
+    key = (owner_key or "").strip()
+    if not key or len(key) > _MAX_OWNER_KEY:
+        raise HTTPException(422, f"owner_key must be 1-{_MAX_OWNER_KEY} characters")
+    return key
+
+
+class QuotaRequest(BaseModel):
+    """`monthly_document_cap` has NO DEFAULT on purpose.
+
+    The three values are three different answers — null follows the deployment
+    default, 0 is unlimited for this account, n is n documents a month — so an
+    omitted field must be a 422 rather than quietly meaning whichever of them the
+    author of this model happened to pick.
+    """
+    model_config = ConfigDict(extra="forbid")
+    monthly_document_cap: int | None
+    # Bounded because it lands in a TEXT column an admin can post to.  Why a cap
+    # was set is the field the NEXT administrator needs in order to change it
+    # back safely, so it is recorded, not merely allowed.
+    note: str = Field(default="", max_length=500)
+
+    @field_validator("monthly_document_cap")
+    @classmethod
+    def _not_negative(cls, v: int | None) -> int | None:
+        if v is not None and v < 0:
+            raise ValueError("monthly_document_cap must be 0 or more (0 means unlimited)")
+        return v
+
+
+class DisableRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason: str = Field(default="", max_length=500)
+
+
+@app.get("/api/admin/accounts")
+def admin_list_accounts(limit: int = 50, offset: int = 0, db: Session = Depends(db_dep),
+                        admin: str = Depends(require_admin)):
+    """Accounts this deployment has SEEN, busiest month first.
+
+    Not "every account" — identity lives with the auth provider, and enumerating
+    it needs the service-role key this process deliberately does not hold.  The
+    honest set is the union of the `owner_key` values in this app's own tables, so
+    an account that registered and never uploaded anything is not here.  The
+    payload says so in `scope`; a client that labels this "all users" is labelling
+    something else.
+
+    `display_label` is derived from the audit trail (no column holds an email) and
+    is a label, never an identity — `owner_key` is what owns a job.
+    """
+    return accounts.list_accounts(db, limit=limit, offset=offset)
+
+
+@app.get("/api/admin/accounts/{owner_key}/usage")
+def admin_account_usage(owner_key: str, db: Session = Depends(db_dep),
+                        admin: str = Depends(require_admin)):
+    """One account's month-to-date usage — the same shape `/api/usage` returns to
+    the account itself, plus the allowance metadata that is an admin's actual job.
+
+    `estimated_cost_usd` is null until vendor rates are configured and
+    `unpriced_events` counts the calls no rate could price: a non-zero value means
+    the cost shown is a FLOOR, not a total.  Units are measured, money is
+    estimated, and this route does not blur them either.
+    """
+    key = _admin_target(owner_key)
+    return {**metering.summary(db, key),
+            "monthly_document_cap": metering.resolved_cap(db, key) or None,
+            "account": accounts.account_detail(db, key)}
+
+
+@app.put("/api/admin/accounts/{owner_key}/quota")
+def admin_set_quota(owner_key: str, body: QuotaRequest, request: Request,
+                    db: Session = Depends(db_dep), admin: str = Depends(require_admin)):
+    """Set or clear one account's monthly document cap, recording who set it.
+
+    THIS IS THE ROUTE THAT MAKES A SENTENCE TRUE.  `metering.quota_exceeded` has
+    always told a blocked reviewer their extraction resumes "at the start of next
+    month, or when an administrator raises the limit" — and until step 1 there was
+    no per-account limit to raise, and until this route there was no administrator
+    to raise it and nothing recording who did.  `account_quota.updated_by` shipped
+    without a writer; this is the writer.
+
+    The audit record is the row: `updated_by` names the human, `updated_at` says
+    when, `note` says why.  Plus the structured log line below, which carries the
+    request id and the acting principal's stable id.  There is deliberately no
+    `AuditEvent` — that table's `job_id` is a non-nullable foreign key to
+    `customs_job`, and an account-level action has no job to hang off.  What step
+    2 therefore ships is current-state attribution, not an action history; a
+    history is its own table and its own decision.
+    """
+    key = _admin_target(owner_key)
+    row = accounts.set_quota(db, key, body.monthly_document_cap,
+                             note=body.note, actor=_actor(request))
+    # WARNING, not INFO: a privileged change to what an account may spend is
+    # worth finding in a log without knowing to look for it.
+    log.warning("admin set the monthly document cap for %s to %s", key,
+                "the deployment default" if row.monthly_document_cap is None
+                else row.monthly_document_cap,
+                extra={"target_owner_key": key,
+                       "monthly_document_cap": row.monthly_document_cap})
+    return {"status": "UPDATED", "account": accounts.account_detail(db, key)}
+
+
+@app.post("/api/admin/accounts/{owner_key}/disable")
+def admin_disable_account(owner_key: str, request: Request,
+                          body: DisableRequest | None = None,
+                          db: Session = Depends(db_dep),
+                          admin: str = Depends(require_admin)):
+    """Bar an account from signing in, and from buying any more OCR.
+
+    A LOCAL deny-list, not a Supabase user-disable: that needs the service-role
+    key this process does not hold.  Consulted at sign-in, on the extraction route
+    and by `require_admin` — but NOT on every request, so a session already issued
+    keeps reading its own jobs until its 24h token expires.  That window is real;
+    `EASYCUSTOMS_AUTH_SECRET` rotation is what ends every open session at once.
+
+    Refuses your own account: an admin who locks themselves out has to be undone
+    with SQL against a live database, and on the `local` provider there is no
+    second admin to undo it.
+    """
+    key = _admin_target(owner_key)
+    if key == admin:
+        raise HTTPException(409, "you cannot disable the account you are signed in as — "
+                                 "there may be no other administrator to undo it")
+    reason = (body.reason if body else "") or ""
+    accounts.disable(db, key, reason=reason, actor=_actor(request))
+    log.warning("admin disabled account %s", key,
+                extra={"target_owner_key": key, "reason": reason[:200]})
+    return {"status": "DISABLED", "account": accounts.account_detail(db, key)}
+
+
+@app.post("/api/admin/accounts/{owner_key}/enable")
+def admin_enable_account(owner_key: str, request: Request, db: Session = Depends(db_dep),
+                         admin: str = Depends(require_admin)):
+    """Lift the bar.  The inverse exists because a deny-list that can only be
+    added to turns one mis-click into a permanently barred paying customer, only
+    fixable with SQL against a live database."""
+    key = _admin_target(owner_key)
+    lifted = accounts.enable(db, key)
+    log.warning("admin re-enabled account %s (%s)", key,
+                "was disabled" if lifted else "was not disabled",
+                extra={"target_owner_key": key})
+    return {"status": "ENABLED", "was_disabled": lifted,
+            "account": accounts.account_detail(db, key)}
 
 
 # --------------------------------------------------------------------------- #

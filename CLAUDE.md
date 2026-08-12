@@ -84,6 +84,7 @@ Layer map:
 | `app/declaration/` | builder (valuation), validator, merged models |
 | `app/xml/` | ASYCUDA composer (lxml) + brand/model/size `.xls` export |
 | `app/storage.py` | document bytes: a local directory or an S3 bucket, dispatched on the key |
+| `app/accounts.py` | the platform role, the login deny-list, per-account quota writes, account/usage **metadata** — never job content |
 | `app/metering.py` | per-extraction token/page counts, cost only where a rate is configured, monthly document cap |
 | `app/logging_setup.py` | JSON log lines, request-id / principal context, secret scrubbing |
 
@@ -108,6 +109,8 @@ Packing lists are parsed deterministically wherever OCR yields a readable table,
 Auth is **middleware, not a per-route dependency** (`app/main.py` → `app/auth.py`), so a route added later is protected by the fact that it exists; `tests/test_auth.py` asserts this. Tokens are stateless HMAC-SHA256, 24h, returned in the body *and* as an HttpOnly cookie (the cookie is what makes PDF `<iframe>` and download links work).
 
 **Who may see what is decided once**, in `services.job_visible_to`. The decision behind it is `docs/ADR-001-identity-and-tenancy.md`, the tenancy record: the USER is the tenant — there are no organizations, firms or memberships, and both isolation and quota are per-user. Read it before writing anything that widens visibility.
+
+**The `admin` role is not a data privilege, and `job_visible_to` does not know it exists.** An admin manages accounts, quotas and usage metadata (`app/accounts.py`, the `/api/admin/*` routes, `Depends(require_admin)`); an admin reading someone else's job, documents, XML, `.xls` or declaration gets the same 404 anybody else does, asserted route by route in `tests/test_tenant_isolation.py`. `if role == "admin": return True` in that predicate is the "unowned job is visible to everyone" branch with a different condition — ADR-001 argues it out, and any support-access feature is an explicit, expiring, customer-created grant ROW plus an ADR amendment, never a role test. The role is a row in `account_role` (absence means member), read server-side per request on the admin routes only; it is deliberately **not** a claim in the session token, because a stateless 24h token cannot be revoked. The first admin comes from `scripts/grant_admin.py` — no route grants a role.
 
 `tests/conftest.py` configures an operator account, patches `TestClient.__init__` to attach a token, and gives each run its own temp SQLite database. A test that wants an anonymous client does `client.headers.pop("Authorization", None)`.
 

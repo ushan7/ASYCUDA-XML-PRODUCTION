@@ -210,6 +210,54 @@ def documents_this_month(db, owner_key: str, *, now: datetime | None = None) -> 
                UsageEvent.created_at >= month_start(now))) or 0)
 
 
+def documents_this_month_by_owner(db, *, now: datetime | None = None) -> dict[str, int]:
+    """``documents_this_month`` for every account at once, in one query.
+
+    The bulk sibling of the function above, and identical in what it counts —
+    ``ocr`` rows since ``month_start`` — because an admin listing that disagreed
+    with the number the quota gate enforces would be worse than no listing.  One
+    row per account with usage this month, so this is bounded by the deployment's
+    monthly activity rather than by its usage history.
+    """
+    rows = db.execute(
+        select(UsageEvent.owner_key, func.count(UsageEvent.id))
+        .where(UsageEvent.operation == "ocr", UsageEvent.created_at >= month_start(now))
+        .group_by(UsageEvent.owner_key)).all()
+    return {owner: int(n or 0) for owner, n in rows if owner}
+
+
+def estimated_cost_this_month(db, owner_keys, *, now: datetime | None = None) -> dict[str, dict]:
+    """Month-to-date spend for the named accounts: ``{owner: {cost, unpriced}}``.
+
+    Restricted to the accounts asked for, because the money column is
+    Decimal-as-string (money never touches a float here) and therefore has to be
+    summed in Python — which is affordable for one page of accounts and not for
+    every account this deployment holds.
+
+    ``unpriced_events`` travels with the total for the same reason
+    :func:`summary` carries it: a cost computed from rows where some models had no
+    rate is an UNDERSTATEMENT, and reporting it without saying so invites someone
+    to budget against it.
+    """
+    keys = [k for k in (owner_keys or []) if k]
+    if not keys:
+        return {}
+    rows = db.execute(
+        select(UsageEvent.owner_key, UsageEvent.estimated_cost_usd)
+        .where(UsageEvent.owner_key.in_(keys),
+               UsageEvent.created_at >= month_start(now))).all()
+    known: dict[str, Decimal] = {}
+    unpriced: dict[str, int] = {}
+    for owner, cost in rows:
+        if cost:
+            known[owner] = known.get(owner, Decimal("0")) + Decimal(cost)
+        else:
+            unpriced[owner] = unpriced.get(owner, 0) + 1
+    return {key: {"estimated_cost_usd": str(known[key]) if key in known else None,
+                  "unpriced_events": unpriced.get(key, 0)}
+            for key in set(known) | set(unpriced)}
+
+
 def summary(db, owner_key: str, *, since: datetime | None = None) -> dict:
     """Totals for one owner, with the honest caveat attached.
 

@@ -232,6 +232,87 @@ class AccountQuota(Base):
     updated_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
 
+class AccountRole(Base):
+    """One account's PLATFORM role.  A row means ``admin``; absence means member.
+
+    ``docs/ADR-001-identity-and-tenancy.md`` decides what the role is for, and it
+    is narrow: an admin manages accounts, quotas and usage METADATA.  An admin
+    does not read declarations, documents, extractions, XML artifacts or job
+    audit trails, and ``services.job_visible_to`` is deliberately not aware that
+    this table exists — a ``role == "admin"`` arm in that predicate is the
+    "unowned job is visible to everyone" branch with a different condition, in
+    the one function whose entire value is not having a bypass.
+
+    ``admin`` is a PLATFORM role — the service operator — never a firm role.  It
+    does not mean "senior broker" or "manages this brokerage's staff"; the system
+    has no concept of a brokerage at all.
+
+    WHY HERE AND NOT IN SUPABASE ``app_metadata``.  Writing that requires the
+    service-role key, which ``app/auth_supabase.py`` keeps deliberately out of
+    this process — so an admin console that grants a role could not exist without
+    granting this process control of the whole auth database.  It also splits
+    authorization across two systems when ``owner_key`` (the value a role has to
+    line up with) is a local column, and the `local` provider has no
+    ``app_metadata`` at all, so the local mechanism gets built either way.
+
+    The one genuine advantage of ``app_metadata`` — a user cannot self-promote —
+    is kept by the obvious means: this table is read SERVER-SIDE and a role is
+    never accepted from a request body, a header or a client-supplied claim.  It
+    is also deliberately NOT copied into the session token: a stateless 24h token
+    cannot be revoked, and late revocation of a privilege is the direction that
+    matters.  One primary-key lookup, on the admin routes only.
+
+    ABSENCE IS THE NORMAL STATE.  No row is written for an ordinary user, so
+    there is no signup-time write and no default to migrate.  The first admin is
+    inserted out of band (``scripts/grant_admin.py``) — bootstrapping a
+    privileged role through a route that must itself be privileged has no
+    non-silly answer.
+    """
+
+    __tablename__ = "account_role"
+
+    # The same key Job.owner_key holds: the Supabase auth.users.id, or the
+    # configured username under the `local` provider.
+    owner_key: Mapped[str] = mapped_column(String(160), primary_key=True)
+    # Only "admin" is meaningful.  Any other value is read as no role at all
+    # (accounts.role_of), so a typo cannot silently grant something.
+    role: Mapped[str] = mapped_column(String(20))
+    granted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    # WHO granted it, as a display name — same convention as AuditEvent.actor,
+    # because this column exists to be read by the next administrator.  NULL
+    # means nobody recorded a grantor, which is what the bootstrap row is when
+    # it is inserted by hand.
+    granted_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
+
+
+class AccountDisabled(Base):
+    """The local deny-list: a row means this account may not sign in.
+
+    Local, and not a Supabase user-disable, for the same reason the role is
+    local — disabling a Supabase user needs the service-role key this process
+    deliberately does not hold.
+
+    WHAT THIS DOES NOT DO, stated here because the gap is the interesting part.
+    Sessions are stateless HMAC tokens with a 24h lifetime, so a row written here
+    stops the NEXT sign-in, not the session already in someone's browser.  Two
+    places therefore consult it besides login: the extraction route, which is the
+    one route that is about to spend real money at Mistral and OpenAI, and
+    ``require_admin``.  Every other route keeps working until the token expires.
+    Closing that window completely would mean a database read on every request
+    for all 1500 reviewers, which is the cost the role deliberately avoids; the
+    remedy for an urgent revocation remains rotating ``EASYCUSTOMS_AUTH_SECRET``,
+    which ends every open session at once.
+    """
+
+    __tablename__ = "account_disabled"
+
+    owner_key: Mapped[str] = mapped_column(String(160), primary_key=True)
+    # Why, for the administrator who has to decide whether to lift it.
+    reason: Mapped[str] = mapped_column(Text, default="")
+    disabled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    disabled_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
+
+
 class LoginAttempt(Base):
     """One FAILED sign-in, kept only long enough to rate-limit the next one.
 
