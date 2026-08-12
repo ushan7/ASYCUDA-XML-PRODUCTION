@@ -40,6 +40,13 @@ _EXEMPT = {
     # use by name (main.RequestBodyLimit) — the raw field is only the override,
     # the ceiling itself is derived from max_upload_mb.
     "max_request_mb",
+    # consumed through resolved_monthly_document_cap() in config.py, which
+    # metering.resolved_cap uses by name.  Same shape as max_request_mb: the raw
+    # field is the OPERATOR'S OVERRIDE (None = "take the default for the auth
+    # provider"), never the effective number — reading it directly is the bug
+    # this exemption exists to keep out, because it would miss both the
+    # per-provider default and the per-account account_quota row.
+    "usage_monthly_document_cap",
 }
 
 

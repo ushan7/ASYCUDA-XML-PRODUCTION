@@ -31,7 +31,7 @@ from functools import lru_cache
 from sqlalchemy import func, select
 
 from .config import get_settings
-from .models import UsageEvent
+from .models import AccountQuota, UsageEvent
 
 log = logging.getLogger("easycustoms.metering")
 
@@ -249,15 +249,48 @@ def summary(db, owner_key: str, *, since: datetime | None = None) -> dict:
     }
 
 
+def resolved_cap(db, owner_key: str) -> int:
+    """How many documents THIS account may extract this month.  0 = unlimited.
+
+    Resolution order, and nothing else decides it:
+
+      1. the account's own ``account_quota`` row, when it has one carrying a
+         number.  A row whose ``monthly_document_cap`` is NULL exists to hold a
+         note and defers to the deployment — NULL is "follow the default", 0 is
+         "unlimited", and collapsing the two would turn every note into a ban;
+      2. otherwise the deployment default
+         (``Settings.resolved_monthly_document_cap``, which is itself
+         per-provider);
+      3. ``<= 0`` means unlimited, at either level.
+
+    A per-account row is what makes the sentence below true.  It has always
+    promised the reviewer that "an administrator raises the limit" is a thing
+    that can happen; until this row existed, raising one account's limit meant
+    raising everyone's.
+
+    Deliberately NOT wrapped in a try/except, unlike ``record``.  That one
+    swallows because a declaration is not worth losing to a failed insert into a
+    cost report; this one is the check that stands between an account and this
+    deployment's vendor budget, so a database that cannot answer it must stop the
+    extraction loudly rather than wave it through.  Fail closed, like the login
+    throttle it sits beside.
+    """
+    if owner_key:
+        row = db.get(AccountQuota, owner_key)
+        if row is not None and row.monthly_document_cap is not None:
+            return row.monthly_document_cap
+    return get_settings().resolved_monthly_document_cap()
+
+
 def quota_exceeded(db, owner_key: str) -> str | None:
     """The reason this owner may not start another extraction, or None.
 
     Returns a sentence for the reviewer rather than a bool: "you are over your
     limit" is only actionable if it says what the limit was.
     """
-    cap = get_settings().usage_monthly_document_cap
+    cap = resolved_cap(db, owner_key)
     if cap <= 0:
-        return None                                   # unlimited (the default)
+        return None                                   # unlimited
     used = documents_this_month(db, owner_key)
     if used < cap:
         return None

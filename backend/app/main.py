@@ -612,10 +612,15 @@ def usage(db: Session = Depends(db_dep), principal: str = Depends(principal_dep)
     (backend/vendor_prices.example.json), and `unpriced_events` counts the calls
     no rate could price. A non-zero value there means the cost shown is a FLOOR,
     not a total — token and page counts are always exact, money never guesses.
+
+    `monthly_document_cap` is THIS account's own limit (metering.resolved_cap),
+    not the deployment's: once an account can carry its own `account_quota` row,
+    reporting the deployment-wide number would show a limit the caller is not
+    actually subject to — in either direction. Null means unlimited.
     """
     return {
         **metering.summary(db, principal),
-        "monthly_document_cap": get_settings().usage_monthly_document_cap or None,
+        "monthly_document_cap": metering.resolved_cap(db, principal) or None,
     }
 
 
