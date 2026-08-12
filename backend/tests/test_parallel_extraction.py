@@ -27,14 +27,24 @@ def _row(page, idx, desc):
 class _RoutedCompletions:
     """Response chosen by request CONTENT (window page range in the note), not
     call order — deterministic no matter which thread calls first.  A route
-    may carry a delay so completion order differs from submission order."""
+    may carry a delay so completion order differs from submission order.
 
-    def __init__(self, routes):
+    `rendezvous=N` makes overlap DETERMINISTIC: each call parks inside create()
+    until N of them are in flight together, so `max_in_flight` records real
+    concurrency instead of racing a sleep.  It used to race one: window 1 slept
+    150ms and window 2 had to reach create() before it woke.  That holds on a
+    developer machine and is marginal on a 2-vCPU CI runner, where it passed
+    twice and failed twice on identical code — a flake sitting on top of the
+    assertion that proves windows run in parallel at all.
+    """
+
+    def __init__(self, routes, rendezvous: int = 0):
         self._routes = routes                    # substring -> (delay_s, response_json)
         self._lock = threading.Lock()
         self.calls = 0
         self.max_in_flight = 0
         self._in_flight = 0
+        self._barrier = threading.Barrier(rendezvous) if rendezvous else None
 
     def create(self, **kw):
         with self._lock:
@@ -42,6 +52,15 @@ class _RoutedCompletions:
             self._in_flight += 1
             self.max_in_flight = max(self.max_in_flight, self._in_flight)
         try:
+            if self._barrier is not None:
+                try:
+                    # Waited OUTSIDE the lock, or the second caller could never
+                    # arrive to release the first.  A timeout rather than a bare
+                    # wait: if the pool did not in fact run these concurrently
+                    # the test must FAIL on max_in_flight, not wedge the suite.
+                    self._barrier.wait(timeout=10)
+                except threading.BrokenBarrierError:
+                    pass
             user = " ".join(m["content"] for m in kw["messages"] if m["role"] == "user")
             for key, (delay, content) in self._routes.items():
                 if key in user:
@@ -57,8 +76,9 @@ class _RoutedCompletions:
 
 
 class _RoutedClient:
-    def __init__(self, routes):
-        self.chat = type("Chat", (), {"completions": _RoutedCompletions(routes)})()
+    def __init__(self, routes, rendezvous: int = 0):
+        self.chat = type("Chat", (),
+                         {"completions": _RoutedCompletions(routes, rendezvous)})()
 
 
 def test_parallel_windows_keep_document_order(monkeypatch):
@@ -78,8 +98,12 @@ def test_parallel_windows_keep_document_order(monkeypatch):
                        "rows": [_row(3, 1, "B1"), _row(4, 1, "B2")],
                        "totals": {"grand_total_raw": "400.00"}})
     # window 1 is SLOW: window 2 completes first; merged output must still be
-    # in document order with header/totals correctly attributed
-    client = _RoutedClient({"pages 1-2": (0.15, win1), "pages 3-4": (0.0, win2)})
+    # in document order with header/totals correctly attributed.  The delay is
+    # what makes completion order differ from submission order; the rendezvous
+    # is what makes the overlap itself certain rather than raced (both windows
+    # park in create() until the other arrives, THEN window 1 sleeps).
+    client = _RoutedClient({"pages 1-2": (0.15, win1), "pages 3-4": (0.0, win2)},
+                           rendezvous=2)
     page = "|  MODEL | DESC | 1 | EA | 100.00 | 100.00  |"
     ocr = OcrDocument(document_id="d", declared_role=DeclaredRole.INVOICE,
                       pages=[OcrPage(page_no=i, plain_text=page) for i in (1, 2, 3, 4)])

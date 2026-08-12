@@ -219,7 +219,16 @@ def test_the_access_log_records_the_path_but_never_the_query_string(caplog):
     lines = [r for r in caplog.records if getattr(r, "http_path", None)]
     assert lines, "the access log produced nothing"
     assert any(r.http_path == "/api/reference/hs" for r in lines)
-    assert "widgets-of-interest" not in caplog.text
+    # OUR records only, and every field of them — not `caplog.text`, which is
+    # every logger in the process. The HTTP client library behind TestClient
+    # logs the full request URL including the query string, so the old form
+    # failed on a third-party line while this app's own entry was correct.
+    # What is being policed is what THIS app writes.
+    ours = [r for r in caplog.records if r.name.startswith("easycustoms")]
+    assert ours, "no easycustoms log records were captured"
+    leaked = [r for r in ours
+              if any("widgets-of-interest" in str(v) for v in vars(r).values())]
+    assert not leaked, f"the query string reached this app's log: {vars(leaked[0])}"
 
 
 def test_the_access_log_carries_status_and_duration(caplog):
