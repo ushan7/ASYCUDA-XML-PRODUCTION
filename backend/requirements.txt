@@ -1,11 +1,31 @@
 # Flexible version ranges so it installs on Python 3.10 - 3.14.
 # (Exact pins are avoided because very new Python versions may lack wheels for
 #  older releases.)
+#
+# Every entry also carries an UPPER bound at the next major. The flexibility
+# above is about lower bounds — about which old release a new interpreter can
+# still find a wheel for — and it is not a reason to accept a major nobody has
+# read the changelog of. An unbounded `>=` makes this file a moving target: the
+# build changes with no commit behind it, so CI goes red on a branch whose diff
+# is empty and the cause is somewhere in the dependency graph. That is exactly
+# how openai 3.0.0 broke PR #9 (see the note above that line).
+#
+# A cap is a review gate, not a judgement that the next major is bad. Raising
+# one is a deliberate change with its own test run.
+#
+# Where a range spans two majors (lxml, pypdf, Pillow, pytest) the lower bound
+# is older than what is installed today; the bound is deliberately left where it
+# is, so the cap reads `>=5.2,<7` rather than pretending the floor moved.
 
 # ---- Core web stack ----
 fastapi>=0.111,<1.0
-uvicorn[standard]>=0.30
-python-multipart>=0.0.9
+uvicorn[standard]>=0.30,<1.0
+# Pre-1.0, and capped at <1.0 rather than <0.1. Nothing here imports it — it is
+# starlette's form parser, reached through fastapi, and both of those float it
+# at `>=0.0.18` with no ceiling of their own. A <0.1 cap would be tighter than
+# what our own web framework asks for, and would break the next fastapi upgrade
+# rather than the next python-multipart major. 1.0 is where the review gate goes.
+python-multipart>=0.0.9,<1.0
 pydantic>=2.7,<3
 pydantic-settings>=2.3,<3
 
@@ -16,25 +36,33 @@ SQLAlchemy>=2.0,<3
 # never has to run alembic. Postgres does: app/database.py refuses to serve a
 # Postgres database whose schema is not at head, because create_all cannot ALTER
 # an existing table and would leave a column silently missing.
-alembic>=1.13
+alembic>=1.13,<2
 # Postgres driver. Only loaded when EASYCUSTOMS_DATABASE_URL points at Postgres
 # (SQLAlchemy imports the dialect's driver on demand); harmless otherwise.
-psycopg[binary]>=3.2
+psycopg[binary]>=3.2,<4
 
 # ---- Reference data / documents ----
-openpyxl>=3.1
-xlwt>=1.3            # legacy .xls writer for the brand/model/size export
-xlrd>=2.0            # .xls READER — tests/test_bms_endpoint.py and
+openpyxl>=3.1,<4
+xlwt>=1.3,<2         # legacy .xls writer for the brand/model/size export
+xlrd>=2.0,<3         # .xls READER — tests/test_bms_endpoint.py and
                      # tests/test_brand_model_size.py import it to verify that
                      # export. Without it pytest aborts at COLLECTION, so
                      # `pytest -q` runs zero tests and reports success-shaped
                      # output for a suite it never executed.
-pypdf>=4.2
-lxml>=5.2
+pypdf>=4.2,<7    # 6.x installed; the offline OCR provider reads every page here
+# The XML composer is built on lxml (app/xml/composer.py `from lxml import
+# etree`), so its serialisation behaviour IS the declaration that goes to
+# ASYCUDA. A major that changed, say, how it emits empty elements or orders
+# attributes would produce a still-valid-looking XML that customs reads
+# differently, and nothing in the suite is guaranteed to spell that out.
+# Of everything in this file this is the one to take deliberately. 6.x installed.
+lxml>=5.2,<7
 # Photo uploads: JPEG/PNG are converted to PDF at the upload boundary so
 # everything downstream (OCR, viewer, #page deep links) stays PDF-only.
-img2pdf>=0.5     # lossless JPEG/PNG → PDF (no recompression)
-Pillow>=10.0     # decode/verify images, flatten alpha, read dimensions
+img2pdf>=0.5,<1.0   # lossless JPEG/PNG → PDF (no recompression)
+Pillow>=10.0,<13    # decode/verify images, flatten alpha, read dimensions
+                    # (12.x installed; Pillow removes deprecated APIs on the
+                    #  major, which is what img2pdf hands its decoded images to)
 
 # ---- Live extraction (Mistral OCR + OpenAI) ----
 # Imported lazily, so the app still boots offline if these are absent.
@@ -53,7 +81,7 @@ mistralai>=1.2,<2
 # ---- Queue mode (async extraction over AWS SQS) ----
 # Only loaded when EASYCUSTOMS_QUEUE_PROVIDER=sqs (producer app/queueing.py
 # and consumer worker.py import it lazily); harmless to install otherwise.
-boto3>=1.34
+boto3>=1.34,<2
 
 # ---- Supabase (scripts/check_supabase_connection.py only) ----
 # NOT used by the application. The FastAPI app reaches Postgres through
@@ -63,8 +91,11 @@ boto3>=1.34
 # supabase pulls realtime, which pins websockets>=11,<16 — inside
 # uvicorn[standard]'s own websockets>=13, so both resolve, but it does cap
 # uvicorn's websockets below 16.
-supabase>=2.31
-python-dotenv>=1.0
+# That transitive pin is why the cap matters more than "a script's dependency"
+# suggests: a supabase major moves realtime, which moves the websockets window
+# uvicorn is resolved inside, so it reaches the server the app actually runs on.
+supabase>=2.31,<3
+python-dotenv>=1.0,<2
 
 # ---- Supabase Auth (EASYCUSTOMS_AUTH_PROVIDER=supabase) ----
 # Sign-in is one POST to Supabase's password-grant endpoint (app/auth_supabase.py),
@@ -72,7 +103,7 @@ python-dotenv>=1.0
 # deliberately NOT the `supabase` SDK above: the SDK pulls realtime and its
 # websockets pin for a single HTTP call the request path makes on every login.
 # httpx is here rather than under Tests because APPLICATION code imports it now.
-httpx>=0.27
+httpx>=0.27,<1.0
 
 # ---- Tests ----
-pytest>=8.2
+pytest>=8.2,<10  # 9.x installed
