@@ -97,12 +97,15 @@ Packing lists are parsed deterministically wherever OCR yields a readable table,
 - **Packing match is by product identity**, never row number.
 - **Rule-vs-sample conflicts are versioned config flags, not silent guesses** — the ADR table in `README.md`, implemented in `app/config.py` (`default_net_to_gross_ratio`, `pair_divide_by_two`, `cost_allocation_basis`, `default_unknown_payment_terms_to_lc`). Each is recorded in the audit trail.
 - **A setting must be read by the behaviour it describes.** `tests/test_config_is_consumed.py` fails on any `Settings` field never read outside `config.py`. Add a flag in the same commit as the code that obeys it.
+- **A job-scoped route must state what it does about ownership.** `tests/test_tenant_isolation.py::test_every_job_scoped_route_is_listed_here` reads the app's own routing table and fails when a `{job_id}` route exists that its sweep does not exercise. `services.job_visible_to` was never wrong; what was not guaranteed is that every route *asks* it. Two never did — `/api/jobs/{job_id}/xml` and `/api/jobs/{job_id}/brand-model-size.xls` took `principal` via `Depends` and never read it, so any authenticated caller holding a job id downloaded another user's finished declaration XML and `.xls` (fixed in 86bd148).
 - **Warn mode is the default** (`xml_strict_blocking=False`): blocking cases warn and still produce XML so the reviewer can test it in real ASYCUDA. Don't assume a blocker stops generation.
 - **Role mismatch parks a document** in `ROLE_REVIEW_REQUIRED`; review and finalize refuse until the reviewer accepts or rejects it. Having a stored extraction is not sufficient to be read — `services.declarable_documents` is the gate.
 
 ## Auth, schema, tests
 
 Auth is **middleware, not a per-route dependency** (`app/main.py` → `app/auth.py`), so a route added later is protected by the fact that it exists; `tests/test_auth.py` asserts this. Tokens are stateless HMAC-SHA256, 24h, returned in the body *and* as an HttpOnly cookie (the cookie is what makes PDF `<iframe>` and download links work).
+
+**Who may see what is decided once**, in `services.job_visible_to`. The decision behind it is `docs/ADR-001-identity-and-tenancy.md`, the tenancy record: the USER is the tenant — there are no organizations, firms or memberships, and both isolation and quota are per-user. Read it before writing anything that widens visibility.
 
 `tests/conftest.py` configures an operator account, patches `TestClient.__init__` to attach a token, and gives each run its own temp SQLite database. A test that wants an anonymous client does `client.headers.pop("Authorization", None)`.
 
