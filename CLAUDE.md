@@ -56,6 +56,8 @@ Concretely:
 
 **And the rules themselves are frozen.** Every customs rule here — allocation, reconciliation, item order, the reference-data lookups, the ADR config flags — is an authoritative business requirement, not an implementation detail that happens to be written this way. A refactor changes how a rule is *expressed*, never what it *decides*. A rule that looks wrong is reported by name and left in place; it is never silently corrected, because a quiet "fix" and a regression are indistinguishable by the time anyone notices. Changing one takes explicit approval first, and updates `docs/allocation-spec.md` in the same commit.
 
+The same same-commit rule covers the three screen specs — a change to Critical Review, Detailed Review or upload/extraction behaviour updates `docs/critical-review-spec.md`, `docs/detailed-review-spec.md` or `docs/upload-extraction-spec.md` with it. Where they describe weights and cartons they defer to `docs/allocation-spec.md`, which stays authoritative on any conflict.
+
 ## Pipeline
 
 `app/pipeline.py` is the spine. Resolution always replays from the **stored raw extraction** — never re-OCRing — so Critical Review and Finalize run the same deterministic steps in dependency order:
