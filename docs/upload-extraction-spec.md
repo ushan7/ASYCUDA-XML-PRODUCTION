@@ -751,9 +751,20 @@ arrive months later. They just cannot be changed.
 * **The quota is checked before the claim and before anything is bought** — the last point at which
   refusing costs nothing. Over the cap → `429` with
   `{status:"QUOTA_EXCEEDED", code:"USAGE_LIMIT_REACHED", detail:"…"}`.
+* The cap is **this account's own** (`metering.resolved_cap`): its `account_quota` row when it has
+  one, otherwise the deployment default, and `<= 0` is unlimited at either level.
 * The detail is a **sentence, not a bool**: "This account has extracted N documents this calendar
   month, which is its limit of M. Extraction resumes at the start of next month, or when an
-  administrator raises the limit." A limit is only actionable if it says what it was.
+  administrator raises the limit." A limit is only actionable if it says what it was — and that
+  second remedy is real: `PUT /api/admin/accounts/{owner_key}/quota` is what an administrator raises
+  it with, and the account is findable in `GET /api/admin/accounts` because it is ordered by
+  documents extracted this month.
+* **One line before the quota gate, a disabled account is refused**: `403` with
+  `{status:"REFUSED", code:"ACCOUNT_DISABLED", detail:"…"}`. Same reasoning, one step further — a
+  session that was issued before the operator disabled the account keeps working until its 24h token
+  expires, so a deny-list checked only at sign-in would do nothing about the account spending this
+  deployment's vendor budget right now. One primary-key read, on the one route about to buy OCR.
+  Every other route keeps serving that account its own jobs until the token expires.
 * OCR spend is recorded **next to the paid call and only for a real one** — the offline provider and
   fixture replays cost nothing, and a report that counted them would make the demo look like spend.
   Recorded: provider, operation, model, job, document, calls, pages.
@@ -925,7 +936,8 @@ exist — and the reviewer would have no reason to doubt a review that computed 
 | `EXTRACTION_ALREADY_RUNNING` | the claim was lost to a concurrent run (409) |
 | `EXTRACTION_FAILED (<Type>)` | stored on the row; the route answers 502 |
 | `EXTRACTION_INTERRUPTED` | the process restarted mid-run; returned to `UPLOADED` |
-| `USAGE_LIMIT_REACHED` | monthly document cap (429) |
+| `USAGE_LIMIT_REACHED` | monthly document cap, this account's own (429) |
+| `ACCOUNT_DISABLED` | the account is on the operator's deny-list (403) |
 | `DOCUMENT_ROLE_NOT_IN_REVIEW` | a role decision on a document not awaiting one |
 | `DOCUMENT_EXTRACTION_RUNNING` | removal attempted mid-extraction |
 

@@ -50,6 +50,12 @@ PROTECTED = [
     ("GET", "/api/jobs/any-id/audit"),
     ("GET", "/api/jobs/any-id/documents/any-doc/file"),
     ("GET", "/api/auth/session"),
+    # The admin surface is inside the SAME gate, so an anonymous caller is
+    # answered 401 by the middleware and never reaches `require_admin` — which is
+    # what makes the admin routes' 404-to-a-member a refusal that reveals nothing
+    # either way (every /api path answers 401 unauthenticated, real or not).
+    ("GET", "/api/admin/accounts"),
+    ("GET", "/api/admin/accounts/any-owner/usage"),
     ("GET", "/openapi.json"),
     ("GET", "/docs"),
 ]
