@@ -1310,6 +1310,13 @@ def declaration(job_id: str, db: Session = Depends(db_dep),
 @app.get("/api/jobs/{job_id}/xml")
 def download_xml(job_id: str, db: Session = Depends(db_dep),
                       principal: str = Depends(principal_dep)):
+    # Ownership FIRST, exactly as every other job route does it.  The artifact
+    # lookup below cannot stand in for this one: XmlArtifact is keyed by job_id
+    # and carries no owner, so `latest_xml` has nothing to scope by and this
+    # route served any signed-in caller the whole declaration of any job whose
+    # id they held.
+    if not services.get_job(db, job_id, principal=principal):
+        raise HTTPException(404, "job not found")
     art = services.latest_xml(db, job_id)
     if not art:
         raise HTTPException(404, "xml not built")
@@ -1321,6 +1328,9 @@ def download_xml(job_id: str, db: Session = Depends(db_dep),
 def download_brand_model_size(job_id: str, db: Session = Depends(db_dep),
                       principal: str = Depends(principal_dep)):
     """Per-item BRAND / MODEL / SIZE workbook — built alongside the XML."""
+    # Ownership first, for the same reason as the XML route above.
+    if not services.get_job(db, job_id, principal=principal):
+        raise HTTPException(404, "job not found")
     art = services.latest_bms(db, job_id)
     if not art:
         raise HTTPException(404, "brand-model-size not built")
