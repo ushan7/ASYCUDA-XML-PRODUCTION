@@ -351,8 +351,10 @@ EASYCUSTOMS_SUPABASE_ANON_KEY=<anon publishable key>
 
 # Signs THIS app's own session token, under either provider. Generate with:
 #   python -c "import secrets; print(secrets.token_hex(32))"
-# Unset, each uvicorn worker signs with its own random key and a session minted
-# by one is rejected by the other — a browser signed in every other request.
+# The app REFUSES TO BOOT without it on this provider. Unset, each uvicorn worker
+# signs with its own random key and a session minted by one is rejected by the
+# other — a browser signed in every other request, which looks like a broken
+# proxy rather than a missing line, so it is stopped rather than warned about.
 EASYCUSTOMS_AUTH_SECRET=<64 hex characters>
 EASYCUSTOMS_AUTH_TOKEN_TTL_HOURS=24
 
@@ -445,7 +447,7 @@ form always works and always wins.
 | `EASYCUSTOMS_SUPABASE_TIMEOUT_SECONDS` \| `SUPABASE_TIMEOUT_SECONDS` | no | `15.0` | Too low: slow sign-ins surface as "could not check credentials" (503), not as wrong passwords |
 | `EASYCUSTOMS_AUTH_USERNAME` \| `AUTH_USERNAME` | **no** under supabase | unset | **Never read at sign-in under `supabase`.** Under `local` its absence is fail-closed: no token can be issued and every route 401s. Startup logs a "no login account is configured" error even under supabase — see §13 |
 | `EASYCUSTOMS_AUTH_PASSWORD` \| `AUTH_PASSWORD` | **no** under supabase | unset | As above. Placeholder values (`your_…`, anything containing `*`) count as unset |
-| `EASYCUSTOMS_AUTH_SECRET` \| `AUTH_SECRET` | **yes in practice** | unset → random per process | Not a boot failure — a warning. With `--workers 2` the two processes sign with different keys, so roughly half of all authenticated requests 401. Changing it signs everyone out |
+| `EASYCUSTOMS_AUTH_SECRET` \| `AUTH_SECRET` | **yes** | unset → random per process | **Boot refusal under `supabase`.** It used to be a warning, and the warning was not enough: unset, the key is generated per process, so `--workers 2` signs with two different keys and each worker treats the other's session as a forgery — a browser signed in on roughly every other request, at random, which reads as a broken proxy or a broken Supabase rather than a missing line. Under `local` it stays a warning (one process, one operator, "sign in again after a restart"). Changing it signs everyone out |
 | `EASYCUSTOMS_AUTH_TOKEN_TTL_HOURS` \| `AUTH_TOKEN_TTL_HOURS` | no | `24.0` | `<= 0` is refused at boot — it would issue already-expired tokens |
 | `EASYCUSTOMS_SESSION_COOKIE_SECURE` \| `SESSION_COOKIE_SECURE` | **yes** (`always`) | `auto` | At `auto` behind Caddy the app sees `http` and the session cookie goes out **without `Secure`**. One downgraded request puts the token on the wire in clear. Values: `auto`/`always`/`never` |
 | `EASYCUSTOMS_TRUSTED_PROXY_HOPS` \| `TRUSTED_PROXY_HOPS` | **yes** (`1`) | `0` | At 0 all three limiters key on Caddy's address: everyone shares one bucket, and an unauthenticated attacker can lock out every user. Set too **high** and the key comes from a position the caller controls, so nothing is limited |
@@ -677,7 +679,8 @@ does not repeat them. What matters at bring-up:
 * **The API binds `127.0.0.1:8000`.** Caddy owns TLS and the public port.
 * **`--workers 2`** is now safe: the job lock is a Postgres advisory lock, the
   vendor stores are tables, and the login throttle is a table. It is *not* safe
-  without `EASYCUSTOMS_AUTH_SECRET` (§6).
+  without `EASYCUSTOMS_AUTH_SECRET`, which is why this provider refuses to boot
+  without one (§6) — the unit will fail to start and say so.
 * **`ProtectSystem=strict`** makes the whole filesystem read-only except
   `backend/storage` and `/tmp`. Fine here — Postgres and S3 hold everything. It is
   why a SQLite deployment under these units cannot write its database unless the
@@ -792,6 +795,29 @@ control the app depends on and cannot see.
 
 Do not point the `.env` at production's project "just to test the login". Every
 signup in the smoke test creates a real account.
+
+### Check the project answers before starting the app
+
+```bash
+cd /opt/easycustoms/backend && sudo -u easycustoms .venv/bin/python scripts/check_supabase_connection.py
+```
+
+Read-only — one `GET /auth/v1/settings` with the anon key. It creates no account
+and sends no email. It reads the URL and key **through the app's own settings**,
+so it checks the values `app/auth_supabase.py` will actually use rather than
+whatever a second reading of `.env` would find, and a wrong key comes back as a
+401 here instead of as a failed sign-in in step 3 of the smoke test.
+
+It also prints the project's `disable_signup` and `mailer_autoconfirm` flags,
+which are two of the dashboard settings in the table above — the only ones
+visible from this side. **It reports them; it enforces nothing.** SMTP, Site URL
+and the Redirect URLs allow-list remain invisible to it, and to every other
+check on this box.
+
+It needs no service-role key. If a command anywhere asks you to put one in
+`backend/.env`, that is the defect this check was rewritten to remove — the key
+bypasses row-level security, and the process reading that file parses uploaded
+PDFs.
 
 ### The first admin
 

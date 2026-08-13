@@ -40,7 +40,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import delete as sql_delete
 from sqlalchemy import select
 
-from .config import get_settings
+from .config import configured, get_settings
 
 log = logging.getLogger("easycustoms.auth")
 
@@ -89,14 +89,11 @@ class Session:
 # --------------------------------------------------------------------------- #
 # Configuration
 # --------------------------------------------------------------------------- #
-def _configured(value: str | None) -> str | None:
-    """Blank and the .env.example placeholders count as NOT configured."""
-    if value is None:
-        return None
-    v = value.strip()
-    if not v or v.lower().startswith("your_"):
-        return None
-    return v
+# Blank and the .env.example placeholders count as NOT configured.  Defined in
+# config.py, not here, because config.py refuses to boot on an unset auth_secret
+# under the supabase provider and the two must not be able to disagree about
+# what "unset" means — see config.configured.
+_configured = configured
 
 
 def configured_username() -> str | None:

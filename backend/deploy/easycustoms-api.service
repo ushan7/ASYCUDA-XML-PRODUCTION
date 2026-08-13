@@ -37,14 +37,20 @@
 #         "no login account is configured" from the local-provider check even
 #         when supabase is the provider and the message does not apply.
 #
-#   * EASYCUSTOMS_AUTH_SECRET — required under BOTH providers, and for a reason
-#     that only became sharp when --workers went above 1. It signs THIS app's own
-#     session token under either provider (Supabase decides identity; the session
-#     is this server's). Unset, app/auth.py::_secret falls back to a per-PROCESS
-#     random key and logs a warning — so with --workers 2 the two workers sign
-#     with DIFFERENT keys, and a session minted by one is rejected as forged by
-#     the other. The symptom is not "logged out on restart", it is a browser that
-#     is signed in for roughly every other request.
+#   * EASYCUSTOMS_AUTH_SECRET — required under BOTH providers, and under
+#     `supabase` it is now a BOOT REFUSAL rather than advice. It signs THIS app's
+#     own session token under either provider (Supabase decides identity; the
+#     session is this server's). Unset, app/auth.py::_secret falls back to a
+#     per-PROCESS random key — so with --workers 2 the two workers sign with
+#     DIFFERENT keys, and a session minted by one is rejected as forged by the
+#     other. The symptom is not "logged out on restart", it is a browser that is
+#     signed in for roughly every other request, which reads as a broken proxy or
+#     a broken identity provider rather than as a missing line in .env. That is
+#     why config.py stops the boot over it instead of warning.
+#     Under `local` it stays a warning: one process, one operator, and "sign in
+#     again after a restart" is comprehensible. If you raise --workers on THAT
+#     provider, the bug is identical and nothing will stop you — see the
+#     --workers note further down.
 #   * EASYCUSTOMS_SESSION_COOKIE_SECURE=always in that .env. Behind a TLS
 #     terminator the app sees plain http, so the `auto` default would ship the
 #     session cookie WITHOUT `Secure` to a browser that is very much on https.

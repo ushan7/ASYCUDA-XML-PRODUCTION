@@ -50,6 +50,24 @@ def _real_key(value: str | None) -> str | None:
     return v
 
 
+def configured(value: str | None) -> str | None:
+    """A string setting, or None when it is blank or a `.env.example` placeholder.
+
+    Lives HERE, and is imported by app/auth.py rather than defined there, because
+    this module now REFUSES TO BOOT on an unset `auth_secret` and that refusal has
+    to agree exactly with the code that later decides the same value is unset. Two
+    copies of the predicate is a refusal that fires on a secret auth.py would have
+    used happily, or — the direction that matters — one that stays silent while
+    auth.py quietly falls back to a per-process key.
+    """
+    if value is None:
+        return None
+    v = value.strip()
+    if not v or v.lower().startswith("your_"):
+        return None
+    return v
+
+
 def _alias(name: str) -> AliasChoices:
     """Accept both the EASYCUSTOMS_-prefixed and the bare env name (as used in
     backend/.env); the prefixed form wins when both are set."""
@@ -304,6 +322,37 @@ class Settings(BaseSettings):
             # answer every login with a 502 and look like a credential problem.
             raise ValueError("EASYCUSTOMS_AUTH_PROVIDER=supabase requires SUPABASE_URL "
                              "and SUPABASE_ANON_KEY")
+        if self.auth_provider == "supabase" and not configured(self.auth_secret):
+            # ENFORCED on this provider for the same reason the cap above is:
+            # the failure does not arrive as an error anybody can act on.
+            #
+            # Unset, auth._secret falls back to a key generated PER PROCESS. The
+            # deployment shape this provider actually has — the shipped
+            # easycustoms-api.service runs `--workers 2` behind a proxy — then
+            # signs sessions with two different keys, and the token one worker
+            # mints is a forgery to the other. What a reviewer sees is not "log
+            # in again": it is being signed in on roughly every other request,
+            # at random, forever. That reads as a broken session store, a broken
+            # cookie, a broken proxy, or a broken Supabase — anything but a
+            # missing line in .env, which is why it is worth stopping the boot
+            # over rather than warning about.
+            #
+            # DELIBERATELY NOT EXTENDED TO `local`, and the residual is real:
+            # `local` with --workers 2 behind a proxy has the identical bug. It
+            # is left because `local` is the single-process laptop — one
+            # operator, `uvicorn --reload`, no proxy — where an unset secret
+            # means "sign in again after a restart", which is comprehensible,
+            # documented, and the zero-setup path that makes this app runnable
+            # with no configuration at all. Refusing there would trade a real
+            # quickstart for a hypothetical deployment. The unit file carries
+            # the warning for anyone who does raise --workers on that provider.
+            raise ValueError(
+                "EASYCUSTOMS_AUTH_PROVIDER=supabase requires EASYCUSTOMS_AUTH_SECRET. It "
+                "signs THIS app's session token (Supabase decides identity; the session is "
+                "this server's), and unset it is generated per process — so more than one "
+                "uvicorn worker signs with different keys and a session minted by one is "
+                "refused as forged by the other, at random, on every other request. "
+                'Generate one with: python -c "import secrets; print(secrets.token_hex(32))"')
         if self.allow_self_signup and self.auth_provider != "supabase":
             # A capability that cannot exist must not be configurable to "on".
             # `local` verifies the token subject against the ONE configured

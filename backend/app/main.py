@@ -413,18 +413,42 @@ def _widen_threadpool() -> None:
                     "requests", target, type(e).__name__, e)
 
 
+def _report_identity_provider() -> None:
+    """Name the provider, and complain only about a misconfiguration that is real.
+
+    GATED ON THE PROVIDER. Unguarded, the complaint below described a CORRECTLY
+    configured supabase deployment as broken — and said so as the first line in
+    the journal, which is exactly where somebody bringing a box up looks. Under
+    that provider `auth.verify_login` hands the credentials to Supabase's password
+    grant and never reads _AUTH_USERNAME / _AUTH_PASSWORD on any path, so their
+    absence is the expected state and no route answers 401 for it.
+
+    The equivalent misconfigurations on that provider are a missing SUPABASE_URL /
+    _ANON_KEY and a missing AUTH_SECRET, and config.py refuses to boot on all
+    three rather than logging about them — a stronger control that leaves nothing
+    for this function to say.
+
+    Its own function so a test can attach a handler and call it. `_startup` runs
+    `logging_setup.configure_logging()`, which clears the root handlers and would
+    take pytest's caplog handler with them.
+    """
+    provider = get_settings().auth_provider
+    log.info("identity provider: %s", provider)
+    if provider == "local" and not auth.credentials_configured():
+        # Loud, because the symptom otherwise reads as a broken app: every
+        # screen is a login form that rejects every password.
+        log.error("no login account is configured — set EASYCUSTOMS_AUTH_USERNAME and "
+                  "EASYCUSTOMS_AUTH_PASSWORD in backend/.env. Until then nobody can sign in "
+                  "and every API route answers 401 (the app fails CLOSED, never open).")
+
+
 @app.on_event("startup")
 def _startup() -> None:
     # First, so every line below is formatted and correlated — including
     # the fail-closed warning about a missing account.
     logging_setup.configure_logging()
     _widen_threadpool()
-    if not auth.credentials_configured():
-        # Loud, because the symptom otherwise reads as a broken app: every
-        # screen is a login form that rejects every password.
-        log.error("no login account is configured — set EASYCUSTOMS_AUTH_USERNAME and "
-                  "EASYCUSTOMS_AUTH_PASSWORD in backend/.env. Until then nobody can sign in "
-                  "and every API route answers 401 (the app fails CLOSED, never open).")
+    _report_identity_provider()
     init_db()
     get_reference()  # warm the reference cache
     if get_settings().queue_provider == "sqs":

@@ -178,6 +178,71 @@ def test_supabase_without_configuration_is_refused_at_boot():
 
 
 # --------------------------------------------------------------------------- #
+# EASYCUSTOMS_AUTH_SECRET is a boot refusal on this provider.
+#
+# Unset, auth._secret generates one PER PROCESS, so the shipped
+# easycustoms-api.service (`--workers 2`) signs sessions with two different keys
+# and each worker treats the other's token as a forgery.  The symptom is a
+# browser signed in on roughly every other request — which looks like anything
+# except a missing line in .env, and costs somebody an afternoon.
+#
+# `_env_file=None` stops backend/.env being read; conftest still puts a secret in
+# os.environ, so "unset" has to be said explicitly as an init kwarg (the
+# highest-priority source) rather than by omission.
+# --------------------------------------------------------------------------- #
+_SUPABASE = {"auth_provider": "supabase",
+             "supabase_url": "https://project.supabase.co",
+             "supabase_anon_key": "anon"}
+
+
+def test_supabase_without_an_auth_secret_is_refused_at_boot():
+    from app.config import Settings
+
+    with pytest.raises(Exception) as caught:
+        Settings(_env_file=None, auth_secret=None, **_SUPABASE)
+    message = str(caught.value)
+    assert "EASYCUSTOMS_AUTH_SECRET" in message
+    assert "secrets.token_hex" in message, "the refusal has to say how to make one"
+
+
+def test_the_env_example_placeholder_does_not_count_as_a_secret():
+    """The realistic way to get this wrong is copying .env.example and filling in
+    every line but this one.  `config.configured` is the single predicate both
+    this refusal and auth._secret use, so a value one accepts the other cannot
+    silently treat as absent."""
+    from app.config import Settings
+
+    with pytest.raises(Exception) as caught:
+        Settings(_env_file=None, auth_secret="your_random_64_hex_secret_here", **_SUPABASE)
+    assert "EASYCUSTOMS_AUTH_SECRET" in str(caught.value)
+
+    with pytest.raises(Exception):
+        Settings(_env_file=None, auth_secret="   ", **_SUPABASE)
+
+
+def test_supabase_with_an_auth_secret_boots():
+    from app.config import Settings
+
+    s = Settings(_env_file=None, auth_secret="0" * 64, **_SUPABASE)
+    assert s.auth_secret == "0" * 64
+
+
+def test_a_single_operator_deployment_still_boots_without_one():
+    """The path this refusal must not break: `local` is the broker's laptop —
+    one process, `uvicorn --reload`, no proxy — where an unset secret means "sign
+    in again after a restart".  That is comprehensible, documented, and the
+    zero-setup path that makes this app runnable with no configuration at all.
+
+    The residual is deliberate and recorded rather than closed: `local` with
+    --workers 2 behind a proxy has the identical bug, and the unit file carries
+    the warning for it."""
+    from app.config import Settings
+
+    assert Settings(_env_file=None, auth_provider="local", auth_secret=None
+                    ).auth_secret is None
+
+
+# --------------------------------------------------------------------------- #
 # End to end: two users, two dashboards
 # --------------------------------------------------------------------------- #
 def _login(client, email, password):
