@@ -10,6 +10,13 @@ validator afterwards:
 A supplied ``fixture`` (e.g. the bundled demo) short-circuits the LLM entirely.
 If a live provider is selected but its key/library is unavailable, we fall back
 to the offline extractor with a warning so the app keeps working.
+
+That decision is made HERE, per extraction.  Under ``auth_provider=supabase`` a
+live provider with a MISSING KEY is refused at boot instead
+(``config.Settings._check_auth_provider_config``), because there the warning is
+the only difference between this app reading a document and inventing one.  The
+behaviour in this module is unchanged; ``config.live_extraction_key_missing`` is
+the one predicate both it and that refusal consult.
 """
 from __future__ import annotations
 
@@ -68,34 +75,46 @@ def _run_provider(role: DeclaredRole, ocr: OcrDocument, fixture: dict | None,
         return payload, warnings, "fixture", None
 
     provider = settings.extraction_provider
-    if provider == "openai":
-        if settings.resolved_openai_key():
-            from .openai_extractor import OpenAIExtractor
+    # The KEY question, asked through the one predicate the boot refusal in
+    # config.py also asks, so a key this treats as missing cannot be one that
+    # refusal treats as present.  Under `auth_provider=supabase` this branch is
+    # now unreachable — that deployment is refused at boot rather than allowed
+    # to serve offline facts — and it stays exactly as it was everywhere else.
+    if settings.live_extraction_key_missing():
+        log.warning("extraction_provider %r selected but no key — falling back to offline.",
+                    provider)
 
-            from .openai_extractor import ExtractionDeadlineExceeded
+    elif provider == "openai":
+        from .openai_extractor import OpenAIExtractor
 
-            extractor = OpenAIExtractor()
-            try:
-                payload, warnings = extractor.extract(role, ocr, None, deadline=deadline)
-            except ExtractionDeadlineExceeded as aborted:
-                # The windows that completed before the budget ran out were
-                # paid for. Dropping their tokens here would make an aborted
-                # packing list — the most expensive thing this app does —
-                # cost nothing on the report.
-                aborted.usage = extractor.usage()
-                raise
-            return payload, warnings, "openai", extractor.usage()
-        log.warning("extraction_provider 'openai' selected but no key — falling back to offline.")
+        from .openai_extractor import ExtractionDeadlineExceeded
+
+        extractor = OpenAIExtractor()
+        try:
+            payload, warnings = extractor.extract(role, ocr, None, deadline=deadline)
+        except ExtractionDeadlineExceeded as aborted:
+            # The windows that completed before the budget ran out were
+            # paid for. Dropping their tokens here would make an aborted
+            # packing list — the most expensive thing this app does —
+            # cost nothing on the report.
+            aborted.usage = extractor.usage()
+            raise
+        return payload, warnings, "openai", extractor.usage()
 
     elif provider == "langroid":
         from .langroid_agents import langroid_available
 
-        if settings.resolved_openai_key() and langroid_available():
+        if langroid_available():
             from .langroid_agents import run_langroid_extraction
 
             payload, warnings = run_langroid_extraction(role, ocr.page_text_map(), ocr.full_text())
             return payload, warnings, "langroid", None
-        log.warning("extraction_provider 'langroid' unavailable (key/library) — falling back to offline.")
+        # LIBRARY, not key — the key case was handled above.  This one is a
+        # residual the boot refusal does NOT cover: `pip install langroid` is
+        # not a setting, and a settings validator that imported an optional
+        # dependency to check would make every boot depend on it.
+        log.warning("extraction_provider 'langroid' selected but the library is not installed "
+                    "— falling back to offline.")
 
     payload, warnings = OfflineExtractor().extract(role, ocr, None)
     return payload, warnings, "offline", None

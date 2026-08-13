@@ -38,6 +38,20 @@ ADR_003_NET_TO_GROSS_RATIO = Decimal("0.7")
 # is a STARTING POINT for the first month of real traffic, not a finding.
 DEFAULT_MULTI_ACCOUNT_DOCUMENT_CAP = 200
 
+# The OCR / extraction providers that call a paid vendor API — i.e. the ones
+# that actually READ the customer's document, as opposed to the offline readers
+# that approximate it.
+#
+# Named HERE, and read both by the boot refusal in
+# `_check_auth_provider_config` and by the per-extraction fallbacks in
+# `app/ocr/service.py` and `app/extraction/service.py`, for the same reason
+# `configured` lives here: the refusal and the fallback have to agree about
+# which provider is live, or the refusal fires on a deployment the fallback
+# would have run happily — or, the direction that matters, stays silent while
+# the fallback quietly substitutes synthetic facts.
+LIVE_OCR_PROVIDER = "mistral"
+LIVE_EXTRACTION_PROVIDERS = ("openai", "langroid")
+
 
 def _real_key(value: str | None) -> str | None:
     """Treat blanks and obvious placeholders ('***', 'your_..._here') as unset
@@ -408,6 +422,56 @@ class Settings(BaseSettings):
                 f"unset to take the default of {DEFAULT_MULTI_ACCOUNT_DOCUMENT_CAP}. "
                 "Raise it for one account with an account_quota row rather than for "
                 "everyone here.")
+        if self.auth_provider == "supabase":
+            # ENFORCED on this provider, for the third time and the same reason:
+            # the failure does not arrive as an error anybody can act on.
+            #
+            # A live provider whose key is missing falls back to the OFFLINE
+            # reader — pypdf text-layer OCR, heuristic extraction — and that
+            # fallback is per-extraction and logged at WARNING, so the process
+            # boots clean, answers /api/health, accepts the document, and hands
+            # the reviewer a complete-looking ASYCUDA declaration assembled from
+            # facts nothing ever read off the paperwork. Every deterministic
+            # rule downstream then runs perfectly on invented input. There is no
+            # 500, no failed job and no red badge; the only tells are a log line
+            # nobody greps for and a `provider: offline` in the audit trail.
+            # Until now, step 5 of docs/deploy-staging.md — a human reading the
+            # journal — was the whole control between that and a broker
+            # submitting a fabricated declaration to Nepal customs.
+            #
+            # `supabase` is the discriminator for the same reason as the two
+            # refusals above: it is the multi-account provider, i.e. the shape a
+            # real deployment has, serving brokers who did not configure it and
+            # cannot see which extractor ran.
+            #
+            # DELIBERATELY NOT EXTENDED TO `local`, and that is not timidity:
+            # `local` is the broker's own laptop and the bundled demo, where
+            # running with no keys at all is the documented zero-setup path and
+            # the reason the demo and the test suite work. Whoever is misled
+            # there is the person who chose it.
+            #
+            # NOT A REFUSAL OF OFFLINE. Naming `offline` outright still boots on
+            # any provider — an explicit choice is not a misconfiguration. What
+            # is refused is CLAIMING a live provider and not giving it a key.
+            missing = []
+            if self.live_ocr_key_missing():
+                missing.append(f"EASYCUSTOMS_OCR_PROVIDER={self.ocr_provider} needs "
+                               f"EASYCUSTOMS_MISTRAL_API_KEY (or MISTRAL_API_KEY)")
+            if self.live_extraction_key_missing():
+                missing.append(f"EASYCUSTOMS_EXTRACTION_PROVIDER={self.extraction_provider} "
+                               f"needs EASYCUSTOMS_OPENAI_API_KEY (or OPENAI_API_KEY)")
+            if missing:
+                raise ValueError(
+                    "EASYCUSTOMS_AUTH_PROVIDER=supabase selects a live document provider "
+                    "whose key is absent: " + "; ".join(missing) + ". Unset, that provider "
+                    "is silently replaced per extraction by the OFFLINE reader, so this "
+                    "deployment would boot clean and produce a complete-looking ASYCUDA "
+                    "declaration out of facts nothing read off the document — a failure "
+                    "indistinguishable from success. Set the key(s) above, or say so "
+                    "outright with EASYCUSTOMS_OCR_PROVIDER=offline / "
+                    "EASYCUSTOMS_EXTRACTION_PROVIDER=offline, which still boots. A "
+                    "placeholder ('***', 'your_..._here') counts as absent, here and in "
+                    "the fallback both.")
         return self
 
     # One operator account, from the environment.  Unset = FAIL CLOSED: no
@@ -678,6 +742,13 @@ class Settings(BaseSettings):
     # When a live provider is selected but its key is missing, the code falls
     # back to the offline path with a warning so the app still boots and the
     # bundled demo / test-suite keep working without keys.
+    #
+    # ONE EXCEPTION, added deliberately: under `auth_provider=supabase` that
+    # combination is refused at boot instead (_check_auth_provider_config).  The
+    # fallback itself is unchanged — offline remains a valid explicit choice on
+    # every provider, and the warning is still what a `local` deployment gets.
+    # What the multi-account provider may no longer do is boot clean on a
+    # MISSING key and serve invented facts to somebody who did not configure it.
     ocr_provider: str = Field(default="mistral", validation_alias=_alias("OCR_PROVIDER"))
     extraction_provider: str = "openai"
     mistral_api_key: str | None = Field(default=None, validation_alias=_alias("MISTRAL_API_KEY"))
@@ -899,13 +970,43 @@ class Settings(BaseSettings):
         m = (self.openai_reasoning_fallback_model or "").strip()
         return m if m and not m.lower().startswith("your_") else None
 
+    # ---- Live provider / key agreement -------------------------------------
+    # These two are THE predicate for "the selected provider is live and its key
+    # is absent".  The boot refusal in `_check_auth_provider_config` and the
+    # per-extraction fallbacks in app/ocr/service.py and app/extraction/service.py
+    # both call them rather than re-deriving the question, so a value one treats
+    # as a usable key cannot be one the other silently treats as missing (the
+    # `configured` / auth_secret rule, applied to vendor keys).
+    #
+    # False when the provider IS `offline`: that is an explicit choice, not a
+    # missing key, and it boots.
+    def live_ocr_key_missing(self) -> bool:
+        """True exactly when `ocr.service.get_ocr_provider` will substitute the
+        offline pypdf reader for the live one because no key was configured."""
+        return self.ocr_provider == LIVE_OCR_PROVIDER and not self.resolved_mistral_key()
+
+    def live_extraction_key_missing(self) -> bool:
+        """True exactly when `extraction.service._run_provider` will substitute
+        the offline extractor for a live one *for want of a key*.
+
+        Scoped to the KEY.  `langroid` also falls back when its library is not
+        installed, which this does not and must not claim: that is a different
+        absence, it is not a variable anybody can set in `.env`, and importing
+        langroid inside a settings validator to find out would make every boot
+        depend on an optional dependency.  Recorded as a residual in
+        docs/upload-extraction-spec.md §5.1 rather than half-covered here.
+        """
+        return (self.extraction_provider in LIVE_EXTRACTION_PROVIDERS
+                and not self.resolved_openai_key())
+
     @property
     def ocr_live_ready(self) -> bool:
-        return self.ocr_provider == "mistral" and bool(self.resolved_mistral_key())
+        return self.ocr_provider == LIVE_OCR_PROVIDER and bool(self.resolved_mistral_key())
 
     @property
     def extraction_live_ready(self) -> bool:
-        return self.extraction_provider in ("openai", "langroid") and bool(self.resolved_openai_key())
+        return (self.extraction_provider in LIVE_EXTRACTION_PROVIDERS
+                and bool(self.resolved_openai_key()))
 
 
 @lru_cache

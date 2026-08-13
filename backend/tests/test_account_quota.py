@@ -219,7 +219,13 @@ def test_a_row_belonging_to_nobody_in_particular_is_not_everyones(db, monkeypatc
 
 # --------------------------------------------------------------------------- #
 # The deployment default is per PROVIDER
+#
+# A supabase deployment naming a LIVE extraction/OCR provider without its key is
+# refused at boot too (tests/test_live_provider_keys.py), so the constructions
+# below say the vendor keys are present.  These tests are about the CAP: a
+# supabase shape that trips a different refusal would assert nothing about it.
 # --------------------------------------------------------------------------- #
+_LIVE_KEYS = {"MISTRAL_API_KEY": "sk-mistral", "OPENAI_API_KEY": "sk-openai"}
 def test_a_single_operator_deployment_is_unlimited_by_default():
     """`local` holds exactly one account — auth.verify_token checks the token
     subject against the configured username, so a second cannot exist.  There is
@@ -232,7 +238,7 @@ def test_a_single_operator_deployment_is_unlimited_by_default():
 
 def test_a_multi_account_deployment_gets_a_real_cap_by_default():
     s = Settings(_env_file=None, AUTH_PROVIDER="supabase",
-                 SUPABASE_URL="https://project.supabase.co", SUPABASE_ANON_KEY="anon")
+                 SUPABASE_URL="https://project.supabase.co", SUPABASE_ANON_KEY="anon", **_LIVE_KEYS)
     assert s.usage_monthly_document_cap is None
     assert s.resolved_monthly_document_cap() == DEFAULT_MULTI_ACCOUNT_DOCUMENT_CAP
 
@@ -269,7 +275,7 @@ def test_boot_refuses_an_uncapped_multi_account_deployment():
     with pytest.raises(Exception) as e:
         Settings(_env_file=None, AUTH_PROVIDER="supabase",
                  SUPABASE_URL="https://project.supabase.co", SUPABASE_ANON_KEY="anon",
-                 USAGE_MONTHLY_DOCUMENT_CAP="0")
+                 **_LIVE_KEYS, USAGE_MONTHLY_DOCUMENT_CAP="0")
     message = str(e.value)
     assert "USAGE_MONTHLY_DOCUMENT_CAP" in message
     assert str(DEFAULT_MULTI_ACCOUNT_DOCUMENT_CAP) in message, (
@@ -279,7 +285,7 @@ def test_boot_refuses_an_uncapped_multi_account_deployment():
 def test_boot_does_not_refuse_a_multi_account_deployment_that_named_a_cap():
     s = Settings(_env_file=None, AUTH_PROVIDER="supabase",
                  SUPABASE_URL="https://project.supabase.co", SUPABASE_ANON_KEY="anon",
-                 USAGE_MONTHLY_DOCUMENT_CAP="10")
+                 **_LIVE_KEYS, USAGE_MONTHLY_DOCUMENT_CAP="10")
     assert s.resolved_monthly_document_cap() == 10
 
 
@@ -288,7 +294,7 @@ def test_boot_does_not_refuse_a_multi_account_deployment_that_named_nothing():
     mentioned the setting boots with a real cap rather than being stopped by a
     change it did not make."""
     s = Settings(_env_file=None, AUTH_PROVIDER="supabase",
-                 SUPABASE_URL="https://project.supabase.co", SUPABASE_ANON_KEY="anon")
+                 SUPABASE_URL="https://project.supabase.co", SUPABASE_ANON_KEY="anon", **_LIVE_KEYS)
     assert s.resolved_monthly_document_cap() == DEFAULT_MULTI_ACCOUNT_DOCUMENT_CAP
 
 

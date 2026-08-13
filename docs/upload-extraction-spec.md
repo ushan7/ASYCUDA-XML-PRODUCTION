@@ -333,6 +333,10 @@ upload.
 to offline **rather than failing to boot**. This is why the bundled demo and the whole test suite
 work with no keys at all.
 
+**Exception — `auth_provider=supabase` refuses to boot instead.** See §5.1: the fallback below is
+unchanged, but on the multi-account provider a *missing* key stops the process rather than quietly
+downgrading the reader.
+
 Mistral flow: `files.upload` → `files.get_signed_url` → `ocr.process(document_url=…)`, with every HTTP
 call bounded by `timeout_ms` (default 120 s) — without it a stalled connection hangs the whole
 extraction silently.
@@ -378,6 +382,49 @@ one that never started.
 
 A live provider whose key or library is missing **falls back to offline with a warning** rather than
 failing.
+
+### 5.1a A missing key is a boot refusal under `supabase`
+
+The fallback above is decided **per extraction**, in `ocr/service.get_ocr_provider` and
+`extraction/service._run_provider`. Nothing at boot used to ask the question, so a deployment with no
+keys started clean, answered `/api/health`, accepted the document, and produced a **complete-looking
+ASYCUDA declaration out of facts nothing read off the paperwork** — every deterministic rule
+downstream working perfectly on invented input. No 500, no failed job, nothing red; the only tells
+are a `WARNING` nobody greps for and `provider: offline` in the audit trail. Step 5 of
+`docs/deploy-staging.md` was the whole control between that and a broker filing it.
+
+So `config.Settings._check_auth_provider_config` refuses the boot when **all three** hold:
+
+| | |
+| --- | --- |
+| `auth_provider` | `supabase` — the multi-account provider, i.e. the shape a real deployment has |
+| provider named | `ocr_provider=mistral`, or `extraction_provider` in {`openai`, `langroid`} |
+| its key | **absent** — unset, blank, or a placeholder (`***`, `your_…_here`) |
+
+The message names the variable to set for each half at once, and the escape hatch.
+
+**What this does not do.**
+
+* **It does not change the fallback.** `local` still warns and downgrades, which is the documented
+  zero-setup path — and the reason the bundled demo and the test suite run with no keys at all.
+* **It does not refuse `offline`.** Named outright it boots on every provider; an explicit choice is
+  not a misconfiguration. What is refused is *claiming* a live provider and not giving it a key.
+* **It does not validate the key.** One that is present but expired, revoked or out of quota is a
+  different failure and already behaves like one: the live provider is constructed, the vendor call
+  raises, and `services.extract_document` marks the document `FAILED` with
+  `EXTRACTION_FAILED (…)`, writes `DOCUMENT_EXTRACTION_FAILED` to the audit trail, and re-raises.
+  Only *absence* is silent, and only absence is refused. Boot-time credential validation against a
+  third party would be a different feature with its own failure mode.
+* **It does not cover the langroid LIBRARY.** `langroid` with a key but no `pip install langroid`
+  still falls back with a warning: that is not a variable anyone can set in `.env`, and importing an
+  optional dependency inside a settings validator would make every boot depend on it. Recorded here
+  as a residual rather than half-covered.
+
+`config.live_ocr_key_missing()` / `live_extraction_key_missing()` are the **single predicate** the
+refusal and both fallbacks consult — the `configured`/`auth_secret` rule applied to vendor keys, so a
+value one treats as a usable key cannot be one the other silently treats as missing.
+`tests/test_live_provider_keys.py` runs the real dispatch functions across the provider × key matrix
+and asserts the branch taken is the one the refusal predicts.
 
 ### 5.2 The raw extraction schema — the entire LLM contract
 

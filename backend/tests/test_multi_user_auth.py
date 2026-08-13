@@ -190,9 +190,15 @@ def test_supabase_without_configuration_is_refused_at_boot():
 # os.environ, so "unset" has to be said explicitly as an init kwarg (the
 # highest-priority source) rather than by omission.
 # --------------------------------------------------------------------------- #
+#
+# The vendor keys are part of the shape because a supabase deployment naming a
+# LIVE extraction/OCR provider without one is now refused at boot as well
+# (tests/test_live_provider_keys.py) — these tests are about the auth secret, so
+# they say the rest of the deployment is complete rather than tripping over it.
 _SUPABASE = {"auth_provider": "supabase",
              "supabase_url": "https://project.supabase.co",
-             "supabase_anon_key": "anon"}
+             "supabase_anon_key": "anon",
+             "mistral_api_key": "sk-mistral", "llm_api_key": "sk-openai"}
 
 
 def test_supabase_without_an_auth_secret_is_refused_at_boot():
