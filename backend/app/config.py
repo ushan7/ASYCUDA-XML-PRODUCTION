@@ -265,6 +265,28 @@ class Settings(BaseSettings):
     # the OCR quality gate that never existed.
     allow_self_signup: bool = Field(default=False,
                                     validation_alias=_alias("ALLOW_SELF_SIGNUP"))
+    # Where Supabase's password-reset email should land (`redirect_to` on
+    # POST /auth/v1/recover).  UNSET is the normal state and means "omit it", so
+    # the link goes to the project's Site URL — which is right whenever one
+    # deployment owns one Supabase project.
+    #
+    # It exists for the case that is not: Site URL is a single value for the whole
+    # project, so a second deployment sharing it (staging, another region) would
+    # mail its users a link to somebody else's origin.  Set to THIS deployment's
+    # own origin there.
+    #
+    # NEVER read from a request.  A caller-supplied redirect is an open redirect
+    # that mails a recovery token wherever the caller asked; this is configuration
+    # precisely so no request can influence it, and the value must ALSO be in the
+    # Supabase Redirect URLs allow-list or Supabase silently falls back to Site
+    # URL — the allow-list being the second lock rather than the only one.
+    #
+    # Password reset is NOT gated on `allow_self_signup`.  A deployment that
+    # invites its users by hand still has users who forget passwords; tying the
+    # two together would switch reset off on every deployment that never opened
+    # registration, which is the default one.
+    password_reset_redirect_url: str = Field(
+        default="", validation_alias=_alias("PASSWORD_RESET_REDIRECT_URL"))
 
     @field_validator("auth_provider")
     @classmethod
@@ -294,6 +316,19 @@ class Settings(BaseSettings):
                 "account named in the environment — it has nowhere to put a second one, "
                 "and a token naming any other subject is refused. Unset the flag, or "
                 "move this deployment to the multi-account provider.")
+        reset_redirect = self.password_reset_redirect_url.strip()
+        if reset_redirect and not reset_redirect.lower().startswith(("http://", "https://")):
+            # Refused at boot rather than at the first reset.  Supabase ignores a
+            # `redirect_to` it cannot parse and silently falls back to Site URL, so
+            # a typo here does not fail — it quietly mails every user a link to a
+            # different origin, which is the failure nobody notices until somebody
+            # reports that the link "does nothing".
+            raise ValueError(
+                "EASYCUSTOMS_PASSWORD_RESET_REDIRECT_URL must be an absolute http:// or "
+                "https:// origin — Supabase ignores anything else and falls back to the "
+                "project's Site URL without saying so. It must also be listed in "
+                "Authentication -> URL Configuration -> Redirect URLs, or the same silent "
+                "fallback applies.")
         if self.auth_provider == "supabase" and self.resolved_monthly_document_cap() <= 0:
             # ENFORCED, not documented.  `supabase` is the only provider under
             # which this app holds more than one account, and every extraction

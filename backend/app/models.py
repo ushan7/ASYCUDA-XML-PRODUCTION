@@ -378,6 +378,45 @@ class SignupAttempt(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
+class PasswordResetAttempt(Base):
+    """One password-reset LINK REQUEST, kept long enough to rate-limit the next.
+
+    A THIRD table, and for the same reason there is a second one.  It cannot share
+    ``signup_attempt``: three password resets would then exhaust a caller's
+    registration budget and three registrations would stop them recovering an
+    account, and ``auth.reset_signup_limiter`` — the manual unlock for a caller
+    stranded by a misconfigured ``trusted_proxy_hops`` — would empty a window it
+    was not asked about.  It cannot share ``login_attempt`` for the reasons on
+    ``SignupAttempt``.  Limiters that must not clear one another are limiters that
+    do not share a table.
+
+    WHAT IT COUNTS is a reset request this app passed to the identity provider —
+    every one of them, whatever the provider then answered.  That last part is the
+    control: counting only the requests that produced an email would make *how
+    many tries you have left* vary by whether the address exists, which is the
+    account-existence oracle re-entering through the budget after the status code
+    closed the front door.
+
+    Keyed on the CALLER (``auth.client_key``) and never on the address, so this
+    table holds no email, no user id and no outcome — a throttle key and a
+    timestamp, pruned to its longest window on every write.  The residual that
+    follows, stated because a per-caller key cannot cover it: a distributed
+    attacker mailbombing ONE victim spreads across addresses this table never
+    sees, and what bounds that is the provider's own per-address send cooldown.
+    """
+
+    __tablename__ = "password_reset_attempt"
+    __table_args__ = (Index("ix_password_reset_attempt_client_created",
+                            "client_key", "created_at"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    # An IP address, from `auth.client_key` — the same key the login throttle and
+    # the signup limiter use, so EASYCUSTOMS_TRUSTED_PROXY_HOPS governs all three
+    # and cannot be right for one and wrong for another.
+    client_key: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
 class AccountSeen(Base):
     """An account that has SIGNED IN to this deployment at least once.
 

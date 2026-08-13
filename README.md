@@ -187,11 +187,15 @@ EASYCUSTOMS_AUTH_TOKEN_TTL_HOURS=24        # one working day (default)
   issued and every protected route answers `401` — a deployment that skipped
   this step is visibly broken, never quietly open. Ten failed sign-ins from one
   address within five minutes are throttled (`429`).
-* Unauthenticated by design: `GET /api/health` (liveness only, no data),
-  `/api/auth/signup` (a stranger has no session — see below) and the static SPA
-  shell, which has to load to draw the login form. Everything the shell renders
-  comes from `/api/*`, which is gated, and so are `/docs`, `/redoc` and
-  `/openapi.json`.
+* Unauthenticated by design, and asserted **as a closed set** in
+  `tests/test_auth.py` so the next one is a decision somebody makes rather than a
+  line somebody adds: `GET /api/health` (liveness only, no data),
+  `/api/auth/login`, `/api/auth/signup`, `/api/auth/password-reset` and
+  `/api/auth/password-reset/confirm` — each public because the caller has no
+  session and the whole point of the route is that they cannot get one yet — plus
+  the static SPA shell, which has to load to draw the login form. Everything the
+  shell renders comes from `/api/*`, which is gated, and so are `/docs`, `/redoc`
+  and `/openapi.json`.
 
 The gate is **middleware, not a per-route dependency**, so a route added later
 is protected by the fact that it exists (`tests/test_auth.py` asserts this).
@@ -252,10 +256,76 @@ Refused attempts are deliberately **not** counted, so a user fixing a rejected
 password is not locked out for an hour; Supabase's own signup rate limit is what
 bounds those.
 
-> **`EASYCUSTOMS_TRUSTED_PROXY_HOPS` is now load-bearing twice.** The signup
-> limiter keys on the same caller identity as the login throttle, so behind a
-> load balancer at the default `0` every registration shares one bucket and the
-> third of the day locks out everybody.
+### Password reset
+
+**Not a flag.** It is offered whenever `EASYCUSTOMS_AUTH_PROVIDER=supabase` and
+refused with `501` under `local`, whose one password *is* `backend/.env`.
+Deliberately **not** tied to `EASYCUSTOMS_ALLOW_SELF_SIGNUP`: a deployment that
+creates its accounts by hand still has users who forget passwords, and
+registration is off by default, so gating one on the other would switch reset off
+almost everywhere.
+
+* **`POST /api/auth/password-reset`** takes `{email}` and answers **`202`,
+  always** — including for an address with no account, and including when the
+  provider answers `429`. That last part is where this route is deliberately
+  **stricter than signup**: GoTrue applies a per-*address* cooldown to the mail it
+  sends, so forwarding that status would let a prober ask twice seconds apart and
+  read *"an email actually went out for this address"* off the difference. Our own
+  limiter is keyed on the **caller**, so it is the only thing that ever tells
+  anybody to wait.
+* **A delivery failure is not reported either**, for the sharpest version of the
+  same reason: Supabase only *attempts* a send for an address that exists, so a
+  surfaced SMTP error would be the cleanest account-existence oracle in the app.
+  It is logged at `ERROR`, where an operator sees it and a stranger does not.
+* **The budget is not an oracle either.** Every request that reached the provider
+  is counted, whatever it answered — otherwise *how many tries you have left*
+  would say what the status code refused to.
+* **`POST /api/auth/password-reset/confirm`** takes `{access_token, password}`
+  and **nothing else** — which account is being changed is whatever the recovery
+  token says, decided by Supabase, so no caller can aim a reset at an account they
+  did not receive a link for. It answers honestly (expired, spent, weak password),
+  because the only secret in the question is the token the caller brought. It
+  issues **no session**: the next thing that user does is sign in.
+* **`GET /api/auth/password-reset`** reports whether reset is offered, because the
+  sign-in screen has no session and cannot read the gated `/api/config`. It is a
+  *separate* question from the signup GET, for the reason above.
+* The **deny-list is not consulted** on either route. Refusing a barred address
+  differently is the oracle again; it is consulted at sign-in, so a reset buys a
+  disabled account nothing.
+
+**The reset link lands on the SPA as a URL fragment.** Supabase redirects to the
+app origin with `#access_token=…&type=recovery`; `frontend/index.html` reads it at
+module scope — before React mounts and before the session check, so a user who is
+*already* signed in still gets the reset screen rather than the workspace — strips
+it from the address bar with `history.replaceState`, and posts it to this server,
+which spends it against Supabase server-side. The token never becomes this app's
+session and is never stored. The trade: for a few milliseconds it is somewhere
+page scripts can read, which is what this app avoids for its *own* session. It is
+acceptable here because the token's entire power is *set this one account's
+password, once, within the hour*, and a fragment is never sent to a server, so it
+appears in no access log and no `Referer`.
+
+Two more dashboard settings matter on top of the four above:
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| **Site URL** + **Redirect URLs** | must also allow the reset landing page | A wildcard mails recovery tokens wherever an attacker asks |
+| Auth → **Rate limits** (email) | set explicitly | Bounds the per-*address* mailbombing our limiter cannot see — ours is keyed on the caller, so a distributed attacker aiming at one victim spreads across buckets it never shares |
+
+`EASYCUSTOMS_PASSWORD_RESET_REDIRECT_URL` exists only for the case where one
+Supabase project serves more than one deployment; unset (the normal state) sends
+no `redirect_to` and lets Site URL decide. It is never read from a request — a
+caller-supplied redirect is an open redirect — must be an absolute `http(s)`
+origin (refused at boot otherwise), and must be in the Redirect URLs allow-list or
+Supabase silently falls back to Site URL.
+
+> **`EASYCUSTOMS_TRUSTED_PROXY_HOPS` is now load-bearing three times.** The signup
+> limiter (3/hour, 10/day) and the reset limiter (5/hour, 20/day) key on the same
+> caller identity as the login throttle, so behind a load balancer at the default
+> `0` every registration and every reset in the world shares one bucket and the
+> third of the day locks out everybody. All three are separate tables —
+> `login_attempt`, `signup_attempt`, `password_reset_attempt` — precisely so they
+> cannot clear, prune or exhaust one another.
 
 ### Roles — `admin` and `member`
 

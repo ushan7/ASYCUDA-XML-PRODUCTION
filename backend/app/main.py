@@ -58,6 +58,23 @@ _PUBLIC_API_PATHS = frozenset({
     # outcome that is not the caller's own password to fix answers the same 202.
     # Refused outright unless EASYCUSTOMS_ALLOW_SELF_SIGNUP is on.
     "/api/auth/signup",
+    # Password reset, in two halves, and public for the same unavoidable reason:
+    # somebody who cannot sign in is the only person who ever needs either.
+    #
+    # The GET on the first path is what the sign-in screen asks before drawing
+    # "Forgot your password?" — it has no session and cannot read /api/config,
+    # which is gated.  It cannot reuse the signup GET: reset is gated on the
+    # PROVIDER and registration on `allow_self_signup`, whose default is off, so
+    # one flag answering both would hide reset from every deployment that never
+    # opened registration.
+    #
+    # The first is an ACCOUNT-EXISTENCE ORACLE FOR NOBODY — one 202 for every
+    # outcome including the provider's own 429, which is address-keyed and is
+    # therefore the one place this route is stricter than signup.  The second
+    # reports honestly, because the only secret in the question is the token the
+    # caller brought with them.  Neither issues a session.
+    "/api/auth/password-reset",
+    "/api/auth/password-reset/confirm",
 })
 # Interactive API docs enumerate every endpoint and can call them: same gate.
 _PROTECTED_NON_API = ("/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect")
@@ -851,6 +868,226 @@ def signup(body: SignupRequest, request: Request, db: Session = Depends(db_dep))
     # deployment default (metering.resolved_cap), which is what lets that default
     # ever be changed again for the accounts that already exist.
     return JSONResponse(status_code=202, content=_SIGNUP_ACCEPTED)
+
+
+# --------------------------------------------------------------------------- #
+# Password reset, in two halves.
+#
+# Supabase owns the recovery token, its expiry, the email and the link in it;
+# this app owns the session and issues NONE here.  A recovery token proves
+# control of a mailbox, not knowledge of a password, and its entire power stays
+# "set this one account's password, once, within the hour".  After it is spent
+# the user signs in through /api/auth/login like anybody else.
+#
+# NOT GATED ON `allow_self_signup`.  A deployment that creates its accounts by
+# hand still has users who forget passwords, and registration is off by default,
+# so tying the two together would switch reset off almost everywhere.  The
+# condition is the provider: `local` is one account whose password lives in
+# backend/.env, where the remedy is editing that file and restarting.
+#
+# THE REQUEST HALF ANSWERS 202 FOR EVERYTHING — including the provider's 429,
+# which is where it is deliberately stricter than signup.  GoTrue applies a
+# per-ADDRESS cooldown to the mail it sends, so forwarding that status would let
+# a prober ask twice in quick succession and read "an email actually went out for
+# this address" off the difference.  Our own limiter is keyed on the CALLER, so
+# it is the only thing that ever tells anybody to wait.
+#
+# The confirm half answers honestly, because the only secret in the question is
+# the token the caller is holding.
+# --------------------------------------------------------------------------- #
+class PasswordResetRequest(BaseModel):
+    """`{email}` and nothing else."""
+    model_config = ConfigDict(extra="forbid")
+    email: str = Field(min_length=3, max_length=254)
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    """`{access_token, password}` and nothing else.
+
+    `extra="forbid"`, as everywhere else here: an `email`, an `owner_key` or a
+    `role` in this body is a 422 rather than a field somebody has to remember not
+    to trust.  WHICH ACCOUNT IS BEING CHANGED IS NOT IN THE REQUEST — it is
+    whatever the recovery token says it is, decided by Supabase, so no caller can
+    aim a reset at an account they did not receive a link for.
+    """
+    model_config = ConfigDict(extra="forbid")
+    # A Supabase-issued JWT. Bounded generously: these carry claims and are
+    # comfortably longer than a session id, but a megabyte is not a token.
+    access_token: str = Field(min_length=1, max_length=4096)
+    # Bounded, not policed — the POLICY belongs to the identity provider and is
+    # configured there, exactly as at signup.
+    password: str = Field(min_length=1, max_length=128)
+
+
+_PASSWORD_RESET_ACCEPTED = {
+    "status": "ACCEPTED",
+    "code": "PASSWORD_RESET_SENT",
+    "detail": "If that address has an account here, a reset link is on its way. "
+              "The link is good for a short time — open it, then choose a new password.",
+}
+
+
+def _password_reset_refusal(settings) -> tuple[int, str, str] | None:
+    """``(status, code, detail)`` for why this deployment cannot reset a
+    password, or None if it can.  One implementation, so the GET, the POST and
+    the confirm can never disagree about whether reset is offered."""
+    if settings.auth_provider != "supabase":
+        # 501: the capability cannot exist here rather than being switched off.
+        # `local` is a single account whose password IS backend/.env, and there is
+        # no address to mail — the remedy is editing that file and restarting.
+        return (501, "PASSWORD_RESET_UNSUPPORTED",
+                "This deployment has a single configured account. Its password is set in "
+                "the server's environment, not by email.")
+    return None
+
+
+@app.get("/api/auth/password-reset")
+def password_reset_available():
+    """Whether the sign-in screen should offer "Forgot your password?".
+
+    Public because the sign-in screen is: it has no session and cannot read
+    /api/config.  One boolean and a sentence — never the provider's name, never
+    an address.  What it does reveal is which provider this deployment runs,
+    which the signup POST's 501-vs-403 split already tells anybody who asks.
+    """
+    refusal = _password_reset_refusal(get_settings())
+    if refusal is None:
+        return {"enabled": True,
+                "detail": "We email you a link. Open it to choose a new password."}
+    return {"enabled": False, "detail": refusal[2]}
+
+
+@app.post("/api/auth/password-reset")
+def password_reset(body: PasswordResetRequest, request: Request,
+                   db: Session = Depends(db_dep)):
+    """Ask for a reset link.  202, always.
+
+    The order is the same design as signup's: the deployment's own gate first
+    (nothing reaches the vendor on a deployment that cannot do this), the obvious
+    syntactic check next (junk costs no outbound request), then the abuse limiter,
+    then the provider.
+    """
+    from . import auth_supabase
+
+    refusal = _password_reset_refusal(get_settings())
+    if refusal is not None:
+        status, code, detail = refusal
+        return JSONResponse(status_code=status, content={
+            "status": "REFUSED", "code": code, "detail": detail})
+
+    email = body.email.strip()
+    if " " in email or email.count("@") != 1 or not all(email.split("@")):
+        # Safe to be specific about, for the same reason it is at signup: this is
+        # a syntactic check that cannot distinguish a registered address from an
+        # unregistered one, so it leaks nothing that a regex does not already know.
+        return JSONResponse(status_code=400, content={
+            "status": "REJECTED", "code": "INVALID_EMAIL",
+            "detail": "Enter a valid email address."})
+
+    client = _client_id(request)
+    try:
+        retry_after = auth.password_reset_retry_after(db, client)
+    except auth.PasswordResetLimitUnavailable as e:
+        # FAIL CLOSED, exactly as the other two limiters do.
+        log.error("refusing a password-reset request: the limiter is unreadable (%s)", e)
+        raise HTTPException(503, "This server cannot accept password-reset requests right "
+                                 "now. Try again shortly.")
+    if retry_after:
+        log.warning("password reset limited for %s (%ss)", client, retry_after)
+        return JSONResponse(status_code=429, headers={"Retry-After": str(retry_after)},
+                            content={
+            "status": "THROTTLED", "code": "TOO_MANY_ATTEMPTS",
+            "detail": f"Too many reset links have been requested from here recently. "
+                      f"Try again in {retry_after} second(s)."})
+
+    try:
+        auth_supabase.request_password_reset(email)
+    except auth_supabase.SupabaseAuthUnavailable as e:
+        # NOT counted: the caller did nothing to earn it, and an outage is the
+        # same answer for every address, so declining to count it tells a prober
+        # nothing.  502 rather than 202 because we could not even ask.
+        log.error("a password-reset request could not be sent: %s", e)
+        raise HTTPException(502, "The password-reset service could not be reached. This is "
+                                 "a server problem — try again shortly.")
+
+    # COUNTED WHATEVER THE PROVIDER ANSWERED — see `auth.record_password_reset`.
+    # An address with no account must cost the same budget as one with an account,
+    # or the number of tries left becomes the oracle the status code just closed.
+    auth.record_password_reset(db, client)
+    return JSONResponse(status_code=202, content=_PASSWORD_RESET_ACCEPTED)
+
+
+@app.post("/api/auth/password-reset/confirm")
+def password_reset_confirm(body: PasswordResetConfirmRequest,
+                           db: Session = Depends(db_dep)):
+    """Spend a recovery token on a new password.  200, and NO session.
+
+    The token arrives from the SPA, which read it out of the URL fragment
+    Supabase redirected to and stripped it from the address bar before making
+    this call.  It is forwarded to Supabase server-side and never stored, never
+    logged, and never exchanged for one of this app's own tokens: it proves
+    control of a mailbox, and a session here is minted from a password grant.
+
+    No `account_seen` row either — that record is deliberately proof-of-sign-in
+    (`models.AccountSeen`), and the sign-in that follows is what writes it.
+
+    DELIBERATELY NOT RATE-LIMITED, unlike the request half, and this is the
+    reasoning rather than an oversight: there is no secret here to guess.  The
+    token is a Supabase-signed JWT, so a wrong one is refused by cryptography and
+    a right one is already the caller's; there is no budget to exhaust and no
+    address to enumerate.  What is left is the outbound call an invalid token
+    still costs, which the shape check below makes free for anything that is not
+    even token-shaped, and which the provider's own limits bound beyond that.
+    """
+    from . import auth_supabase
+
+    refusal = _password_reset_refusal(get_settings())
+    if refusal is not None:
+        status, code, detail = refusal
+        return JSONResponse(status_code=status, content={
+            "status": "REFUSED", "code": code, "detail": detail})
+
+    token = body.access_token.strip()
+    if token.count(".") != 2 or not all(token.split(".")[:2]):
+        # Not even JWT-shaped.  A local sanity check, not verification — Supabase
+        # decides whether a token is real — so that a string nobody could have
+        # received costs no outbound request.
+        return JSONResponse(status_code=400, content={
+            "status": "REJECTED", "code": "INVALID_TOKEN",
+            "detail": "This reset link is not valid. Request a new one from the sign-in "
+                      "screen."})
+
+    try:
+        outcome = auth_supabase.set_password_with_recovery_token(token, body.password)
+    except auth_supabase.SupabaseAuthUnavailable as e:
+        log.error("a password reset could not be completed: %s", e)
+        raise HTTPException(502, "The password-reset service could not be reached. This is "
+                                 "a server problem — try again shortly.")
+
+    if not outcome.accepted:
+        if outcome.code == "WEAK_PASSWORD":
+            # The one refusal whose text is forwarded: it is about what the caller
+            # just typed and names no account.
+            return JSONResponse(status_code=400, content={
+                "status": "REJECTED", "code": "WEAK_PASSWORD", "detail": outcome.message})
+        if outcome.code == "TOO_MANY_ATTEMPTS":
+            headers = {"Retry-After": str(outcome.retry_after)} if outcome.retry_after else {}
+            return JSONResponse(status_code=429, headers=headers, content={
+                "status": "THROTTLED", "code": "TOO_MANY_ATTEMPTS",
+                "detail": "Too many attempts have reached the password-reset service. "
+                          "Try again shortly."})
+        # Expired, already spent, or never ours — one sentence for all three,
+        # because the remedy is the same and which it was is not actionable.
+        return JSONResponse(status_code=400, content={
+            "status": "REJECTED", "code": "INVALID_TOKEN",
+            "detail": "This reset link has expired or has already been used. Request a "
+                      "new one from the sign-in screen."})
+
+    log.info("a password was reset through a recovery link")
+    # No cookie, no token: the next thing this user does is sign in.
+    return JSONResponse({
+        "status": "OK", "code": "PASSWORD_UPDATED",
+        "detail": "Your password has been changed. Sign in with the new one."})
 
 
 @app.get("/api/auth/session")

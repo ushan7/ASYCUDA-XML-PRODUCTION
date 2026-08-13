@@ -84,17 +84,33 @@ def test_health_and_the_spa_shell_stay_public(anon):
 
 
 def test_the_public_surface_is_a_closed_set():
-    """Every path outside the gate, named here so a fourth is a decision somebody
-    made rather than a line somebody added.
+    """Every path outside the gate, named here so the next one is a decision
+    somebody made rather than a line somebody added.
 
-    Registration has to be public — a stranger has no session — which is why the
-    route is written to be an account-existence oracle for nobody
-    (tests/test_signup.py) and why it is refused outright unless the deployment
-    turns it on.
+    Each is public for the same unavoidable reason — the caller has no session and
+    the whole point of the route is that they cannot get one yet — and each is
+    therefore written to be an account-existence oracle for nobody
+    (tests/test_signup.py, tests/test_password_reset.py).  Registration is refused
+    outright unless the deployment turns it on; both reset paths are refused
+    outright unless the deployment holds more than one account.
     """
     from app.main import _PUBLIC_API_PATHS
 
-    assert set(_PUBLIC_API_PATHS) == {"/api/health", "/api/auth/login", "/api/auth/signup"}
+    assert set(_PUBLIC_API_PATHS) == {"/api/health", "/api/auth/login",
+                                      "/api/auth/signup",
+                                      "/api/auth/password-reset",
+                                      "/api/auth/password-reset/confirm"}
+
+
+def test_password_reset_is_refused_rather_than_hidden_on_this_deployment(anon):
+    """The suite runs the single-account provider, whose password IS the server's
+    environment: 501, and the sign-in screen is told not to offer it."""
+    assert anon.get("/api/auth/password-reset").json()["enabled"] is False
+    r = anon.post("/api/auth/password-reset", json={"email": "a@b.np"})
+    assert r.status_code == 501 and r.json()["code"] == "PASSWORD_RESET_UNSUPPORTED"
+    confirm = anon.post("/api/auth/password-reset/confirm",
+                        json={"access_token": "a.b.c", "password": "a-new-password"})
+    assert confirm.status_code == 501
 
 
 def test_registration_is_refused_rather_than_hidden_on_this_deployment(anon):
