@@ -19,19 +19,28 @@ app has no user table: identity lives in Supabase and enumerating it needs the
 admin API, i.e. the service-role key that ``app/auth_supabase.py`` keeps out of
 this process on purpose.  So there is no such thing here as "every account" —
 only every account THIS DEPLOYMENT HAS SEEN, which is the union of the
-``owner_key`` values in its own tables.  An account that registers and never
-uploads a document is invisible to ``list_accounts``, and the display label is
-derived best-effort from the audit trail because no column holds an email.
+``owner_key`` values in its own tables.
+
+That set grew a member in step 3, and the reason is worth recording.  Until then
+it was jobs, usage and the three tables above, so an account that registered and
+never uploaded anything was invisible — which was tolerable while accounts were
+created by hand and became a support hole the day strangers could register: "did
+X sign up?" and "which UUID is alice@broker.np, so I can raise her cap?" were
+both unanswerable.  ``AccountSeen`` closes them by recording a SIGN-IN (never a
+signup — see the model for why a signup response cannot be trusted to name a real
+account).  It is still not "every account": one that registered and never
+confirmed its email has never signed in, and is not here.
 """
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import func, select
 
 from . import metering
-from .models import AccountDisabled, AccountQuota, AccountRole, AuditEvent, Job, UsageEvent
+from .models import (AccountDisabled, AccountQuota, AccountRole, AccountSeen, AuditEvent,
+                     Job, UsageEvent)
 
 log = logging.getLogger("easycustoms.accounts")
 
@@ -110,6 +119,53 @@ def revoke_admin(db, owner_key: str) -> bool:
     db.delete(row)
     db.flush()
     return True
+
+
+# --------------------------------------------------------------------------- #
+# Who has actually signed in
+# --------------------------------------------------------------------------- #
+def record_sign_in(db, owner_key: str, *, display: str = "") -> None:
+    """Note that this account signed in, and what it signed in as.
+
+    BEST EFFORT, and it must stay that way: the caller has already proved their
+    password, and a sign-in is not worth failing because a metadata upsert lost a
+    race with a second tab.  Every failure mode here — a duplicate insert from two
+    simultaneous logins, a read-only replica, a missing table on a database
+    somebody upgraded halfway — ends in a log line and a successful sign-in.
+
+    Called at SIGN-IN and never at signup.  ``models.AccountSeen`` has the whole
+    argument; the short version is that a signup response cannot be trusted to
+    name a real account, because the anti-enumeration answer for an
+    already-registered address carries an id that belongs to nobody.
+    """
+    if not owner_key:
+        return
+    try:
+        row = db.get(AccountSeen, owner_key)
+        if row is None:
+            row = AccountSeen(owner_key=owner_key)
+            db.add(row)
+        # Truncated to the column rather than trusted: the display name comes from
+        # the identity provider, and a value longer than the column is a write
+        # that fails on Postgres and silently truncates elsewhere.
+        name = (display or "").strip()[:160]
+        if name:
+            row.display = name
+        row.last_seen_at = datetime.now(timezone.utc)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        log.warning("could not record a sign-in for %s: %s", owner_key, e)
+
+
+def sign_ins_of(db, owner_keys) -> dict[str, AccountSeen]:
+    """``{owner_key: row}`` for the accounts among those named that have signed
+    in — one query, for the same reason :func:`roles_of` exists."""
+    keys = [k for k in (owner_keys or []) if k]
+    if not keys:
+        return {}
+    rows = db.scalars(select(AccountSeen).where(AccountSeen.owner_key.in_(keys))).all()
+    return {row.owner_key: row for row in rows}
 
 
 # --------------------------------------------------------------------------- #
@@ -219,16 +275,25 @@ def known_owner_keys(db) -> set[str]:
             .union(select(UsageEvent.owner_key).where(UsageEvent.owner_key != ""),
                    select(AccountQuota.owner_key).where(AccountQuota.owner_key != ""),
                    select(AccountRole.owner_key).where(AccountRole.owner_key != ""),
-                   select(AccountDisabled.owner_key).where(AccountDisabled.owner_key != "")))
+                   select(AccountDisabled.owner_key).where(AccountDisabled.owner_key != ""),
+                   # Added in step 3: an account that has signed in and done
+                   # nothing else is now listed, which is what makes "did X get
+                   # in?" answerable once strangers can register.
+                   select(AccountSeen.owner_key).where(AccountSeen.owner_key != "")))
     return {key for key in db.execute(stmt).scalars() if key}
 
 
-def _display_labels(db, owner_keys: list[str]) -> dict[str, str]:
+def _audit_labels(db, owner_keys: list[str]) -> dict[str, str]:
     """Best-effort human label per account, from the audit trail.
 
-    NO COLUMN HOLDS AN EMAIL.  ``Job.created_by`` is empty for every job the API
-    creates, and the display name reaches the database in exactly one place:
-    ``AuditEvent.actor``, written from the session's display name.  So the label
+    THE FALLBACK, since step 3.  ``AccountSeen.display`` records what an account
+    signed in as and is the better answer where it exists; this one covers every
+    account that has not signed in since that table arrived, which on an upgraded
+    deployment is all of them until they next sign in.
+
+    ``Job.created_by`` is empty for every job the API creates, and before
+    ``AccountSeen`` the display name reached the database in exactly one place:
+    ``AuditEvent.actor``, written from the session's display name.  So this label
     is derived, is reported as a label rather than as an identity, and is absent
     for an account whose only rows are usage or a quota.
 
@@ -253,6 +318,22 @@ def _display_labels(db, owner_keys: list[str]) -> dict[str, str]:
         if best is None or seen_at > best[0]:
             latest[owner] = (seen_at, actor)
     return {owner: actor for owner, (_, actor) in latest.items()}
+
+
+def _label_of(owner_key: str, sign_ins: dict, audit_labels: dict) -> tuple[str | None, str | None]:
+    """``(label, source)`` for one account, sign-in record first.
+
+    The source travels with the label because the two are not equally good and a
+    reader has to be able to tell: ``sign-in`` is what the identity provider
+    itself said this account is called, ``audit`` is inferred from who last acted
+    on one of its jobs, and ``None`` means nothing has ever named a person.
+    Collapsing them would present a guess with the same authority as a fact.
+    """
+    row = sign_ins.get(owner_key)
+    if row is not None and (row.display or "").strip():
+        return row.display.strip(), "sign-in"
+    label = audit_labels.get(owner_key)
+    return (label, "audit") if label else (None, None)
 
 
 def _job_counts(db, owner_keys: list[str]) -> dict[str, dict[str, int]]:
@@ -310,10 +391,12 @@ def disabled_reasons(db, owner_keys) -> dict[str, str]:
 
 
 def account_row(db, owner_key: str, *, display_label: str | None = None,
+                label_source: str | None = None,
                 jobs_by_status: dict[str, int] | None = None,
                 usage: dict | None = None,
                 role: str | None = None,
-                disabled: str | None = None) -> dict:
+                disabled: str | None = None,
+                last_sign_in: datetime | None = None) -> dict:
     """One account's metadata, in the shape both admin routes report it.
 
     ``monthly_document_cap`` is the RESOLVED number from
@@ -344,9 +427,16 @@ def account_row(db, owner_key: str, *, display_label: str | None = None,
     cap = metering.resolved_cap(db, owner_key)
     return {
         "owner_key": owner_key,
-        # Derived from the audit trail, absent when nothing named a person. Never
+        # What this account signed in as, or — for one that has not signed in
+        # since `account_seen` existed — a name inferred from its audit trail.
+        # `label_source` says which, because they are not equally good.  Never
         # presented as an identity: ownership is the owner_key.
         "display_label": display_label,
+        "label_source": label_source,
+        # When this account last signed in, or null for one this deployment has
+        # only ever seen through its jobs and usage.  This is the field that
+        # answers "did they get in", which the union of owner_keys could not.
+        "last_sign_in": last_sign_in.isoformat() if last_sign_in else None,
         "role": role,
         "disabled": bool(disabled),
         "jobs": sum(jobs_by_status.values()),
@@ -375,11 +465,17 @@ def has_activity(db, owner_key: str) -> bool:
     silently accept a quota row that governs nobody, for ever.  Reported rather
     than enforced: pre-provisioning an account that has not signed in yet is a
     legitimate thing to want.
+
+    A SIGN-IN COUNTS, since step 3.  It has to: the case this check exists to
+    catch is a typo, and the commonest legitimate reason to set a cap on an
+    account with no jobs is that somebody has just registered and asked for one.
+    Reporting them as never seen would train an admin to ignore the flag.
     """
     if not owner_key:
         return False
     return bool(
-        db.scalar(select(func.count(Job.id)).where(Job.owner_key == owner_key))
+        db.get(AccountSeen, owner_key) is not None
+        or db.scalar(select(func.count(Job.id)).where(Job.owner_key == owner_key))
         or db.scalar(select(func.count(UsageEvent.id)).where(UsageEvent.owner_key == owner_key)))
 
 
@@ -390,17 +486,19 @@ def account_detail(db, owner_key: str) -> dict:
     which is how a typo in an ``owner_key`` becomes visible immediately instead of
     becoming a quota row that governs nobody.
     """
-    labels = _display_labels(db, [owner_key])
+    sign_ins = sign_ins_of(db, [owner_key])
+    label, source = _label_of(owner_key, sign_ins, _audit_labels(db, [owner_key]))
     costs = metering.estimated_cost_this_month(db, [owner_key])
     barred = disabled_reason(db, owner_key)
     row = account_row(
         db, owner_key,
-        display_label=labels.get(owner_key),
+        display_label=label, label_source=source,
         jobs_by_status=_job_counts(db, [owner_key]).get(owner_key),
         usage={"documents_this_month": metering.documents_this_month(db, owner_key),
                **costs.get(owner_key, {})},
         role=role_of(db, owner_key),
-        disabled=barred or "")
+        disabled=barred or "",
+        last_sign_in=getattr(sign_ins.get(owner_key), "last_seen_at", None))
     row["seen"] = has_activity(db, owner_key)
     # WHY it is barred, on the single-account view only: the listing reports the
     # fact, and the reason is what an administrator deciding whether to lift it
@@ -431,11 +529,13 @@ def list_accounts(db, *, limit: int = 50, offset: int = 0) -> dict:
 
     # Everything below is restricted to the page, and every one of them is ONE
     # query for the whole page rather than one per account.
-    labels = _display_labels(db, page)
+    sign_ins = sign_ins_of(db, page)
+    labels = _audit_labels(db, page)
     jobs = _job_counts(db, page)
     costs = metering.estimated_cost_this_month(db, page)
     roles = roles_of(db, page)
     barred = disabled_reasons(db, page)
+    shown = {key: _label_of(key, sign_ins, labels) for key in page}
     return {
         "total": len(ordered),
         "limit": limit,
@@ -443,10 +543,12 @@ def list_accounts(db, *, limit: int = 50, offset: int = 0) -> dict:
         # Said in the payload, not only in a docstring: a client that shows this
         # list as "all accounts" is showing something else.
         "scope": "accounts this deployment has seen (identity lives with the auth "
-                 "provider; an account with no jobs and no usage is not listed)",
+                 "provider; an account that has never signed in and owns nothing is "
+                 "not listed)",
         "rate_version": metering.rate_table().version,
         "accounts": [
-            account_row(db, key, display_label=labels.get(key),
+            account_row(db, key,
+                        display_label=shown[key][0], label_source=shown[key][1],
                         jobs_by_status=jobs.get(key),
                         usage={"documents_this_month": documents.get(key, 0),
                                **costs.get(key, {})},
@@ -454,7 +556,8 @@ def list_accounts(db, *, limit: int = 50, offset: int = 0) -> dict:
                         # "" and not None: None would send account_row back to the
                         # table for every account that is not on the deny-list,
                         # which is all of them.
-                        disabled=barred.get(key, ""))
+                        disabled=barred.get(key, ""),
+                        last_sign_in=getattr(sign_ins.get(key), "last_seen_at", None))
             for key in page
         ],
     }

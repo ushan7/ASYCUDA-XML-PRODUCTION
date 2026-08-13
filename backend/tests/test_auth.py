@@ -83,6 +83,28 @@ def test_health_and_the_spa_shell_stay_public(anon):
     assert shell.status_code == 200 and "<div id=\"root\">" in shell.text
 
 
+def test_the_public_surface_is_a_closed_set():
+    """Every path outside the gate, named here so a fourth is a decision somebody
+    made rather than a line somebody added.
+
+    Registration has to be public — a stranger has no session — which is why the
+    route is written to be an account-existence oracle for nobody
+    (tests/test_signup.py) and why it is refused outright unless the deployment
+    turns it on.
+    """
+    from app.main import _PUBLIC_API_PATHS
+
+    assert set(_PUBLIC_API_PATHS) == {"/api/health", "/api/auth/login", "/api/auth/signup"}
+
+
+def test_registration_is_refused_rather_than_hidden_on_this_deployment(anon):
+    """The suite runs the single-account provider, where registration cannot
+    exist: 501, and the sign-in screen is told not to offer it."""
+    assert anon.get("/api/auth/signup").json()["enabled"] is False
+    r = anon.post("/api/auth/signup", json={"email": "a@b.np", "password": "a-password"})
+    assert r.status_code == 501 and r.json()["code"] == "SIGNUP_UNSUPPORTED"
+
+
 def test_new_api_routes_are_protected_by_default():
     """The gate is middleware, not a per-route dependency, so a route added
     without any auth wiring is still closed."""

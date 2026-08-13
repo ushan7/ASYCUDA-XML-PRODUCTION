@@ -84,7 +84,7 @@ Layer map:
 | `app/declaration/` | builder (valuation), validator, merged models |
 | `app/xml/` | ASYCUDA composer (lxml) + brand/model/size `.xls` export |
 | `app/storage.py` | document bytes: a local directory or an S3 bucket, dispatched on the key |
-| `app/accounts.py` | the platform role, the login deny-list, per-account quota writes, account/usage **metadata** — never job content |
+| `app/accounts.py` | the platform role, the login deny-list, per-account quota writes, the sign-in record, account/usage **metadata** — never job content |
 | `app/metering.py` | per-extraction token/page counts, cost only where a rate is configured, monthly document cap |
 | `app/logging_setup.py` | JSON log lines, request-id / principal context, secret scrubbing |
 
@@ -107,6 +107,8 @@ Packing lists are parsed deterministically wherever OCR yields a readable table,
 ## Auth, schema, tests
 
 Auth is **middleware, not a per-route dependency** (`app/main.py` → `app/auth.py`), so a route added later is protected by the fact that it exists; `tests/test_auth.py` asserts this. Tokens are stateless HMAC-SHA256, 24h, returned in the body *and* as an HttpOnly cookie (the cookie is what makes PDF `<iframe>` and download links work).
+
+**The public surface is a closed set** — `/api/health`, `/api/auth/login`, `/api/auth/signup` — asserted as a set in `tests/test_auth.py`, so a fourth is a decision somebody makes rather than a line somebody adds. Registration is off unless `allow_self_signup` says otherwise, is refused at boot under the `local` provider (one account, so a second could never sign in), and answers **one 202 body for every accepted outcome** — created, already registered, or created on a project whose email confirmation is off — because a public endpoint that distinguishes them is an account-existence oracle for any address a stranger cares to test. Its limiter counts **successes** in its own `signup_attempt` table and shares nothing with the login throttle: that one counts failures and a correct password clears the window, so a shared key would let an attacker interleave a registration between password guesses to reset their guessing budget for ever (`tests/test_signup.py` asserts both directions).
 
 **Who may see what is decided once**, in `services.job_visible_to`. The decision behind it is `docs/ADR-001-identity-and-tenancy.md`, the tenancy record: the USER is the tenant — there are no organizations, firms or memberships, and both isolation and quota are per-user. Read it before writing anything that widens visibility.
 

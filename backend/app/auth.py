@@ -416,14 +416,146 @@ def clear_failures(db, client: str) -> None:
 
 
 def reset_throttle(db=None) -> None:
-    """Empty the window — a test hook, and the manual unlock for an operator who
-    has locked themselves out.  Opens its own session when not given one."""
+    """Empty the FAILURE window — a test hook, and the manual unlock for an
+    operator who has locked themselves out.  Opens its own session when not
+    given one.
+
+    Deliberately does not touch ``signup_attempt``: the suite calls this between
+    every test (tests/conftest.py), and a signup limiter it emptied would be a
+    limiter no test could ever observe holding.
+    """
     from .database import SessionLocal
     from .models import LoginAttempt
 
     session = db or SessionLocal()
     try:
         session.execute(sql_delete(LoginAttempt))
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        if db is None:
+            session.close()
+
+
+# --------------------------------------------------------------------------- #
+# Signup limiter — the same shape as the throttle above, and NONE of its state.
+#
+# The login throttle does not cover self-service registration, and reusing it
+# would make things worse.  Three reasons, each independent:
+#
+#   1. It is not middleware.  `throttle_retry_after` / `record_failure` are
+#      called from the body of the login handler, so a new public route inherits
+#      nothing from them.
+#   2. It counts FAILURES.  A row is written only when `verify_login` returns
+#      None, so ten thousand scripted registrations — every one of them valid —
+#      record zero failures and are never slowed.
+#   3. Sharing the key would WEAKEN it.  A correct password calls
+#      `clear_failures`, wiping that caller's window.  If a signup shared the key
+#      and cleared on success, an attacker would interleave a registration
+#      between password guesses to reset their guessing budget indefinitely.
+#
+# So: a success counter, in its own table, never cleared on success — success is
+# the thing being counted — and keyed on the same `client_key` so
+# `trusted_proxy_hops` cannot be right for one limiter and wrong for the other.
+#
+# WHAT IT COUNTS is a signup this app ACCEPTED, which is a superset of accounts
+# created and never fewer: with email confirmation on, Supabase deliberately
+# answers an already-registered address exactly as it answers a new one, so
+# "an account was created" is not a fact this process can know.  A refused
+# signup (a password the policy rejects, an address that will not validate) is
+# NOT counted — the caller has created nothing, and locking someone out for an
+# hour because they typed a short password twice is a limiter doing damage
+# rather than work.  What bounds that direction is the identity provider's own
+# signup rate limit, which the deployment checklist says to set.
+# --------------------------------------------------------------------------- #
+_SIGNUP_MAX_PER_HOUR = 3
+_SIGNUP_MAX_PER_DAY = 10
+_SIGNUP_HOUR_SECONDS = 3600
+_SIGNUP_DAY_SECONDS = 86_400
+
+
+class SignupLimitUnavailable(RuntimeError):
+    """The signup count could not be read, so the limit cannot be enforced."""
+
+
+def signup_retry_after(db, client: str) -> int:
+    """Seconds before this caller may register again, or 0 to go ahead.
+
+    Two windows, because they answer different questions: the hourly one stops a
+    burst, the daily one stops a patient script that spaces its registrations an
+    hour apart.  The caller waits for whichever is longer.
+
+    Raises SignupLimitUnavailable rather than returning 0 when the store cannot
+    be read — FAIL CLOSED, exactly as `throttle_retry_after` does.  An unreadable
+    counter that answered "go ahead" would turn a database fault into unlimited
+    account creation, and every one of those accounts can spend real money at
+    Mistral and OpenAI.
+    """
+    from .models import SignupAttempt
+
+    now = datetime.now(timezone.utc)
+    day_cutoff = now - timedelta(seconds=_SIGNUP_DAY_SECONDS)
+    try:
+        stamps = [_aware(s) for s in db.scalars(
+            select(SignupAttempt.created_at)
+            .where(SignupAttempt.client_key == client,
+                   SignupAttempt.created_at >= day_cutoff)
+            .order_by(SignupAttempt.created_at))]
+    except Exception as e:
+        raise SignupLimitUnavailable(str(e)) from e
+
+    wait = 0.0
+    within_hour = [s for s in stamps if s >= now - timedelta(seconds=_SIGNUP_HOUR_SECONDS)]
+    if len(within_hour) >= _SIGNUP_MAX_PER_HOUR:
+        # Until the OLDEST signup in the hour ages out, which is when this caller
+        # drops back below the limit.
+        wait = max(wait, _SIGNUP_HOUR_SECONDS - (now - within_hour[0]).total_seconds())
+    if len(stamps) >= _SIGNUP_MAX_PER_DAY:
+        wait = max(wait, _SIGNUP_DAY_SECONDS - (now - stamps[0]).total_seconds())
+    return max(1, int(wait)) if wait > 0 else 0
+
+
+def record_signup(db, client: str) -> None:
+    """Count one accepted registration, and prune the window while we are here.
+
+    Never raises, for the same reason `record_failure` does not: by the time this
+    is called the identity provider has already created the account, and this app
+    cannot roll that back — so failing the request here would tell a caller their
+    registration failed when it did not.  Logged at ERROR instead, because a
+    limiter that has silently stopped counting is the whole control.
+
+    Pruning uses the LONGEST window.  Pruning at the hourly one would delete the
+    rows the daily limit is made of, and the daily limit would quietly stop
+    existing — which is the trap a `kind` column on `login_attempt` would have
+    walked straight into, since that table prunes at five minutes.
+    """
+    from .models import SignupAttempt
+
+    try:
+        db.add(SignupAttempt(client_key=client))
+        db.execute(sql_delete(SignupAttempt).where(
+            SignupAttempt.created_at
+            < datetime.now(timezone.utc) - timedelta(seconds=_SIGNUP_DAY_SECONDS)))
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        log.error("could not record a signup for %s — the signup limiter is not "
+                  "counting: %s", client, e)
+
+
+def reset_signup_limiter(db=None) -> None:
+    """Empty the signup window — a test hook, and the manual unlock for a real
+    caller who has been limited by a misconfigured `trusted_proxy_hops` (behind a
+    load balancer at hops=0 every caller shares one bucket).  Opens its own
+    session when not given one."""
+    from .database import SessionLocal
+    from .models import SignupAttempt
+
+    session = db or SessionLocal()
+    try:
+        session.execute(sql_delete(SignupAttempt))
         session.commit()
     except Exception:
         session.rollback()
