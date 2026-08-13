@@ -7,24 +7,73 @@
 # Watch:
 #   journalctl -u easycustoms-api -f
 #
+# SYSTEMD DOES NOT READ backend/.env, and nothing below tells it to. The file is
+# loaded by pydantic-settings from an ABSOLUTE path baked into app/config.py
+# (BACKEND_ROOT/".env"), so it is read by the process, not by the unit — which is
+# why there is no EnvironmentFile= line and why WorkingDirectory does not decide
+# it. Consequence: the file must be readable by User=easycustoms, and a variable
+# that is not in it (and not in this unit) is simply absent.
+#
 # Prerequisites on the box:
 #   * the repo at /opt/easycustoms (git clone — never a folder copy),
 #     backend/.venv created and `pip install -r requirements.txt` done;
-#   * backend/.env with EASYCUSTOMS_AUTH_USERNAME / _PASSWORD / _SECRET (the
-#     app fails CLOSED without them — every route answers 401), the OCR/LLM
-#     keys, and EASYCUSTOMS_DATABASE_URL;
+#   * backend/.env. WHAT IT MUST CONTAIN DEPENDS ON THE AUTH PROVIDER, and the
+#     two are not variations of one list — see docs/deploy-staging.md for the
+#     complete set derived from app/config.py. In brief:
+#
+#       EASYCUSTOMS_AUTH_PROVIDER=local (the default) — the one operator account
+#         IS _AUTH_USERNAME / _AUTH_PASSWORD. Unset, the app fails CLOSED: no
+#         token can be issued and every protected route answers 401.
+#
+#       EASYCUSTOMS_AUTH_PROVIDER=supabase — _AUTH_USERNAME and _AUTH_PASSWORD
+#         ARE NOT THE CREDENTIAL SOURCE AND ARE NEVER READ AT SIGN-IN.
+#         app/auth.py::verify_login hands the credentials to Supabase's password
+#         grant and returns that identity; the local pair is not consulted on any
+#         path. What IS required instead is SUPABASE_URL and SUPABASE_ANON_KEY —
+#         the anon/publishable key, never the service-role key — and the app
+#         REFUSES TO BOOT without them (config.py::_check_auth_provider_config),
+#         so this one is a startup failure rather than a 401.
+#         Known cosmetic wart on this path: startup still logs
+#         "no login account is configured" from the local-provider check even
+#         when supabase is the provider and the message does not apply.
+#
+#   * EASYCUSTOMS_AUTH_SECRET — required under BOTH providers, and for a reason
+#     that only became sharp when --workers went above 1. It signs THIS app's own
+#     session token under either provider (Supabase decides identity; the session
+#     is this server's). Unset, app/auth.py::_secret falls back to a per-PROCESS
+#     random key and logs a warning — so with --workers 2 the two workers sign
+#     with DIFFERENT keys, and a session minted by one is rejected as forged by
+#     the other. The symptom is not "logged out on restart", it is a browser that
+#     is signed in for roughly every other request.
 #   * EASYCUSTOMS_SESSION_COOKIE_SECURE=always in that .env. Behind a TLS
 #     terminator the app sees plain http, so the `auto` default would ship the
 #     session cookie WITHOUT `Secure` to a browser that is very much on https.
 #     app/main.py::_cookie_secure documents this and names `always` as the
 #     answer for exactly this deployment — it is not optional here.
 #   * EASYCUSTOMS_TRUSTED_PROXY_HOPS=1 in that .env (2 if a CDN sits in front of
-#     Caddy). Also not optional: at the default of 0 the login throttle keys
-#     every request on Caddy's own address, so all callers share one bucket and
-#     10 failed sign-ins lock out everybody. See app/auth.py::client_key.
+#     Caddy). Not optional, and NOW LOAD-BEARING THREE TIMES rather than once:
+#     the login throttle, the signup limiter and the password-reset limiter all
+#     key on app/auth.py::client_key. At the default of 0 every request keys on
+#     Caddy's own address, so all callers share one bucket — 10 failed sign-ins,
+#     or the third registration of the day, lock out everybody.
 #   * Caddy (or another TLS terminator) in front — see Caddyfile.example.
 #     This unit binds LOOPBACK ONLY and is not reachable from the network by
 #     itself, which is deliberate: the app speaks plain HTTP.
+#   * AWS, when this deployment uses either. Both are the INSTANCE ROLE's job,
+#     never keys in .env on a server:
+#       EASYCUSTOMS_STORAGE_BACKEND=s3  -> s3:GetObject, s3:PutObject and
+#         s3:DeleteObject on <bucket>/<prefix>*. All three: this process stores
+#         the upload, serves it back to the evidence panel, and deletes it with
+#         the job (app/storage.py). No s3:ListBucket — nothing lists.
+#       EASYCUSTOMS_QUEUE_PROVIDER=sqs  -> sqs:SendMessage on the main queue,
+#         and nothing else. This process only claims and enqueues; receiving,
+#         deleting and extending are the worker's (easycustoms-worker.service).
+#   * The metering price file, if costs are wanted. Token and page counts are
+#     recorded either way; the money column stays NULL until
+#     backend/vendor_prices.json exists (EASYCUSTOMS_USAGE_PRICE_PATH). Under
+#     the supabase provider an EXPLICIT
+#     EASYCUSTOMS_USAGE_MONTHLY_DOCUMENT_CAP=0 is refused at boot — leave it
+#     unset to take the 200/account/month default.
 #
 # Deploying a schema change (Postgres): migrations are a DELIBERATE step, not
 # something this unit does to itself on restart.
@@ -82,11 +131,18 @@ WorkingDirectory=/opt/easycustoms/backend
 #     a trusted position, not a per-process dict — so N workers no longer allow
 #     N times the guess rate.
 #
-# Two things to size together when raising it. EASYCUSTOMS_DB_POOL_SIZE and
+# Three things to size together when raising it. EASYCUSTOMS_DB_POOL_SIZE and
 # _DB_MAX_OVERFLOW are PER PROCESS, so the connections this unit can open is
 # workers x (pool + overflow) — check that against the server's max_connections.
-# And in queue mode the slow work is not in this process at all, so one worker
-# still goes a long way; scale the WORKER unit first.
+# EASYCUSTOMS_THREADPOOL_MAX_THREADS must not exceed pool + overflow, and that
+# one is enforced: config.py refuses to boot on the contradiction rather than
+# letting the surplus threads queue on the pool and time out. And in queue mode
+# the slow work is not in this process at all, so one worker still goes a long
+# way; scale the WORKER unit first.
+#
+# EASYCUSTOMS_AUTH_SECRET must be set before raising this above 1 — see the
+# prerequisite above. Two workers with no configured secret sign sessions with
+# two different per-process keys.
 #
 # EASYCUSTOMS_TRUSTED_PROXY_HOPS=1 is required with the Caddy config below (2
 # if something like CloudFront sits in front of Caddy). Left at the default 0
@@ -104,8 +160,29 @@ RestartSec=5
 TimeoutStopSec=300
 KillSignal=SIGTERM
 
-# The app writes storage/ (uploads, plus the vendor layout/profile JSON) and
-# /tmp (Starlette spools multipart parts there before any route runs).
+# The app writes storage/ (uploads) and /tmp (Starlette spools multipart parts
+# there before any route runs). NOT the vendor layout / field-profile stores:
+# those were JSON files under storage/ until 2026-08-11 and are database tables
+# now (`vendor_layout`, `vendor_field_profile`) — a whole-file read-modify-write
+# loses one writer's entries as soon as a second process records, which
+# --workers 2 guarantees. What remains of them here is a one-way READ at startup
+# (database.import_legacy_side_stores) of any leftover JSON.
+#
+# storage/ is still created and still needs to be writable with
+# EASYCUSTOMS_STORAGE_BACKEND=s3 — get_settings() mkdirs it unconditionally —
+# it just stops receiving uploads.
+#
+# ProtectSystem=strict MAKES EVERYTHING ELSE READ-ONLY, INCLUDING THE REST OF
+# THE REPO. That is deliberate and it has one consequence worth stating rather
+# than discovering: the DEFAULT SQLite database path is
+# backend/easy_customs.db, which is NOT under storage/, so a SQLite deployment
+# under this unit cannot create or write its database (nor the -wal/-shm files,
+# which need the directory writable, not just the file). The fix belongs in
+# .env, not here — point the URL inside the one writable path:
+#   EASYCUSTOMS_DATABASE_URL=sqlite:////opt/easycustoms/backend/storage/easy_customs.db
+# Widening ReadWritePaths to the whole backend tree instead would make the venv
+# and the application code writable by the service, which is the opposite trade.
+# Postgres deployments are unaffected.
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict

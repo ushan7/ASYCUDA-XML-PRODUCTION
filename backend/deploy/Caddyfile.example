@@ -25,25 +25,43 @@ customs.example.com {
 	# as max(64, EASYCUSTOMS_MAX_UPLOAD_MB * 2)). This cap sits deliberately
 	# ABOVE it so an oversized upload is refused by the APP, which answers with
 	# a message naming the real limit, rather than by the proxy, which answers
-	# with a bare 413 the SPA cannot explain. Keep the two in step: if you raise
-	# EASYCUSTOMS_MAX_UPLOAD_MB, raise this with it.
+	# with a bare 413 the SPA cannot explain.
+	#
+	# TWO settings can move the app's ceiling, and this has to stay above
+	# whichever is in force. EASYCUSTOMS_MAX_REQUEST_MB, when set to anything
+	# above 0, IS the ceiling outright and the derivation above is not consulted
+	# at all; only when it is 0/unset does EASYCUSTOMS_MAX_UPLOAD_MB decide.
+	# Read the number the app is actually using off GET /api/config rather than
+	# recomputing it here.
 	request_body {
 		max_size 80MB
 	}
 
 	# ---- Security headers --------------------------------------------------
+	# DELIBERATELY SHORT, and shorter than it used to be. Caddy's `header Name
+	# value` REPLACES what the upstream sent, and app/main.py::_security_headers
+	# now sets nosniff, Referrer-Policy, X-Frame-Options and a CSP on EVERY
+	# response — so anything named here silently overrides a decision the
+	# application makes with more information than this file has.
+	#
+	# Two that this file used to set and must not:
+	#
+	#   X-Frame-Options — the app splits it BY CONTENT TYPE. `DENY` on HTML,
+	#     because the workspace carries the clickjackable finalize button;
+	#     `SAMEORIGIN` on everything else, because the evidence panel loads the
+	#     stored PDF in an <iframe> from this origin and `DENY` blanks it. A flat
+	#     `SAMEORIGIN` here downgrades the HTML half back to framable.
+	#   Referrer-Policy — the app sends `same-origin`, which is STRICTER than
+	#     the `strict-origin-when-cross-origin` this file used to impose.
+	#
+	# What is left is the one header the app cannot set for itself (it never
+	# sees the TLS connection) plus the one removal.
 	header {
 		# The app is HTTPS-only in this deployment and its session cookie is
 		# Secure (EASYCUSTOMS_SESSION_COOKIE_SECURE=always). Tell browsers to
 		# never try http again. Add `preload` only if you intend to submit the
 		# domain to the HSTS preload list — it is hard to undo.
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
-		# The app already pins nosniff on document responses; make it global.
-		X-Content-Type-Options "nosniff"
-		Referrer-Policy "strict-origin-when-cross-origin"
-		# The evidence viewer frames the app's OWN document route, so deny
-		# framing by anyone else rather than blanket DENY.
-		X-Frame-Options "SAMEORIGIN"
 		-Server
 	}
 
@@ -77,24 +95,46 @@ customs.example.com {
 }
 
 # ---- Rate limiting ---------------------------------------------------------
-# The app's OWN login throttle now works correctly behind this proxy, which it
-# did not before: it counts failures per client address in the database, and
-# reads that address from X-Forwarded-For as far as
-# EASYCUSTOMS_TRUSTED_PROXY_HOPS says the proxies in front are ours.
+# The app's OWN limiters work correctly behind this proxy, which they did not
+# before: each counts per client address in the database, and reads that address
+# from X-Forwarded-For as far as EASYCUSTOMS_TRUSTED_PROXY_HOPS says the proxies
+# in front are ours.
 #
 #   SET EASYCUSTOMS_TRUSTED_PROXY_HOPS=1 for this configuration.
 #
+# THERE ARE THREE OF THEM NOW, in three separate tables, sharing that one
+# caller identity and nothing else: `login_attempt` (failures, cleared by a
+# correct password), `signup_attempt` (successes, never cleared) and
+# `password_reset_attempt` (every request that reached the provider). They are
+# separate on purpose — a shared key would let an attacker interleave a
+# registration between password guesses to reset their guessing budget. What
+# they share is this setting, so hops=0 behind this proxy breaks all three at
+# once: every caller in the world lands in one bucket, and the third
+# registration of the day locks out everybody.
+#
 # Caddy sets X-Forwarded-For itself in `reverse_proxy` — appending the address
 # it received the request from — so with hops=1 the app reads the entry Caddy
-# vouched for and ignores anything the caller put to the left of it. Left at 0,
-# every request keys on Caddy's own address, all callers share ONE bucket, and
-# 10 failed sign-ins lock out everybody.
+# vouched for and ignores anything the caller put to the left of it.
 #
-# A proxy-level limiter is still worth adding for everything the app-level one
-# cannot see (unauthenticated floods of any route, not just login). Caddy has no
-# built-in rate limiter; it needs a third-party module and a custom binary:
+# A proxy-level limiter is still worth adding for everything the app-level ones
+# cannot see (unauthenticated floods of any route, not just the auth ones).
+# Caddy has no built-in rate limiter; it needs a third-party module and a custom
+# binary:
 #
 #   xcaddy build --with github.com/mholt/caddy-ratelimit
 #
 # Without it, fail2ban on this access log matching POST /api/auth/login
-# responses with status 401 is the cheap version.
+# responses with status 401 is the cheap version — but note it covers LOGIN
+# ONLY. /api/auth/signup and /api/auth/password-reset answer 202 for every
+# accepted outcome precisely so that a stranger cannot tell them apart, which
+# means this log cannot tell them apart either. There is no status code to match
+# on; those two are bounded by the app's own limiters and by Supabase's
+# dashboard rate limits, not from here.
+#
+# ---- Email links -----------------------------------------------------------
+# Confirmation and password-reset links land on the app ORIGIN with the token in
+# the URL FRAGMENT (#access_token=...&type=recovery). A fragment is never sent
+# to a server, so nothing here — no route, no rewrite, no log entry — sees or
+# needs to see it. The SPA reads it at module scope, strips it from the address
+# bar and posts it back. Nothing to configure in this file; it is listed because
+# the absence is easy to mistake for an omission.
