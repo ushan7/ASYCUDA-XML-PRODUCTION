@@ -17,9 +17,34 @@
 #     filesystem with the API. This worker READS the document the API stored, so
 #     with local storage on a separate machine there is nothing to OCR — the
 #     same constraint as the database above, and it fails the same way.
-#   * AWS credentials from the EC2 INSTANCE ROLE (sqs:ReceiveMessage,
-#     sqs:DeleteMessage, sqs:ChangeMessageVisibility on the queue) — no
-#     long-lived keys in .env on a server.
+#   * AWS credentials from the EC2 INSTANCE ROLE — no long-lived keys in .env on
+#     a server. Exactly what this process calls, and nothing more:
+#       sqs:ReceiveMessage, sqs:DeleteMessage, sqs:ChangeMessageVisibility on
+#         the main queue. Nothing on the DLQ — SQS moves messages there itself.
+#       s3:GetObject on <bucket>/<prefix>* WHEN STORAGE_BACKEND=s3. Read only:
+#         this process loads the document and writes its findings to the
+#         database, never back to the bucket. (docs/queue-deployment.md also
+#         lists sqs:GetQueueAttributes; worker.py does not call it — grant it to
+#         scripts/provision_sqs.py's identity, not to this one.)
+#   * backend/vendor_prices.json, if usage cost is wanted, because THIS is the
+#     process that prices it. In queue mode extraction runs here, so
+#     metering.record — and with it EASYCUSTOMS_USAGE_PRICE_PATH — is read on
+#     this box, not on the API's. A worker without the file records honest token
+#     and page counts and a NULL cost.
+#
+# CONFIG VALIDATION IS PROCESS-WIDE, AND THIS PROCESS SHARES THE API'S .env.
+# app/config.py runs every validator here too, including the ones for a
+# subsystem this process never uses: with EASYCUSTOMS_AUTH_PROVIDER=supabase in
+# that file, THIS unit also refuses to boot without SUPABASE_URL and
+# SUPABASE_ANON_KEY, and also refuses an explicit
+# EASYCUSTOMS_USAGE_MONTHLY_DOCUMENT_CAP=0 — despite never authenticating
+# anybody. Surprising, but it fails at startup with the exact message, so it
+# reads as a config error rather than as a broken worker.
+#
+# THE MONTHLY DOCUMENT CAP IS NOT ENFORCED HERE. POST /extract checks it before
+# it claims and enqueues (app/main.py), so a message on the queue has already
+# been paid for as far as quota is concerned. Running more workers raises
+# throughput; it does not raise anyone's spend limit, and it cannot lower it.
 #
 # Scale-out is running MORE of these (on more boxes, or as
 # easycustoms-worker@N template units): every worker long-polls the same
@@ -45,7 +70,16 @@ RestartSec=5
 TimeoutStopSec=900
 KillSignal=SIGTERM
 
-# The worker writes nothing outside storage/ (shared uploads) and /tmp.
+# The worker writes nothing outside storage/ (shared uploads) and /tmp. With
+# STORAGE_BACKEND=s3 — the normal case for a worker on its own box — it writes
+# nothing to storage/ at all; the path stays here because get_settings() mkdirs
+# it unconditionally at import, under either backend.
+#
+# ProtectSystem=strict makes the rest of the filesystem read-only, with the same
+# SQLite consequence spelled out in easycustoms-api.service: the default
+# database path is backend/easy_customs.db, outside the one writable path. It
+# bites here only in the single-machine SQLite configuration, and the answer is
+# the same — move the URL inside storage/ rather than widen this.
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
