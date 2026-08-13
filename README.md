@@ -426,7 +426,12 @@ python scripts/live_smoke_test.py
 
 **Automatic fallback:** if a live provider is selected but its key/library is
 missing, the app logs a warning and falls back to the offline extractor, so it
-always boots and the bundled demo + test-suite keep working with no keys. The
+always boots and the bundled demo + test-suite keep working with no keys — with
+**one exception**: under `EASYCUSTOMS_AUTH_PROVIDER=supabase` a live provider
+with a *missing key* is refused at boot instead, because there the fallback
+means booting clean and serving a complete-looking declaration built from facts
+nothing read off the document. `offline` named outright still boots everywhere,
+and `local` (the demo, the quickstart, the tests) is untouched. The
 header badges in the UI show `live` vs `offline fallback`. The one-click demo
 uses bundled fixtures + offline OCR (deterministic, no keys, no API cost even
 when keys are set); uploading your own PDFs triggers live extraction.
@@ -592,5 +597,6 @@ easy-customs-xml/
   never read on the strength of merely carrying an extraction.
 - **XML** — built only from a validated declaration; the composer never calls
   OCR/LLM and never reads raw extraction.
-#   A S Y C U D A - X M L - P R O D U C T I O N  
+#   A S Y C U D A - X M L - P R O D U C T I O N 
+ 
  

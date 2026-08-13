@@ -395,10 +395,19 @@ AWS_REGION=<region>
 # credential source; a long-lived key in this file outlives the box.
 
 # ---- Extraction -------------------------------------------------------------
-# A missing key does NOT fail the boot — the app logs a warning and falls back to
-# the OFFLINE extractor, which is how the demo and the test suite run with no
-# keys. On staging that looks like a working deployment producing wrong facts,
-# so §12 step 5 checks the provider that actually ran.
+# BOTH ARE REQUIRED HERE. This file sets AUTH_PROVIDER=supabase and leaves the
+# providers at their live defaults (mistral / openai), and that combination with
+# a missing key is a BOOT REFUSAL naming the variable — because the fallback is
+# to the OFFLINE reader, so the box would otherwise come up clean and serve
+# declarations built from facts nothing read off the document.
+# A placeholder ('***', 'your_..._here') counts as missing. To run this staging
+# box deliberately without vendor keys, say so outright:
+#   EASYCUSTOMS_OCR_PROVIDER=offline
+#   EASYCUSTOMS_EXTRACTION_PROVIDER=offline
+# A key that is present but EXPIRED or out of quota is not covered by that
+# refusal and does not need to be: it fails the extraction loudly (document
+# FAILED, EXTRACTION_FAILED in the audit trail). §12 step 5 still checks the
+# provider that actually ran.
 EASYCUSTOMS_MISTRAL_API_KEY=<mistral key>
 EASYCUSTOMS_OPENAI_API_KEY=<openai key>
 
@@ -495,10 +504,10 @@ form always works and always wins.
 
 | Setting | Req. | Default | Missing / wrong |
 | --- | --- | --- | --- |
-| `EASYCUSTOMS_OCR_PROVIDER` \| `OCR_PROVIDER` | no | `mistral` | `offline` reads PDFs with pypdf and finds nothing in a scan |
-| `EASYCUSTOMS_EXTRACTION_PROVIDER` | no | `openai` | `openai` \| `langroid` \| `offline`. `langroid` is not installed by default |
-| `EASYCUSTOMS_MISTRAL_API_KEY` \| `MISTRAL_API_KEY` | **yes for live** | unset | **Does not fail the boot** — warns and falls back to offline OCR. Placeholder values count as unset |
-| `EASYCUSTOMS_OPENAI_API_KEY` \| `OPENAI_API_KEY` \| `EASYCUSTOMS_LLM_API_KEY` | **yes for live** | unset | Same silent offline fallback. This is the failure that looks like success |
+| `EASYCUSTOMS_OCR_PROVIDER` \| `OCR_PROVIDER` | no | `mistral` | `offline` reads PDFs with pypdf and finds nothing in a scan — but it is an *explicit* choice and boots anywhere. `mistral` with no key does not, on this provider |
+| `EASYCUSTOMS_EXTRACTION_PROVIDER` | no | `openai` | `openai` \| `langroid` \| `offline`. `langroid` is not installed by default — and with a key but no library it still falls back to offline with only a warning, the one gap the refusal below cannot close |
+| `EASYCUSTOMS_MISTRAL_API_KEY` \| `MISTRAL_API_KEY` | **yes** | unset | **Boot refusal** under `auth_provider=supabase` with `ocr_provider=mistral`: unset, OCR silently downgrades to offline and the deployment serves invented facts. Placeholder values count as unset. Under `local` it still only warns |
+| `EASYCUSTOMS_OPENAI_API_KEY` \| `OPENAI_API_KEY` \| `EASYCUSTOMS_LLM_API_KEY` | **yes** | unset | **Boot refusal** on the same terms — this was the failure that looked like success. A key that is present but *expired or out of quota* is not covered and does not need to be: it fails the extraction loudly |
 | `EASYCUSTOMS_LLM_MODEL` | no | `gpt-4o-mini` | Must be structured-output capable |
 | `EASYCUSTOMS_MISTRAL_OCR_MODEL` \| `MISTRAL_OCR_MODEL` | no | `mistral-ocr-latest` | A name Mistral does not know fails every OCR call |
 | `EASYCUSTOMS_EXTRACTION_MAX_REPAIR_ROUNDS` | no | `2` | Evidence/schema repair attempts. 0 means a single malformed response fails the document |
@@ -939,12 +948,18 @@ sits at `EXTRACTING`; the **worker's** journal should show
 Nothing in the worker journal means the API enqueued nowhere: check
 `SQS_QUEUE_URL`, the region, and the instance role's `sqs:SendMessage`.
 
-**Now the failure that looks like success.** A missing or wrong vendor key does
-not fail the boot and does not fail the request — the app warns and falls back to
-the **offline** extractor, which produces a plausible-looking job from nothing.
-Check the provider that actually ran, in the journal or the job's audit trail: it
-must say `mistral` and `openai`, not `offline`. If you want to isolate the keys
-before involving the pipeline:
+**Now the failure that looks like success.** A key that is *missing* no longer
+gets this far: on `auth_provider=supabase` the app refuses to boot naming the
+variable, so §7's `systemctl status` would already have caught it. This step is
+what remains — a key that is present but **wrong**, and the `offline` providers
+if somebody named them.
+
+A wrong key fails loudly (the document goes to `FAILED` with
+`EXTRACTION_FAILED (…)`), but check the provider that actually ran anyway, in the
+journal or the job's audit trail: it must say `mistral` and `openai`, not
+`offline`. That check is still worth doing precisely because it does not depend
+on the refusal being right. If you want to isolate the keys before involving the
+pipeline:
 
 ```bash
 cd /opt/easycustoms/backend && sudo -u easycustoms .venv/bin/python scripts/live_smoke_test.py
