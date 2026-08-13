@@ -83,11 +83,20 @@ mistralai>=1.2,<2
 # and consumer worker.py import it lazily); harmless to install otherwise.
 boto3>=1.34,<2
 
-# ---- Supabase (scripts/check_supabase_connection.py only) ----
-# NOT used by the application. The FastAPI app reaches Postgres through
-# SQLAlchemy/EASYCUSTOMS_DATABASE_URL and has no Supabase import anywhere;
-# these back the standalone connectivity check, so installing them does not
-# wire Supabase into anything.
+# ---- Supabase SDK — NOW IMPORTED BY NOTHING IN THIS REPO ----
+# It backed scripts/check_supabase_connection.py, which used to select a row
+# through PostgREST with a SERVICE-ROLE key. That script now does one anon-key
+# GET against /auth/v1/settings with httpx (the same library app/auth_supabase.py
+# uses for the calls the app actually makes), so neither of these has an importer
+# left. python-dotenv went the same way: the script reads app.config, which does
+# the .env loading already.
+#
+# Kept pinned rather than deleted HERE on purpose. Dropping `supabase` also drops
+# realtime, whose websockets>=11,<16 pin sits inside uvicorn[standard]'s own
+# window — so removing it changes what gets resolved for the SERVER, which is a
+# dependency change with its own test run and does not belong in a commit scoped
+# to keeping a service-role key out of backend/.env. Removing them is the
+# follow-up; nothing breaks while they sit here unused.
 # supabase pulls realtime, which pins websockets>=11,<16 — inside
 # uvicorn[standard]'s own websockets>=13, so both resolve, but it does cap
 # uvicorn's websockets below 16.
