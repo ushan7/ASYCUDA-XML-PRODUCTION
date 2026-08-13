@@ -1,7 +1,7 @@
 # Plan — self-service signup, password reset, and the admin/member role
 
-**Status: steps 0, 1 and 2 are implemented. Steps 3-4 are plan only.** See the
-"Order of work" table at the end for what each step covers, and the two
+**Status: steps 0, 1, 2 and 3 are implemented. Step 4 is plan only.** See the
+"Order of work" table at the end for what each step covers, and the three
 "Where step N departed from this plan" sections for the decisions each changed.
 
 Follows `docs/ADR-001-identity-and-tenancy.md`, which decides that the account is
@@ -43,7 +43,7 @@ single-operator install has no registration and must not grow one.
 
 | Route | Public? | Calls Supabase | Returns |
 | --- | --- | --- | --- |
-| `POST /api/auth/signup` | yes — add to `_PUBLIC_API_PATHS` | `POST /auth/v1/signup` | 202 + "check your email", **never a session** |
+| `POST /api/auth/signup` | yes — add to `_PUBLIC_API_PATHS` | `POST /auth/v1/signup` | 202 + "check your email", **never a session** — *landed with step 3, plus a `GET` on the same path so the sign-in screen knows whether to offer it; see departures 4 and 7* |
 | `POST /api/auth/password-reset` | yes — add to `_PUBLIC_API_PATHS` | `POST /auth/v1/recover` | 202, **always**, regardless of whether the email exists |
 | `POST /api/auth/password-reset/confirm` | yes — add to `_PUBLIC_API_PATHS` | `PUT /auth/v1/user` with the recovery token | 200 + "sign in with your new password" |
 
@@ -268,6 +268,11 @@ ratchet exists to catch. `supabase` is by this codebase's own description the
 only provider under which the app is multi-user at all, so it is the condition
 the refusal was reaching for. Step 3 adds `allow_self_signup` alongside the route
 that obeys it, and may tighten this refusal to include it.
+*(Closed by step 3: the flag exists, its reader is
+`main._self_signup_refusal`, and this refusal was deliberately left alone —
+including the flag would have loosened it, not tightened it. See departure 1
+there. Step 3 added a separate refusal instead: the flag cannot be on under
+`local`.)*
 
 Note what the refusal can and cannot fire on: only an **explicit** `0` reaches
 it, since unset resolves to 200. It therefore refuses a deliberate choice and
@@ -446,8 +451,15 @@ three places someone will be tempted:
   `tests/test_account_quota.py`, which also asserts that a row's NULL cap and its
   0 cap are different answers, and that one account's row and one account's usage
   move nothing about another's.
-- The signup limiter counts successes, and a successful signup does **not**
-  clear the login failure window.
+- ~~The signup limiter counts successes, and a successful signup does **not**
+  clear the login failure window.~~ Landed with step 3 in `tests/test_signup.py`,
+  and in both directions: a signup does not clear the failure window (asserted by
+  driving nine failures, a successful registration, then the tenth failure and a
+  throttled login), a successful login does not clear the signup window, the
+  suite's own `reset_throttle` cannot empty it, and the two are asserted to be two
+  tables. Plus: the limiter refuses **before** the provider is called, fails
+  closed on an unreadable counter, prunes to the longest of its two windows, and
+  does not count a refused attempt.
 - ~~Boot refuses when self-signup is on and the deployment cap is `<= 0`.~~
   Landed with step 1, gated on `auth_provider == "supabase"` instead — see
   "Where step 1 departed from this plan". Step 3 may tighten it to include
@@ -559,6 +571,127 @@ no exemption. Nothing about the role is configurable: a deployment-wide
 `admin_owner_keys` env var would be a role that cannot be revoked without a
 restart, and a role in config is a role no test of the table can cover.
 
+## Where step 3 departed from this plan
+
+Eight decisions, taken when the code was read against the plan and reported
+before implementation. All are now the design of record; this section is what a
+reader of step 4 needs.
+
+**1. "Tightening the boot refusal to include `allow_self_signup`" would have
+LOOSENED it, and was not done.** The step-1 section invites step 3 to add the
+flag to the refusal that stops an uncapped multi-account deployment booting.
+ANDing a condition onto a refusal makes it fire in *fewer* cases: `supabase and
+cap == 0 and allow_self_signup` stops refusing the moment registration is off,
+and an uncapped multi-account deployment is an unbounded vendor bill whether or
+not strangers can register — everyone who already holds an account can spend it.
+The refusal stays gated on the provider alone.
+
+What `allow_self_signup` *did* get is a refusal of its own: **`true` under the
+`local` provider is refused at boot.** That provider verifies the token subject
+against its one configured username (`auth.verify_token`), so a second account
+could not sign in even if something created it. Answering 501 for ever would
+leave an operator believing they had opened registration — the same shape as the
+OCR quality gate that was configured, documented and never ran.
+
+**2. The route's reader of the flag is real, and there is no `_EXEMPT` entry.**
+`main._self_signup_refusal` reads `settings.allow_self_signup` and is the single
+implementation both the POST and the GET use, so the two can never disagree about
+whether registration is open.
+
+**3. "Counts accounts created" is not knowable, so it counts ACCEPTED
+registrations.** With email confirmation on, Supabase answers an
+already-registered address with an obfuscated user object *specifically* so the
+caller cannot tell it apart from a new one — and this app keeps that property
+rather than unwinding it. So "an account was created" is not a fact this process
+has. The limiter counts what it can honestly observe: a signup this app accepted.
+That is a superset of accounts created and never fewer, so it errs towards
+limiting more.
+
+**Refused attempts are deliberately not counted**, which the plan does not
+discuss. A user who types a password the policy rejects has created nothing, and
+spending their 3-per-hour budget on it means being locked out for an hour for a
+typo. The cost is stated rather than hidden: refused attempts are unbounded by
+*this* app, and what bounds them is the provider's own signup rate limit — which
+is why "set Auth → Rate limits explicitly" moved from a nice-to-have in the plan
+to a row in the deployment table in `README.md`.
+
+**4. One 202 body, always, and the decision table that produces it.** The plan
+says signup returns "202 + check your email" and stops there. Supabase has at
+least six distinguishable answers, and forwarding them would have made the route
+an account-existence oracle by the back door — including through the *message*,
+where "check your email" and "your account is ready" tell a prober whether an
+address was new. What ships:
+
+| Supabase | this app | why |
+| --- | --- | --- |
+| 200, no session (confirmation on) | 202, constant body | the intended path |
+| 200, session present (confirmation OFF) | 202, **same** body, `WARNING` logged | the difference is the operator's problem, not a fact for the caller |
+| 422 already registered | 202, **same** body | the oracle case, asserted byte for byte |
+| 422 weak password | 400 + the provider's own sentence | the one refusal that is about what the caller typed |
+| 422 signups disabled | 503 | our flag says open, their project says closed: a misconfiguration the caller cannot fix |
+| 429 | 429 + `Retry-After` | theirs, passed on as ours |
+| anything else / unreadable / unreachable | 502, **not counted** | not a definite answer about the account |
+
+**5. Confirmation is a dashboard toggle this repository cannot assert, so the
+code detects it and says so.** The plan lists "Confirm email = ON" as the primary
+anti-abuse control and leaves it as documentation. A session in the signup
+response *is* the evidence that it is off, so `auth_supabase.sign_up` reads it,
+discards the session, and logs a `WARNING` naming the exact dashboard setting.
+The 202 the caller sees is unchanged — see 4.
+
+**6. The SPA got the signup form; it is the one part with no test.** Step 2 shipped
+its admin surface as API-only by explicit decision, but registration with no way
+to reach it is not a feature a customer has. `LoginScreen` asks
+`GET /api/auth/signup` and draws a "Create an account" panel only when the
+deployment says it is open — so a broker's own machine never offers something it
+would refuse. There is no SPA test harness in this repo, so this was verified by
+running the app and driving the screen, not by the suite.
+
+**7. `GET /api/auth/signup` was added.** The plan lists only the POST. The sign-in
+screen has no session and therefore cannot read `/api/config`, which is gated, so
+without a public signal the SPA would have to either always offer registration or
+never. It is the same path, so `_PUBLIC_API_PATHS` does not grow twice, and it
+reports one boolean and a sentence — never the provider's name, never a count.
+
+**8. The decision step 2 left open is CLOSED, and here is its limit.** Step 2
+recorded that the admin listing is the union of `owner_key` values in this app's
+own tables, so an account that registers and never uploads is invisible — and
+handed step 3 the choice of closing that or accepting it.
+
+Closed, by writing an `account_seen` row on a successful **sign-in**. Two
+questions become answerable that were not: *did this person get in?* and *which
+`owner_key` is `alice@broker.np`, so I can raise her cap?* The second is the one
+that matters — step 2 shipped a route to raise one account's quota, keyed on a
+UUID that nothing in the product surfaced unless that account had already created
+a job **and** an audit row naming a human. `account_seen.display` is the first
+column in this schema to hold an email address; it is account metadata, ADR-001
+already grants an admin exactly that, and the same value has always been written
+to `AuditEvent.actor` on every human action. What changes is that it becomes
+answerable per account instead of inferred. The listing reports
+`label_source: "sign-in" | "audit"` so a fact is never presented with the same
+authority as a guess.
+
+**Written at sign-in and never at signup**, which is what makes it safe: with
+confirmation on, the provider's anti-enumeration answer carries a user id that
+belongs to nobody, so a row written from a signup response could be keyed on a
+fabrication and a stranger could fill the table with them. A sign-in is proof —
+the password verified and the id came from a real session.
+
+**The residual, asserted rather than left to be discovered
+(`test_an_account_that_registered_and_never_signed_in_is_still_invisible`):** an
+account that registered and never confirmed its email has never signed in and is
+still not listed. That is not a gap so much as the same fact seen from the other
+side — "the confirmation link was never followed" — and closing it would require
+the admin API and the service-role key this plan rules out in part (a).
+
+The write is best-effort and cannot fail a sign-in: a caller who has proved their
+password is not refused because a metadata upsert lost a race with a second tab.
+
+**Not built, and not owed by this step:** an admin screen in the SPA (still), and
+anything belonging to step 4. `POST /api/auth/password-reset` and its confirm
+route do not exist, and the hash-fragment flow the plan recommends for them is
+untouched.
+
 ## Order of work
 
 The sequence is not arbitrary; each step exists because the next one is unsafe
@@ -569,7 +702,7 @@ without it.
 | 0 | Fix the two unscoped download routes; `test_tenant_isolation.py` green | Registration must not open over a known cross-account read | **done** (`86bd148`) |
 | 1 | `account_quota` + resolution order; lower the deployment default; boot refusal | The spend limit has to exist before accounts can create themselves | **done** — see "Where step 1 departed from this plan" |
 | 2 | `account_role` + `require_admin` + admin routes | Somebody must be able to *raise* a cap before there are users hitting one | **done** — see "Where step 2 departed from this plan" |
-| 3 | Signup + confirmation + the success-counting limiter | Only now is a self-registered account both capped and supportable | planned — **also owes `allow_self_signup`** |
+| 3 | Signup + confirmation + the success-counting limiter | Only now is a self-registered account both capped and supportable | **done** — see "Where step 3 departed from this plan" |
 | 4 | Password reset | The smallest piece, and the only one that needs an SPA route; nothing else depends on it | planned |
 
 Doing 3 before 1 and 2 produces a user who registers, hits the cap, and finds

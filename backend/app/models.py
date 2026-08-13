@@ -340,6 +340,87 @@ class LoginAttempt(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
+class SignupAttempt(Base):
+    """One ACCEPTED self-service signup, kept long enough to rate-limit the next.
+
+    A SEPARATE TABLE FROM ``LoginAttempt``, and that separation is the control
+    rather than tidiness.  The login throttle counts FAILURES and a correct
+    password deletes that caller's rows (``auth.clear_failures``); signup abuse is
+    a stream of SUCCESSES.  Sharing one table — even with a ``kind`` column —
+    means one of two things happens: a successful signup clears the caller's
+    password-guessing budget, so an attacker interleaves a registration between
+    guesses and guesses for ever; or the two windows share a pruning delete and a
+    24h signup window is silently truncated to the 5-minute failure window.  The
+    suite's own ``auth.reset_throttle`` is a third: it empties the login window
+    between every test, and a shared table would empty this one with it.
+
+    WHAT IT COUNTS is a signup this app ACCEPTED, which is a superset of accounts
+    created and never fewer.  With email confirmation on, Supabase deliberately
+    answers an already-registered address exactly as it answers a new one — that
+    is its anti-enumeration behaviour and this app keeps it — so "an account was
+    created" is not knowable here.  Counting the accepted request is the closest
+    honest thing, and it errs towards limiting more, not less.
+
+    Deliberately NOT an audit trail of who registered: no email, no user id, no
+    outcome.  It holds a throttle key and a timestamp, is pruned to its longest
+    window on every write, and answers exactly one question — may this caller
+    register again yet.
+    """
+
+    __tablename__ = "signup_attempt"
+    __table_args__ = (Index("ix_signup_attempt_client_created", "client_key", "created_at"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    # An IP address, from `auth.client_key` — the same key the login throttle
+    # uses, so EASYCUSTOMS_TRUSTED_PROXY_HOPS governs both and cannot be right
+    # for one and wrong for the other.
+    client_key: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class AccountSeen(Base):
+    """An account that has SIGNED IN to this deployment at least once.
+
+    Written on a successful sign-in, and this is the only column in the app that
+    holds an email address.  It exists because step 2's admin listing is the union
+    of the ``owner_key`` values in the app's own tables, which answers "who is
+    spending the budget" and cannot answer either of the two questions self-service
+    registration creates: *did this person get in?* and *which UUID is
+    alice@broker.np, so I can raise her cap?*  Neither is answerable from
+    ``AuditEvent.actor``, which only names an account that has already created a
+    job and done something to it.
+
+    NOT WRITTEN AT SIGNUP, for a reason that survives being tempting.  With email
+    confirmation on, Supabase answers an already-registered address with an
+    obfuscated user object carrying an id that belongs to nobody; a row written
+    from that response would key on a fabricated id, and a stranger could fill
+    this table with them.  A sign-in is proof: the password verified and the id
+    came from a real session.  The cost is stated rather than hidden — an account
+    that registered and never confirmed its email is NOT here, which is the same
+    fact as "the confirmation link was never followed".
+
+    METADATA, never content.  ``docs/ADR-001-identity-and-tenancy.md`` lets an
+    admin see accounts, quotas and usage and nothing else; an email is account
+    metadata and is already in this database on every audit row a human action
+    wrote.  What changes is that it becomes ANSWERABLE per account instead of
+    being derived best-effort from an audit trail.  ``services.job_visible_to``
+    does not know this table exists.
+    """
+
+    __tablename__ = "account_seen"
+
+    # The same key Job.owner_key holds: the Supabase auth.users.id, or the
+    # configured username under the `local` provider.
+    owner_key: Mapped[str] = mapped_column(String(160), primary_key=True)
+    # What they signed in AS — an email under supabase.  A display label, never
+    # an identity: ownership is the owner_key, and this column changes when the
+    # account's email does.  Empty rather than NULL: a sign-in always knows the
+    # name it was given, so "nothing recorded" is not a state this can be in.
+    display: Mapped[str] = mapped_column(String(160), default="")
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
 class VendorLayout(Base):
     """A remembered table column map, keyed by role + header signature.
 

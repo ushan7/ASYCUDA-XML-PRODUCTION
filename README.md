@@ -187,16 +187,75 @@ EASYCUSTOMS_AUTH_TOKEN_TTL_HOURS=24        # one working day (default)
   issued and every protected route answers `401` — a deployment that skipped
   this step is visibly broken, never quietly open. Ten failed sign-ins from one
   address within five minutes are throttled (`429`).
-* Unauthenticated by design: `GET /api/health` (liveness only, no data) and the
-  static SPA shell — it has to load to draw the login form. Everything the
-  shell renders comes from `/api/*`, which is gated, and so are `/docs`,
-  `/redoc` and `/openapi.json`.
+* Unauthenticated by design: `GET /api/health` (liveness only, no data),
+  `/api/auth/signup` (a stranger has no session — see below) and the static SPA
+  shell, which has to load to draw the login form. Everything the shell renders
+  comes from `/api/*`, which is gated, and so are `/docs`, `/redoc` and
+  `/openapi.json`.
 
 The gate is **middleware, not a per-route dependency**, so a route added later
 is protected by the fact that it exists (`tests/test_auth.py` asserts this).
 In the test suite, `tests/conftest.py` configures an account and makes every
 `TestClient` authenticated; a test that wants an anonymous client does
 `client.headers.pop("Authorization", None)`.
+
+### Self-service registration
+
+**Off unless a deployment turns it on**, and only under the multi-account
+provider:
+
+```ini
+EASYCUSTOMS_AUTH_PROVIDER=supabase
+EASYCUSTOMS_ALLOW_SELF_SIGNUP=true
+```
+
+Setting it under `local` is refused **at boot**: that provider verifies the
+token subject against its one configured username, so a second account could not
+sign in even if something created it.
+
+* **`POST /api/auth/signup`** takes `{email, password}` and nothing else
+  (`extra="forbid"` — a role, a quota or an `owner_key` in the body is a `422`).
+  It answers **`202` and never a session**: email confirmation is what completes
+  a registration, so there is nothing to issue yet.
+* **One `202` body, whatever happened** — created, already registered, or
+  created on a project whose confirmation is misconfigured off. This endpoint is
+  nobody's account-existence oracle, so the differences go to the log where an
+  operator can see them and a stranger cannot. The single exception is a password
+  the policy rejects, which is about what the caller just typed.
+* **`GET /api/auth/signup`** reports whether registration is open, because the
+  sign-in screen has no session and cannot read the gated `/api/config`.
+* A new account gets **no `account_quota` row** and therefore the deployment
+  default — **200 documents a month** under `supabase`. A row written at signup
+  would freeze today's default onto every account that ever registered.
+
+**Four Supabase dashboard settings are what make this safe, and this app cannot
+check any of them for you:**
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| Auth → Providers → Email → **Enable Sign Ups** | ON | `/auth/v1/signup` answers 422 while it is off |
+| **Confirm email** | ON | *The* anti-abuse control: an unconfirmed account cannot sign in, so it never reaches a vendor call. With it off a signup returns a usable account immediately — the app detects that from the response and logs a `WARNING` naming this setting |
+| **Site URL** + **Redirect URLs** | the app origin, exactly | A wildcard sends confirmation links wherever an attacker asks |
+| **SMTP** | a real provider | The built-in sender is a few messages an hour; left alone, signup appears to work and the emails silently do not arrive |
+
+Set **Auth → Rate limits** (signup, email) explicitly as well.
+
+**What stops abuse here.** A **success**-counting limiter — 3 registrations per
+caller per hour, 10 per day — in its own `signup_attempt` table, sharing no state
+with the login throttle. That throttle counts *failures* and a correct password
+wipes the window, so a shared key would let an attacker interleave a registration
+between password guesses to reset their guessing budget indefinitely. It counts
+*accepted* registrations (a superset of accounts created: Supabase deliberately
+makes an already-registered address indistinguishable from a new one), never
+clears on success, and fails **closed** — an unreadable counter answers `503`.
+Refused attempts are deliberately **not** counted, so a user fixing a rejected
+password is not locked out for an hour; Supabase's own signup rate limit is what
+bounds those.
+
+> **`EASYCUSTOMS_TRUSTED_PROXY_HOPS` is now load-bearing twice.** The signup
+> limiter keys on the same caller identity as the login throttle, so behind a
+> load balancer at the default `0` every registration shares one bucket and the
+> third of the day locks out everybody.
 
 ### Roles — `admin` and `member`
 
@@ -240,6 +299,19 @@ python scripts/grant_admin.py --revoke <owner_key> --apply
 `<owner_key>` is the Supabase `auth.users.id` (Authentication → Users, the `id`
 column — not the email), or the configured username under the `local` provider.
 There is no HTTP route that grants or revokes a role, by design.
+
+**Finding the account you mean.** `GET /api/admin/accounts` lists the accounts
+this deployment has *seen*, which is the union of the `owner_key` values in its
+own tables — identity lives with the auth provider and enumerating it would need
+the service-role key. Since registration opened, an account is listed from its
+**first sign-in** (`account_seen`), so "did they get in?" and "which `owner_key`
+is `alice@broker.np`?" are answerable without waiting for them to upload
+anything. `display_label` is what they signed in as, with `label_source:
+"sign-in"`; for accounts that have not signed in since that table existed it
+falls back to `"audit"`, a name inferred from who last acted on one of their
+jobs. An account that registered and **never confirmed its email** has never
+signed in and is still not listed — which is the same fact as "the confirmation
+link was never followed".
 
 **Disabling an account** (`POST /api/admin/accounts/{owner_key}/disable`) writes
 a local deny-list row — not a Supabase user-disable, which would need the

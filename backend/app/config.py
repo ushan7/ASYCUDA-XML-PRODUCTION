@@ -249,6 +249,22 @@ class Settings(BaseSettings):
         "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY"))
     supabase_timeout_seconds: float = Field(
         default=15.0, validation_alias=_alias("SUPABASE_TIMEOUT_SECONDS"))
+    # Whether STRANGERS may create their own accounts (POST /api/auth/signup).
+    #
+    # OFF by default, and that is the whole point of it being a setting: opening
+    # registration is a commercial decision with a vendor bill attached, so it is
+    # something a deployment SAYS, never something it inherits by upgrading or by
+    # switching identity provider.  With it off the route answers 403 and nothing
+    # reaches Supabase.
+    #
+    # It cannot be turned on under `local`, which is refused at boot below rather
+    # than answered 501 for ever: `local` has exactly ONE account, verified
+    # against the configured username (auth.verify_token), so a second account
+    # could not sign in even if something created it.  A .env line claiming
+    # registration is open when it silently is not is the same class of defect as
+    # the OCR quality gate that never existed.
+    allow_self_signup: bool = Field(default=False,
+                                    validation_alias=_alias("ALLOW_SELF_SIGNUP"))
 
     @field_validator("auth_provider")
     @classmethod
@@ -266,6 +282,18 @@ class Settings(BaseSettings):
             # answer every login with a 502 and look like a credential problem.
             raise ValueError("EASYCUSTOMS_AUTH_PROVIDER=supabase requires SUPABASE_URL "
                              "and SUPABASE_ANON_KEY")
+        if self.allow_self_signup and self.auth_provider != "supabase":
+            # A capability that cannot exist must not be configurable to "on".
+            # `local` verifies the token subject against the ONE configured
+            # username, so an account created by any means could not sign in;
+            # answering 501 for ever would leave an operator believing they had
+            # opened registration.
+            raise ValueError(
+                "EASYCUSTOMS_ALLOW_SELF_SIGNUP=true requires "
+                "EASYCUSTOMS_AUTH_PROVIDER=supabase. The `local` provider is a single "
+                "account named in the environment — it has nowhere to put a second one, "
+                "and a token naming any other subject is refused. Unset the flag, or "
+                "move this deployment to the multi-account provider.")
         if self.auth_provider == "supabase" and self.resolved_monthly_document_cap() <= 0:
             # ENFORCED, not documented.  `supabase` is the only provider under
             # which this app holds more than one account, and every extraction
@@ -280,6 +308,14 @@ class Settings(BaseSettings):
             # DEFAULT_MULTI_ACCOUNT_DOCUMENT_CAP.  So this refuses a deliberate
             # choice, never an upgrade — a deployment that never named the
             # setting boots with a real cap instead of being stopped.
+            #
+            # DELIBERATELY NOT gated on `allow_self_signup` as well.  The plan
+            # says step 3 may "tighten" this refusal by including that flag, but
+            # ANDing a condition onto a refusal LOOSENS it: `supabase and cap==0`
+            # would stop refusing the moment registration was off, and an
+            # uncapped multi-account deployment is an unbounded vendor bill
+            # whether or not strangers can register — anyone already holding an
+            # account can spend it.  The provider is the condition that matters.
             raise ValueError(
                 "EASYCUSTOMS_USAGE_MONTHLY_DOCUMENT_CAP=0 (unlimited) is refused under "
                 "EASYCUSTOMS_AUTH_PROVIDER=supabase, which is the multi-account provider: "

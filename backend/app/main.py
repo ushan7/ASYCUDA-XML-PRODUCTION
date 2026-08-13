@@ -52,6 +52,12 @@ app = FastAPI(title="Easy Customs XML Generator", version="1.0.0")
 _PUBLIC_API_PATHS = frozenset({
     "/api/health",       # liveness for docker/compose healthchecks; no data
     "/api/auth/login",   # the way in
+    # Self-service registration, and the GET that tells the sign-in screen
+    # whether to offer it.  Public by necessity — a stranger has no session — and
+    # therefore written to be an ACCOUNT-EXISTENCE ORACLE for nobody: every
+    # outcome that is not the caller's own password to fix answers the same 202.
+    # Refused outright unless EASYCUSTOMS_ALLOW_SELF_SIGNUP is on.
+    "/api/auth/signup",
 })
 # Interactive API docs enumerate every endpoint and can call them: same gate.
 _PROTECTED_NON_API = ("/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect")
@@ -654,6 +660,19 @@ def login(body: LoginRequest, request: Request, db: Session = Depends(db_dep)):
         return JSONResponse(status_code=403, content={
             "status": "REFUSED", "code": "ACCOUNT_DISABLED", "detail": barred})
     auth.clear_failures(db, client)
+    # THE FAILURE WINDOW ONLY.  `clear_failures` deletes this caller's
+    # `login_attempt` rows and cannot touch `signup_attempt`, which is why the
+    # signup limiter is a separate table: sharing one would let an attacker
+    # interleave a registration between password guesses to reset their guessing
+    # budget indefinitely.
+    #
+    # Best effort, and deliberately after every refusal above: this records that
+    # the account got IN, which is the only way the admin routes can answer "did
+    # they register?" or "which owner_key is alice@broker.np?" — neither of which
+    # the union of owner_keys could answer, and both of which become support
+    # questions the day strangers can register.  It writes metadata and no job
+    # content, and it never fails a sign-in that has already succeeded.
+    accounts.record_sign_in(db, principal, display=identity.display)
     # sub is the account ID and dsp is what to call them — see auth.Session for
     # why those must not be the same field.
     token, session = auth.issue_token(identity.display, user_id=identity.user_id)
@@ -663,6 +682,175 @@ def login(body: LoginRequest, request: Request, db: Session = Depends(db_dep)):
                     httponly=True, samesite="lax",
                     secure=_cookie_secure(request), path="/")
     return resp
+
+
+# --------------------------------------------------------------------------- #
+# Self-service registration.
+#
+# Supabase owns the account, the password, the confirmation email and the link in
+# it; this app owns the session, and issues none here.  SIGNUP DOES NOT SIGN YOU
+# IN: confirmation is what completes a registration, so there is no session to
+# issue yet, and a route that sometimes returns one is a route whose clients get
+# it wrong.
+#
+# ONE 202 BODY, whatever happened.  Created, already registered, or created on a
+# project whose confirmation is misconfigured off — all the same sentence, so
+# this endpoint cannot be used to test whether an address has an account here.
+# The differences go to the log, where an operator can see them and a stranger
+# cannot.  The single exception is a password the policy rejects, which is about
+# what the caller just typed and says nothing about the address.
+# --------------------------------------------------------------------------- #
+class SignupRequest(BaseModel):
+    """`{email, password}` and NOTHING else.
+
+    `extra="forbid"` is the enforcement: a role, a quota, an `owner_key` or an
+    `is_admin` in the body is a 422 rather than a field somebody has to remember
+    to ignore.  Ownership and privilege are established server-side, from the
+    identity provider's answer and from this app's own tables.
+    """
+    model_config = ConfigDict(extra="forbid")
+    email: str = Field(min_length=3, max_length=254)
+    # Bounded, not policed.  The POLICY — minimum length, leaked-password
+    # checking — belongs to the identity provider and is configured there; a
+    # second minimum here would be a second source of truth that drifts, and
+    # would refuse passwords the provider accepts.  The ceiling exists because a
+    # megabyte password is an outbound request, not a password.
+    password: str = Field(min_length=1, max_length=128)
+
+
+_SIGNUP_ACCEPTED = {
+    "status": "ACCEPTED",
+    "code": "SIGNUP_ACCEPTED",
+    "detail": "If that address can be registered, a confirmation email is on its way. "
+              "Open the link in it, then sign in.",
+}
+
+
+def _self_signup_refusal(settings) -> tuple[int, str, str] | None:
+    """``(status, code, detail)`` for why this deployment will not register
+    anybody, or None if it will.  One implementation, because the POST and the
+    GET below must never disagree about whether registration is open."""
+    if settings.auth_provider != "supabase":
+        # 501: the capability cannot exist here, rather than being switched off.
+        # `local` is one account named in the environment and `auth.verify_token`
+        # refuses a token naming any other subject, so a second account could not
+        # sign in even if something created it.
+        return (501, "SIGNUP_UNSUPPORTED",
+                "This deployment has a single configured account and does not offer "
+                "registration.")
+    if not settings.allow_self_signup:
+        # 403 and not 404: the route exists and is simply closed, which is a fact
+        # a would-be customer is owed — unlike the admin surface, whose existence
+        # is worth not confirming to a signed-in stranger.
+        return (403, "SIGNUP_DISABLED",
+                "Registration is not open on this deployment. Ask the operator for an "
+                "account.")
+    return None
+
+
+@app.get("/api/auth/signup")
+def signup_available():
+    """Whether the sign-in screen should offer to create an account.
+
+    Public because the login screen is: it has no session and cannot read
+    /api/config, which is gated.  It reports one boolean and a sentence — never
+    the provider's name, never a count, never an address.
+    """
+    refusal = _self_signup_refusal(get_settings())
+    if refusal is None:
+        return {"enabled": True,
+                "detail": "Create an account, confirm your email address, then sign in."}
+    return {"enabled": False, "detail": refusal[2]}
+
+
+@app.post("/api/auth/signup")
+def signup(body: SignupRequest, request: Request, db: Session = Depends(db_dep)):
+    """Register an account.  202 and no session; confirmation completes it.
+
+    The order here is the design.  The deployment's own gate first (nothing
+    reaches the vendor on a closed deployment), then the abuse limiter (so a
+    refused caller costs one indexed read and no outbound call), then Supabase,
+    and only an ACCEPTED registration is counted — see `auth.record_signup` for
+    why a refusal is not.
+    """
+    from . import auth_supabase
+
+    settings = get_settings()
+    refusal = _self_signup_refusal(settings)
+    if refusal is not None:
+        status, code, detail = refusal
+        return JSONResponse(status_code=status, content={
+            "status": "REFUSED", "code": code, "detail": detail})
+
+    email = body.email.strip()
+    if " " in email or email.count("@") != 1 or not all(email.split("@")):
+        # A local sanity check, not a validation policy — the provider decides
+        # what a deliverable address is.  This one exists so obvious junk costs
+        # no outbound request, and it is safe to be specific about because it
+        # cannot distinguish a registered address from an unregistered one.
+        return JSONResponse(status_code=400, content={
+            "status": "REJECTED", "code": "INVALID_EMAIL",
+            "detail": "Enter a valid email address."})
+
+    client = _client_id(request)
+    try:
+        retry_after = auth.signup_retry_after(db, client)
+    except auth.SignupLimitUnavailable as e:
+        # FAIL CLOSED, exactly as the login throttle does.  An unreadable counter
+        # that answered "go ahead" would turn a database fault into unlimited
+        # account creation, and every account created can spend real money at
+        # Mistral and OpenAI.
+        log.error("refusing a signup: the signup limiter is unreadable (%s)", e)
+        raise HTTPException(503, "This server cannot accept registrations right now. "
+                                 "Try again shortly.")
+    if retry_after:
+        log.warning("signup limited for %s (%ss)", client, retry_after)
+        return JSONResponse(status_code=429, headers={"Retry-After": str(retry_after)},
+                            content={
+            "status": "THROTTLED", "code": "TOO_MANY_ATTEMPTS",
+            "detail": f"Too many accounts have been created from here recently. "
+                      f"Try again in {retry_after} second(s)."})
+
+    try:
+        outcome = auth_supabase.sign_up(email, body.password)
+    except auth_supabase.SupabaseAuthUnavailable as e:
+        # Not the caller's fault and NOT counted, for the same reason a login
+        # outage is not counted against the failure throttle: they did nothing to
+        # earn it.  It is also not a definite answer about the account, which is
+        # why the sentence does not claim the registration failed.
+        log.error("a signup could not be completed: %s", e)
+        raise HTTPException(502, "The registration service could not be reached. This is "
+                                 "a server problem — try again shortly.")
+
+    if not outcome.accepted:
+        if outcome.code == "WEAK_PASSWORD":
+            return JSONResponse(status_code=400, content={
+                "status": "REJECTED", "code": "WEAK_PASSWORD", "detail": outcome.message})
+        if outcome.code == "TOO_MANY_ATTEMPTS":
+            headers = {"Retry-After": str(outcome.retry_after)} if outcome.retry_after else {}
+            return JSONResponse(status_code=429, headers=headers, content={
+                "status": "THROTTLED", "code": "TOO_MANY_ATTEMPTS",
+                "detail": "Too many registration attempts have reached the sign-in "
+                          "service. Try again shortly."})
+        if outcome.code == "SIGNUP_UNAVAILABLE":
+            # This deployment says registration is open and the identity provider
+            # says it is not.  A misconfiguration the caller cannot fix, and 503
+            # rather than 400 says whose problem it is.
+            raise HTTPException(503, "Registration is not available right now. This is a "
+                                     "server configuration problem, not your address.")
+        return JSONResponse(status_code=400, content={
+            "status": "REJECTED", "code": "INVALID_EMAIL",
+            "detail": "That address could not be registered. Check it and try again."})
+
+    # Counted only now: an accepted registration, which is as close to "an account
+    # was created" as this process can honestly get.
+    auth.record_signup(db, client)
+    log.info("accepted a signup from %s (confirmation %s)", client,
+             "required" if outcome.confirmation_required else "NOT required")
+    # No cookie, no token, and no account_quota row — a new account takes the
+    # deployment default (metering.resolved_cap), which is what lets that default
+    # ever be changed again for the accounts that already exist.
+    return JSONResponse(status_code=202, content=_SIGNUP_ACCEPTED)
 
 
 @app.get("/api/auth/session")

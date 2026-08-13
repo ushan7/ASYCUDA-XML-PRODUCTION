@@ -4641,16 +4641,90 @@ function App({session, onSignOut}){
 }
 
 // ---------------------------------------------------------------------- //
-// Sign in.  The account is one operator's, configured in backend/.env; the
-// server answers with a 24h token (returned in the body AND set as an HttpOnly
-// cookie, because the evidence iframe and the XML/.xls download links are
-// plain navigations that cannot carry a header).
+// Sign in.  On a single-operator install the account is configured in
+// backend/.env; on a multi-account deployment it lives with the identity
+// provider.  Either way the server answers with a 24h token (returned in the
+// body AND set as an HttpOnly cookie, because the evidence iframe and the
+// XML/.xls download links are plain navigations that cannot carry a header).
+//
+// REGISTRATION IS ASKED FOR, NEVER ASSUMED.  GET /api/auth/signup says whether
+// this deployment is open; the panel below is drawn only when it says yes, so a
+// broker's own machine never shows a "create an account" link for something it
+// cannot do.  Signing up does NOT sign you in — the server answers 202 and the
+// confirmation email is what completes it.
 // ---------------------------------------------------------------------- //
+function SignupPanel({onDone}){
+  const [email,setEmail] = useState("");
+  const [password,setPassword] = useState("");
+  const [busy,setBusy] = useState(false);
+  const [err,setErr] = useState("");
+  const [sent,setSent] = useState("");
+
+  async function submit(e){
+    e.preventDefault();
+    if(busy) return;
+    setBusy(true); setErr("");
+    try{
+      const r = await fetch(`${API}/api/auth/signup`, {
+        method:"POST", headers:{"content-type":"application/json"},
+        body:JSON.stringify({email, password})});
+      const body = await r.json().catch(()=>({}));
+      if(!r.ok){
+        // 400 the address or the password · 429 limited · 501/403 closed ·
+        // 502/503 ours. Each already carries the sentence to show.
+        setErr(body.detail || `Could not create the account (${r.status}).`);
+        return;
+      }
+      // One message for every accepted registration, including an address that
+      // already has an account: this screen must not become a way to test
+      // whether somebody is a customer here.
+      setSent(body.detail || "Check your email to confirm the address, then sign in.");
+      setPassword("");
+    }catch(e){
+      setErr("Could not reach the server. Check that it is running, then try again.");
+    }finally{ setBusy(false); }
+  }
+
+  if(sent) return (
+    <div className="msg ok" style={{marginTop:8}}>
+      {sent} <a href="#" onClick={e=>{e.preventDefault(); onDone();}}>Back to sign in</a>
+    </div>);
+
+  return (
+    <form onSubmit={submit} style={{marginTop:4}}>
+      {err && <div className="msg b" style={{marginBottom:4}}>{maskEngine(err)}</div>}
+      <label htmlFor="ec-new-email">Email</label>
+      <input id="ec-new-email" name="email" type="email" autoComplete="email" autoFocus
+             value={email} onChange={e=>{setEmail(e.target.value); setErr("");}}/>
+      <label htmlFor="ec-new-pass">Password</label>
+      <input id="ec-new-pass" name="new-password" type="password" autoComplete="new-password"
+             value={password} onChange={e=>{setPassword(e.target.value); setErr("");}}/>
+      <button className="btn" type="submit" disabled={busy||!email||!password}>
+        {busy ? <span style={{display:"inline-flex",alignItems:"center",gap:9}}><Spin tone="on"/> Creating…</span> : "Create account"}
+      </button>
+      <p className="foot">
+        We email you a link to confirm the address. You sign in after confirming.{" "}
+        <a href="#" onClick={e=>{e.preventDefault(); onDone();}}>I already have an account</a>
+      </p>
+    </form>);
+}
+
 function LoginScreen({onSignedIn, notice}){
   const [username,setUsername] = useState("");
   const [password,setPassword] = useState("");
   const [busy,setBusy] = useState(false);
   const [err,setErr] = useState("");
+  const [signupOpen,setSignupOpen] = useState(false);   // does this deployment offer it
+  const [registering,setRegistering] = useState(false); // which form is showing
+
+  useEffect(()=>{
+    let alive = true;
+    fetch(`${API}/api/auth/signup`)
+      .then(r => r.ok ? r.json() : null)
+      .then(s => { if(alive) setSignupOpen(!!(s && s.enabled)); })
+      .catch(()=>{});                       // no link is the safe default
+    return ()=>{ alive = false; };
+  },[]);
 
   async function submit(e){
     e.preventDefault();
@@ -4674,6 +4748,15 @@ function LoginScreen({onSignedIn, notice}){
     }finally{ setBusy(false); }
   }
 
+  if(registering) return (
+    <div className="loginpage">
+      <div className="logincard">
+        <h1>Easy Customs</h1>
+        <p className="sub">ASYCUDA World XML Generator · create an account.</p>
+        <SignupPanel onDone={()=>setRegistering(false)}/>
+      </div>
+    </div>);
+
   return (
     <div className="loginpage">
       <form className="logincard" onSubmit={submit}>
@@ -4690,7 +4773,10 @@ function LoginScreen({onSignedIn, notice}){
         <button className="btn" type="submit" disabled={busy||!username||!password}>
           {busy ? <span style={{display:"inline-flex",alignItems:"center",gap:9}}><Spin tone="on"/> Signing in…</span> : "Sign in"}
         </button>
-        <p className="foot">Your session stays open for 24 hours, then asks for the password again.</p>
+        <p className="foot">
+          Your session stays open for 24 hours, then asks for the password again.
+          {signupOpen && <> · <a href="#" onClick={e=>{e.preventDefault(); setErr(""); setRegistering(true);}}>Create an account</a></>}
+        </p>
       </form>
     </div>);
 }
