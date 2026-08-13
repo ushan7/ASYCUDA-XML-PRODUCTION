@@ -4,6 +4,7 @@ The account lives in backend/.env; tests/conftest.py configures it for the
 suite and makes every TestClient authenticated by default, so the clients here
 strip the header when they want to be anonymous.
 """
+import logging
 import time
 
 import pytest
@@ -279,6 +280,47 @@ def test_placeholder_credentials_do_not_count_as_configured(monkeypatch):
     assert not auth.credentials_configured()
     monkeypatch.setattr(settings, "auth_username", "  ")
     assert auth.configured_username() is None
+
+
+# --------------------------------------------------------------------------- #
+# The startup line an operator reads first
+# --------------------------------------------------------------------------- #
+_NO_ACCOUNT = "no login account is configured"
+
+
+def _startup_errors(caplog) -> list[str]:
+    """Records from `_report_identity_provider` alone.
+
+    Called directly rather than through `_startup`, which runs
+    `logging_setup.configure_logging()` — that clears the root handlers and takes
+    caplog's with them, so the assertion would pass for the wrong reason.
+    """
+    from app import main
+
+    caplog.clear()
+    with caplog.at_level(logging.INFO, logger="easycustoms.api"):
+        main._report_identity_provider()
+    return [r.getMessage() for r in caplog.records]
+
+
+def test_a_missing_local_account_is_still_reported_loudly(monkeypatch, caplog):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "auth_provider", "local")
+    monkeypatch.setattr(auth, "credentials_configured", lambda: False)
+    assert any(_NO_ACCOUNT in m for m in _startup_errors(caplog))
+
+
+def test_supabase_is_not_told_it_has_no_login_account(monkeypatch, caplog):
+    """It has none, and that is CORRECT there: verify_login hands the credentials
+    to Supabase and never reads the local pair. The unguarded version made this
+    the first line in the journal of a correctly configured staging box, which
+    sends an operator to fix a variable the provider does not use."""
+    settings = get_settings()
+    monkeypatch.setattr(settings, "auth_provider", "supabase")
+    monkeypatch.setattr(auth, "credentials_configured", lambda: False)
+    messages = _startup_errors(caplog)
+    assert not any(_NO_ACCOUNT in m for m in messages)
+    assert any("identity provider: supabase" in m for m in messages)
 
 
 def test_repeated_failures_are_throttled(anon):

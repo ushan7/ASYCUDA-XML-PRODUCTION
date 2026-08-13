@@ -232,11 +232,18 @@ disposal branch, and the heartbeat.
       head (`alembic upgrade head`, or `stamp` for one that predates migrations).
 - [ ] Postgres actually *deployed*. The default is still SQLite, so queue mode
       remains single-machine until `EASYCUSTOMS_DATABASE_URL` points at Postgres.
-- [ ] Supabase auth cutover. `supabase/migrations/` and the commented
-      `SUPABASE_*` block in `.env.example` are scaffolding — **nothing in the
-      backend reads them.** Jobs are owned by `app/auth.py`'s operator, and the
-      worker writes through SQLAlchemy, not the Supabase client. Wiring auth is
-      a separate piece of work; it is not a missing part of the queue.
+- [x] Supabase auth cutover — **done** (`EASYCUSTOMS_AUTH_PROVIDER=supabase`,
+      `app/auth_supabase.py`), along with self-service signup, password reset and
+      the admin/member role. Two things that were true when this line said
+      otherwise still are: the worker writes through SQLAlchemy and never the
+      Supabase client, and `supabase/migrations/` remains a prototype schema
+      **nothing in the backend reads** — the app's schema is `alembic`'s, on both
+      SQLite and Postgres. What changed is identity: sign-in is proxied
+      server-side with the **anon** key, jobs are owned by the Supabase
+      `auth.users.id` rather than by the single configured operator, and the
+      service-role key is deliberately absent from this process. Row-level
+      security does **not** protect this app — the backend connects to Postgres
+      privileged and bypasses it, so isolation is `services.job_visible_to`.
 - [ ] Queue depth / DLQ alarms. Nothing watches `ApproximateNumberOfMessages`
       or tells anyone when a message lands in the DLQ.
 - [ ] Worker metrics beyond the log stream.
