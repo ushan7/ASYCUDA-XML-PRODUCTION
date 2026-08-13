@@ -158,18 +158,26 @@ _KEY_CASES = [(LIVE_OCR_PROVIDER, None), (LIVE_OCR_PROVIDER, "sk-live"),
 
 @pytest.mark.parametrize("provider,key", _KEY_CASES)
 def test_the_ocr_fallback_takes_the_branch_the_refusal_predicts(provider, key, monkeypatch):
+    from app.ocr import mistral as mistral_mod
     from app.ocr import service as ocr_service
 
     s = Settings(_env_file=None, auth_provider="local",
                  ocr_provider=provider, mistral_api_key=key, llm_api_key=None)
     monkeypatch.setattr(ocr_service, "get_settings", lambda: s)
+
+    class _Stub:                      # the BRANCH is under test, not the vendor client
+        name = "mistral"              # (the real one reads the cached global settings,
+                                      # so it would answer about the machine, not `s`)
+        def __init__(self) -> None:
+            assert s.resolved_mistral_key(), "constructed without a key"
+
+    monkeypatch.setattr(mistral_mod, "MistralOcrProvider", _Stub)
     ran = ocr_service.get_ocr_provider().name
 
-    assert (ran == "offline") == (s.live_ocr_key_missing() or provider != LIVE_OCR_PROVIDER)
     if s.live_ocr_key_missing():
         assert ran == "offline", "the refusal claims this deployment reads nothing"
     else:
-        assert (ran == "mistral") == (provider == LIVE_OCR_PROVIDER)
+        assert ran == ("mistral" if provider == LIVE_OCR_PROVIDER else "offline")
 
 
 @pytest.mark.parametrize("provider,key", [("openai", None), ("openai", "sk-live"),
