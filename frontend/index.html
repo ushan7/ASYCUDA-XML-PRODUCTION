@@ -722,6 +722,58 @@ function writeJobUrl(id){
 }
 
 // ---------------------------------------------------------------------- //
+// Links from the identity provider's emails land here as a URL FRAGMENT, and
+// this reads it exactly ONCE, at module scope, before React mounts.
+//
+// WHY A FRAGMENT AT ALL.  A reset link arrives in an email, so the recovery
+// token transits the user's browser whatever we do — the only way out of that
+// is this app minting its own reset tokens, which means owning reset instead of
+// letting the provider own it.  The provider's implicit flow puts the token
+// after the '#', which is the least-bad place: a fragment is never sent to a
+// server, so it appears in no access log and no Referer header.
+//
+// The trade, stated plainly: for the few milliseconds before the line below
+// runs, the token is somewhere page scripts can read — the thing this app
+// deliberately avoids for its OWN session, which lives in an HttpOnly cookie.
+// It is acceptable here and not there because this token's entire power is "set
+// this one account's password, once, within the hour". It cannot read a
+// declaration, it is spent immediately, and it is never stored.
+//
+// AT MODULE SCOPE, not in a component, for three reasons.  It runs before the
+// first render, so nothing can paint a URL still carrying a token.  It runs
+// before Shell asks /api/auth/session, so a user who is ALREADY SIGNED IN gets
+// the reset screen rather than the workspace with a live token in the address
+// bar.  And it runs before writeJobUrl() can replaceState the fragment away
+// without having read it.
+// ---------------------------------------------------------------------- //
+const EMAIL_LINK = (function(){
+  let raw = "";
+  try{ raw = (window.location.hash || "").replace(/^#/, ""); }catch(e){ return null; }
+  if(!raw || raw.indexOf("=") < 0) return null;
+  let p;
+  try{ p = new URLSearchParams(raw); }catch(e){ return null; }
+  const token = p.get("access_token") || "";
+  const error = p.get("error") || p.get("error_code") || "";
+  if(!token && !error) return null;              // somebody else's fragment
+  // Stripped FIRST, and unconditionally — including for the kinds handled below
+  // with no screen of their own. An expired confirmation link still carries a
+  // real token, and the address bar is where URLs get copied into chat messages
+  // and bug reports.
+  try{ history.replaceState(null, "", window.location.pathname + window.location.search); }
+  catch(e){}
+  if(error) return {kind:"error",
+                    detail:(p.get("error_description") || "").trim()
+                           || "That link is no longer valid. Request a new one."};
+  const type = p.get("type") || "";
+  if(type === "recovery") return {kind:"recovery", token:token};
+  // A confirmed signup redirects here the same way. There is nothing to do with
+  // its token — this app's session comes from the password grant — so it is
+  // discarded, and the only thing left to do is tell them they can sign in.
+  if(type === "signup") return {kind:"confirmed"};
+  return null;                                   // stripped, and nothing to say
+})();
+
+// ---------------------------------------------------------------------- //
 // Engine identity — DISPLAY ONLY.
 // The product never names the underlying vendors/models anywhere a user can
 // see; it presents one engine. maskEngine() is a render-time filter applied
@@ -4709,20 +4761,157 @@ function SignupPanel({onDone}){
     </form>);
 }
 
+// ---------------------------------------------------------------------- //
+// "I forgot my password" — the request half.
+//
+// ONE MESSAGE FOR EVERY OUTCOME, including an address with no account here.
+// The server answers 202 either way (and collapses the provider's own
+// address-keyed rate limit into it), so there is nothing for this screen to
+// branch on and nothing it could accidentally reveal.
+// ---------------------------------------------------------------------- //
+function ForgotPasswordPanel({onDone}){
+  const [email,setEmail] = useState("");
+  const [busy,setBusy] = useState(false);
+  const [err,setErr] = useState("");
+  const [sent,setSent] = useState("");
+
+  async function submit(e){
+    e.preventDefault();
+    if(busy) return;
+    setBusy(true); setErr("");
+    try{
+      const r = await fetch(`${API}/api/auth/password-reset`, {
+        method:"POST", headers:{"content-type":"application/json"},
+        body:JSON.stringify({email})});
+      const body = await r.json().catch(()=>({}));
+      if(!r.ok){
+        // 400 the address is not an address · 429 limited · 501 this deployment
+        // has no such thing · 502/503 ours. Each carries the sentence to show.
+        setErr(body.detail || `Could not request a reset (${r.status}).`);
+        return;
+      }
+      setSent(body.detail || "If that address has an account here, a reset link is "
+                             + "on its way.");
+    }catch(e){
+      setErr("Could not reach the server. Check that it is running, then try again.");
+    }finally{ setBusy(false); }
+  }
+
+  if(sent) return (
+    <div className="msg ok" style={{marginTop:8}}>
+      {sent} <a href="#" onClick={e=>{e.preventDefault(); onDone();}}>Back to sign in</a>
+    </div>);
+
+  return (
+    <form onSubmit={submit} style={{marginTop:4}}>
+      {err && <div className="msg b" style={{marginBottom:4}}>{maskEngine(err)}</div>}
+      <label htmlFor="ec-reset-email">Email</label>
+      <input id="ec-reset-email" name="email" type="email" autoComplete="email" autoFocus
+             value={email} onChange={e=>{setEmail(e.target.value); setErr("");}}/>
+      <button className="btn" type="submit" disabled={busy||!email}>
+        {busy ? <span style={{display:"inline-flex",alignItems:"center",gap:9}}><Spin tone="on"/> Sending…</span> : "Email me a reset link"}
+      </button>
+      <p className="foot">
+        The link works once and expires shortly after it arrives.{" "}
+        <a href="#" onClick={e=>{e.preventDefault(); onDone();}}>Back to sign in</a>
+      </p>
+    </form>);
+}
+
+// ---------------------------------------------------------------------- //
+// ...and the confirm half: the screen the emailed link lands on.
+//
+// The token came out of the URL fragment and was stripped from the address bar
+// before this rendered (EMAIL_LINK, near the top of this file). It is held in a
+// prop for the length of one request and posted to our own server, which spends
+// it against the identity provider. It never becomes this app's session — the
+// server issues none here — so a successful reset ends on the sign-in form.
+// ---------------------------------------------------------------------- //
+function ResetPasswordScreen({token, onDone}){
+  const [password,setPassword] = useState("");
+  const [again,setAgain] = useState("");
+  const [busy,setBusy] = useState(false);
+  const [err,setErr] = useState("");
+  const mismatch = !!(password && again && password !== again);
+
+  async function submit(e){
+    e.preventDefault();
+    if(busy || mismatch) return;
+    setBusy(true); setErr("");
+    try{
+      const r = await fetch(`${API}/api/auth/password-reset/confirm`, {
+        method:"POST", headers:{"content-type":"application/json"},
+        body:JSON.stringify({access_token:token, password})});
+      const body = await r.json().catch(()=>({}));
+      if(!r.ok){
+        // 400 expired/spent link, or a password the policy refused · 429 · 502.
+        setErr(body.detail || `Could not change the password (${r.status}).`);
+        setPassword(""); setAgain("");
+        return;
+      }
+      // Drop whatever session this browser was holding. Usually there is none —
+      // the person resetting a password could not sign in — but on a shared
+      // machine there may be, and a password change is the moment to prove the
+      // new one rather than ride the old session.
+      try{ await fetch(`${API}/api/auth/logout`, {method:"POST"}); }catch(e){}
+      onDone(body.detail || "Your password has been changed. Sign in with the new one.");
+    }catch(e){
+      setErr("Could not reach the server. Check that it is running, then try again.");
+    }finally{ setBusy(false); }
+  }
+
+  return (
+    <div className="loginpage">
+      <form className="logincard" onSubmit={submit}>
+        <h1>Easy Customs</h1>
+        <p className="sub">Choose a new password for your account.</p>
+        {err && <div className="msg b" style={{marginBottom:4}}>{maskEngine(err)}</div>}
+        <label htmlFor="ec-reset-pass">New password</label>
+        <input id="ec-reset-pass" name="new-password" type="password"
+               autoComplete="new-password" autoFocus
+               value={password} onChange={e=>{setPassword(e.target.value); setErr("");}}/>
+        <label htmlFor="ec-reset-pass2">New password again</label>
+        <input id="ec-reset-pass2" name="confirm-password" type="password"
+               autoComplete="new-password"
+               value={again} onChange={e=>{setAgain(e.target.value); setErr("");}}/>
+        {mismatch && <div className="msg w" style={{marginBottom:4}}>
+          Those two do not match.</div>}
+        <button className="btn" type="submit" disabled={busy||!password||!again||mismatch}>
+          {busy ? <span style={{display:"inline-flex",alignItems:"center",gap:9}}><Spin tone="on"/> Saving…</span> : "Set new password"}
+        </button>
+        <p className="foot">
+          You sign in with the new password afterwards — this link does not sign you in.{" "}
+          <a href="#" onClick={e=>{e.preventDefault(); onDone("");}}>Cancel</a>
+        </p>
+      </form>
+    </div>);
+}
+
 function LoginScreen({onSignedIn, notice}){
   const [username,setUsername] = useState("");
   const [password,setPassword] = useState("");
   const [busy,setBusy] = useState(false);
   const [err,setErr] = useState("");
   const [signupOpen,setSignupOpen] = useState(false);   // does this deployment offer it
+  const [resetOpen,setResetOpen] = useState(false);     // ...and this one
   const [registering,setRegistering] = useState(false); // which form is showing
+  const [forgot,setForgot] = useState(false);
 
+  // TWO questions, not one. Registration is gated on EASYCUSTOMS_ALLOW_SELF_SIGNUP
+  // and is off by default; password reset is gated on the identity provider
+  // alone, because a deployment that creates its accounts by hand still has users
+  // who forget passwords. Reusing one answer for both would hide "forgot your
+  // password?" on almost every deployment.
   useEffect(()=>{
     let alive = true;
     fetch(`${API}/api/auth/signup`)
       .then(r => r.ok ? r.json() : null)
       .then(s => { if(alive) setSignupOpen(!!(s && s.enabled)); })
       .catch(()=>{});                       // no link is the safe default
+    fetch(`${API}/api/auth/password-reset`)
+      .then(r => r.ok ? r.json() : null)
+      .then(s => { if(alive) setResetOpen(!!(s && s.enabled)); })
+      .catch(()=>{});
     return ()=>{ alive = false; };
   },[]);
 
@@ -4757,6 +4946,15 @@ function LoginScreen({onSignedIn, notice}){
       </div>
     </div>);
 
+  if(forgot) return (
+    <div className="loginpage">
+      <div className="logincard">
+        <h1>Easy Customs</h1>
+        <p className="sub">ASYCUDA World XML Generator · reset your password.</p>
+        <ForgotPasswordPanel onDone={()=>setForgot(false)}/>
+      </div>
+    </div>);
+
   return (
     <div className="loginpage">
       <form className="logincard" onSubmit={submit}>
@@ -4775,6 +4973,7 @@ function LoginScreen({onSignedIn, notice}){
         </button>
         <p className="foot">
           Your session stays open for 24 hours, then asks for the password again.
+          {resetOpen && <> · <a href="#" onClick={e=>{e.preventDefault(); setErr(""); setForgot(true);}}>Forgot your password?</a></>}
           {signupOpen && <> · <a href="#" onClick={e=>{e.preventDefault(); setErr(""); setRegistering(true);}}>Create an account</a></>}
         </p>
       </form>
@@ -4789,7 +4988,14 @@ function LoginScreen({onSignedIn, notice}){
 // ---------------------------------------------------------------------- //
 function Shell(){
   const [session,setSession] = useState(undefined);   // undefined = still asking
-  const [notice,setNotice] = useState("");
+  // An email link that arrived with something to say. Read once, at module
+  // scope, and already stripped from the address bar.
+  const [notice,setNotice] = useState(
+    EMAIL_LINK && EMAIL_LINK.kind === "error" ? EMAIL_LINK.detail :
+    EMAIL_LINK && EMAIL_LINK.kind === "confirmed"
+      ? "Your email address is confirmed. Sign in to continue." : "");
+  const [recovery,setRecovery] = useState(
+    EMAIL_LINK && EMAIL_LINK.kind === "recovery" ? EMAIL_LINK.token : "");
 
   useEffect(()=>{
     let alive = true;
@@ -4826,6 +5032,13 @@ function Shell(){
     setNotice(""); setSession(null);
   }
 
+  // BEFORE the session decision, deliberately. Somebody resetting a password
+  // usually has no session — but on a shared machine they may, and answering
+  // that case with the workspace would leave a live recovery token in a browser
+  // that just navigated away from the only screen that could spend it.
+  if(recovery) return <ResetPasswordScreen token={recovery} onDone={msg=>{
+    setRecovery(""); setNotice(msg); setSession(null);
+  }}/>;
   if(session === undefined) return (
     <main><div className="card"><div className="row" style={{gap:10}}>
       <Spin size="lg"/><span className="muted">Checking your session…</span></div></div></main>);

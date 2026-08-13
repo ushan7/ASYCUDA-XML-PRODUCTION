@@ -549,13 +549,137 @@ def reset_signup_limiter(db=None) -> None:
     """Empty the signup window — a test hook, and the manual unlock for a real
     caller who has been limited by a misconfigured `trusted_proxy_hops` (behind a
     load balancer at hops=0 every caller shares one bucket).  Opens its own
-    session when not given one."""
+    session when not given one.
+
+    Deliberately does not touch `password_reset_attempt`, for the same reason
+    `reset_throttle` does not touch this table: an operator unlocking somebody's
+    registrations has not been asked to unlock anything else.
+    """
     from .database import SessionLocal
     from .models import SignupAttempt
 
     session = db or SessionLocal()
     try:
         session.execute(sql_delete(SignupAttempt))
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        if db is None:
+            session.close()
+
+
+# --------------------------------------------------------------------------- #
+# Password-reset limiter — a THIRD counter, sharing state with neither.
+#
+# Written out rather than factored into a helper shared with the signup limiter
+# above, even though the two-window shape is the same.  These three counters
+# exist BECAUSE they must not be able to clear, prune or exhaust one another; a
+# shared implementation is one edit away from a shared table, and the property
+# being protected is exactly the one such an edit would quietly remove.
+#
+# WHAT IT COUNTS is every reset request this app passed to the identity provider,
+# WHATEVER the provider then answered.  That is not the signup rule and the
+# difference is deliberate: a reset request that produced no email (an address
+# with no account) must cost the same budget as one that did, or "how many tries
+# do I have left" becomes the account-existence oracle after the status code has
+# already been made constant.  Only an outage — where we never got an answer at
+# all, for any address — goes uncounted, which is address-independent and so
+# tells a prober nothing.
+#
+# Keyed on the caller, never on the address.  The residual that follows and
+# cannot be closed here: a distributed attacker mailbombing ONE victim spreads
+# across callers this counter never sees, and what bounds that is the provider's
+# own per-address send cooldown (Auth -> Rate limits, which the deployment
+# checklist already says to set).
+#
+# The windows are wider than the signup ones because the actions differ in cost.
+# A registration creates an account that can spend real money at Mistral and
+# OpenAI; a reset request sends one email and creates nothing.  A shared office
+# behind one NAT address is the case these numbers are chosen for.
+# --------------------------------------------------------------------------- #
+_RESET_MAX_PER_HOUR = 5
+_RESET_MAX_PER_DAY = 20
+_RESET_HOUR_SECONDS = 3600
+_RESET_DAY_SECONDS = 86_400
+
+
+class PasswordResetLimitUnavailable(RuntimeError):
+    """The reset count could not be read, so the limit cannot be enforced."""
+
+
+def password_reset_retry_after(db, client: str) -> int:
+    """Seconds before this caller may request another reset link, or 0 to go
+    ahead.
+
+    Two windows, as at signup: the hourly one stops a burst, the daily one stops
+    a script that spaces its requests an hour apart.  The caller waits for
+    whichever is longer.
+
+    Raises PasswordResetLimitUnavailable rather than returning 0 when the store
+    cannot be read — FAIL CLOSED, exactly as the other two do.  An unreadable
+    counter that answered "go ahead" would turn a database fault into an
+    unmetered mail relay pointed at this deployment's own sending reputation.
+    """
+    from .models import PasswordResetAttempt
+
+    now = datetime.now(timezone.utc)
+    day_cutoff = now - timedelta(seconds=_RESET_DAY_SECONDS)
+    try:
+        stamps = [_aware(s) for s in db.scalars(
+            select(PasswordResetAttempt.created_at)
+            .where(PasswordResetAttempt.client_key == client,
+                   PasswordResetAttempt.created_at >= day_cutoff)
+            .order_by(PasswordResetAttempt.created_at))]
+    except Exception as e:
+        raise PasswordResetLimitUnavailable(str(e)) from e
+
+    wait = 0.0
+    within_hour = [s for s in stamps if s >= now - timedelta(seconds=_RESET_HOUR_SECONDS)]
+    if len(within_hour) >= _RESET_MAX_PER_HOUR:
+        wait = max(wait, _RESET_HOUR_SECONDS - (now - within_hour[0]).total_seconds())
+    if len(stamps) >= _RESET_MAX_PER_DAY:
+        wait = max(wait, _RESET_DAY_SECONDS - (now - stamps[0]).total_seconds())
+    return max(1, int(wait)) if wait > 0 else 0
+
+
+def record_password_reset(db, client: str) -> None:
+    """Count one reset request, and prune the window while we are here.
+
+    Never raises, for the same reason `record_signup` does not: by the time this
+    is called the provider has already been asked and an email may already be in
+    flight, and this app cannot recall it — so failing the request here would tell
+    a caller their reset failed when it did not.  Logged at ERROR instead, because
+    a limiter that has silently stopped counting is the whole control.
+
+    Pruning uses the LONGEST window, or the daily limit would be made of rows the
+    hourly prune had already deleted.
+    """
+    from .models import PasswordResetAttempt
+
+    try:
+        db.add(PasswordResetAttempt(client_key=client))
+        db.execute(sql_delete(PasswordResetAttempt).where(
+            PasswordResetAttempt.created_at
+            < datetime.now(timezone.utc) - timedelta(seconds=_RESET_DAY_SECONDS)))
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        log.error("could not record a password-reset request for %s — the reset limiter "
+                  "is not counting: %s", client, e)
+
+
+def reset_password_reset_limiter(db=None) -> None:
+    """Empty the reset window — a test hook, and the manual unlock for a caller
+    stranded by a misconfigured `trusted_proxy_hops`.  Opens its own session when
+    not given one, and touches neither of the other two tables."""
+    from .database import SessionLocal
+    from .models import PasswordResetAttempt
+
+    session = db or SessionLocal()
+    try:
+        session.execute(sql_delete(PasswordResetAttempt))
         session.commit()
     except Exception:
         session.rollback()

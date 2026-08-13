@@ -12,6 +12,12 @@
       "runtimeExecutable": "backend/.venv/Scripts/python.exe",
       "runtimeArgs": ["-m", "uvicorn", "app.main:app", "--app-dir", "backend", "--port", "8010"],
       "port": 8010
+    },
+    {
+      "name": "backend-multiaccount",
+      "runtimeExecutable": "backend/.venv/Scripts/python.exe",
+      "runtimeArgs": ["-c", "import os, uvicorn; os.environ.update(EASYCUSTOMS_AUTH_PROVIDER='supabase', EASYCUSTOMS_ALLOW_SELF_SIGNUP='true', EASYCUSTOMS_SUPABASE_URL='https://offline.invalid', EASYCUSTOMS_SUPABASE_ANON_KEY='offline-not-a-real-key', SUPABASE_URL='https://offline.invalid', SUPABASE_ANON_KEY='offline-not-a-real-key', NEXT_PUBLIC_SUPABASE_URL='https://offline.invalid', NEXT_PUBLIC_SUPABASE_ANON_KEY='offline-not-a-real-key', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY='offline-not-a-real-key'); uvicorn.run('app.main:app', port=8020, app_dir='backend')"],
+      "port": 8020
     }
   ]
 }

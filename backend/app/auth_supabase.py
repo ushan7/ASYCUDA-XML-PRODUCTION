@@ -42,6 +42,11 @@ _TOKEN_PATH = "/auth/v1/token"
 # ...and for "create an account".  Both are anon-key endpoints; neither needs
 # the service-role key, which is why registration can live here at all.
 _SIGNUP_PATH = "/auth/v1/signup"
+# ...and for "email me a recovery link", and "set the password of whoever this
+# token belongs to".  Also anon-key endpoints: `/recover` needs no credential at
+# all, and `/user` authenticates with the RECOVERY token the caller brings.
+_RECOVER_PATH = "/auth/v1/recover"
+_USER_PATH = "/auth/v1/user"
 
 
 class SupabaseAuthUnavailable(Exception):
@@ -271,4 +276,165 @@ def sign_up(email: str, password: str) -> SignupOutcome:
     # 401/403 means OUR anon key is wrong or the project moved; 5xx is theirs.
     # Neither is the caller's fault and neither is a definite answer about the
     # account, so it is an outage, not a refusal.
+    raise SupabaseAuthUnavailable(f"unexpected status {status}")
+
+
+# --------------------------------------------------------------------------- #
+# Password reset, in two halves.
+#
+# Supabase owns the recovery token, its expiry, the email and the link in it.
+# This app owns neither, and issues NO session from either half: the recovery
+# token's entire power stays "set this one account's password, once, within the
+# hour", and a user who has just reset their password signs in afterwards like
+# anybody else.
+#
+# THE FIRST HALF ANSWERS THE SAME 202 FOR EVERYTHING, and unlike registration it
+# does so for the provider's 429 as well.  That difference is the point.  GoTrue
+# applies a per-ADDRESS cooldown to the mail it sends, so "an email was actually
+# sent for this address" is observable as a 429 on a second request seconds after
+# the first — which is precisely the account-existence oracle this route exists
+# to avoid.  Our own limiter is keyed on the CALLER (auth.client_key), never on
+# the address, so it is the only thing that ever tells somebody to wait.
+#
+# The cost of collapsing everything, stated rather than hidden: with SMTP broken
+# the route reports success and no mail arrives.  That is the same trade the
+# deployment checklist already names for confirmation email, it is visible in the
+# log at ERROR, and the alternative is strictly worse — GoTrue only attempts a
+# send for an address that EXISTS, so a delivery failure surfaced to the caller
+# would be the cleanest oracle in the whole app.
+# --------------------------------------------------------------------------- #
+def request_password_reset(email: str) -> None:
+    """Ask Supabase to email a recovery link.  Returns nothing on purpose.
+
+    There is no outcome to return.  Every definite answer — sent, unknown
+    address, address-cooldown, even a delivery failure — is the same 202 to the
+    caller, so a return value would only be something for a future edit to leak.
+    What an operator needs is logged here.
+
+    Raises SupabaseAuthUnavailable ONLY when the request could not be made at all
+    (no transport) or when Supabase refuses OUR credentials — both of which are
+    identical for every address and therefore say nothing about any of them.
+    """
+    import httpx
+
+    settings = get_settings()
+    base = settings.supabase_url.rstrip("/")
+    payload = {"email": email}
+    # NEVER from the request body.  A caller-supplied redirect is an open redirect
+    # that mails a recovery token wherever the caller asked; this one comes from
+    # the deployment's own configuration, and Supabase's Redirect URLs allow-list
+    # is the second lock.  Unset (the default) omits it, and the link lands on the
+    # project's Site URL exactly as it does today.
+    redirect_to = settings.password_reset_redirect_url.strip()
+    if redirect_to:
+        payload["redirect_to"] = redirect_to
+    try:
+        response = httpx.post(
+            f"{base}{_RECOVER_PATH}",
+            headers={"apikey": settings.supabase_anon_key,
+                     "Content-Type": "application/json"},
+            json=payload,
+            timeout=settings.supabase_timeout_seconds,
+        )
+    except Exception as e:
+        raise SupabaseAuthUnavailable(f"{type(e).__name__}: {e}") from e
+
+    status = response.status_code
+    if status in (401, 403):
+        # Our anon key is wrong or the project moved.  The same failure for every
+        # address, so raising it distinguishes nothing — and it is a
+        # misconfiguration an operator has to see rather than one to swallow.
+        raise SupabaseAuthUnavailable(f"supabase refused our key ({status})")
+    if status == 200:
+        log.info("supabase accepted a password-reset request")
+        return
+    code, message = _error_fields(response)
+    if status == 429:
+        # NOT forwarded — see the module note above.  Logged at INFO because on a
+        # correctly configured project this is a user clicking twice, not a fault.
+        log.info("supabase rate-limited a password-reset request: %.200s",
+                 message or code)
+        return
+    # Everything else, including 5xx and a failed send.  ERROR, because the user
+    # has been told a link is on its way and this is how an operator finds out it
+    # was not.
+    log.error("supabase did not send a password-reset email (%s): %.200s — the caller "
+              "was told a link is on its way, as it is for every other outcome. Check "
+              "Auth -> Emails / SMTP if this repeats.", status, message or code)
+
+
+@dataclass(frozen=True)
+class PasswordResetOutcome:
+    """What became of "set this password using this recovery token".
+
+    Unlike the request half, this one CAN answer honestly: the caller supplied
+    the token, so telling them it is expired reveals nothing they did not bring
+    with them, and there is no address in the question at all.
+    """
+    accepted: bool
+    # Set only when `accepted` is False: which refusal, in OUR vocabulary.
+    code: str = ""
+    # Safe to show ONLY for a password-policy refusal, which is about what the
+    # caller just typed.  Empty for everything else.
+    message: str = ""
+    retry_after: int = 0
+
+
+def set_password_with_recovery_token(access_token: str, password: str) -> PasswordResetOutcome:
+    """Spend a recovery token on a new password.  Raises SupabaseAuthUnavailable
+    for anything that is not a definite answer.
+
+    NO SESSION IS ISSUED, here or by the caller.  Supabase's answer carries the
+    user object and this function reads none of it: a recovery token proves
+    control of a mailbox, and this app's session is minted from a password grant
+    or from nothing.  Not even an `account_seen` row is written — that record is
+    deliberately proof-of-sign-in (models.AccountSeen), and a reset is not one.
+    """
+    import httpx
+
+    settings = get_settings()
+    base = settings.supabase_url.rstrip("/")
+    try:
+        response = httpx.put(
+            f"{base}{_USER_PATH}",
+            headers={"apikey": settings.supabase_anon_key,
+                     "Authorization": f"Bearer {access_token}",
+                     "Content-Type": "application/json"},
+            json={"password": password},
+            timeout=settings.supabase_timeout_seconds,
+        )
+    except Exception as e:
+        raise SupabaseAuthUnavailable(f"{type(e).__name__}: {e}") from e
+
+    status = response.status_code
+    if status == 200:
+        return PasswordResetOutcome(accepted=True)
+
+    code, message = _error_fields(response)
+    haystack = f"{code} {message}".lower()
+    if status in (401, 403):
+        # Expired, already spent, or never ours.  One answer for all three: which
+        # it was is not information the holder of a dead link can act on
+        # differently, and the remedy is the same sentence either way.
+        log.info("a password-reset token was refused by supabase (%s)", status)
+        return PasswordResetOutcome(accepted=False, code="INVALID_TOKEN")
+    if status in (400, 422):
+        if "password" in haystack:
+            # The one refusal whose text is forwarded, exactly as at signup: it is
+            # about what the caller just typed, and it is the DEPLOYMENT'S policy
+            # (length, leaked-password checking, "must differ from the old one")
+            # that should be doing the telling rather than a sentence here that
+            # drifts from it.
+            return PasswordResetOutcome(accepted=False, code="WEAK_PASSWORD",
+                                        message=message or "That password does not meet "
+                                                           "this site's password policy.")
+        log.info("supabase refused a password update (%s): %.200s", status, message or code)
+        return PasswordResetOutcome(accepted=False, code="INVALID_TOKEN")
+    if status == 429:
+        # Forwarded here, unlike in the request half, and for a reason that does
+        # not generalise: this caller already holds a valid token for a specific
+        # account, so a wait tells them nothing they did not already know.
+        log.warning("supabase rate-limited a password update (429): %.200s", message)
+        return PasswordResetOutcome(accepted=False, code="TOO_MANY_ATTEMPTS",
+                                    retry_after=_retry_after(response, message))
     raise SupabaseAuthUnavailable(f"unexpected status {status}")

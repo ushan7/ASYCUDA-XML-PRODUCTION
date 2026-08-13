@@ -1,8 +1,9 @@
 # Plan — self-service signup, password reset, and the admin/member role
 
-**Status: steps 0, 1, 2 and 3 are implemented. Step 4 is plan only.** See the
-"Order of work" table at the end for what each step covers, and the three
-"Where step N departed from this plan" sections for the decisions each changed.
+**Status: every step is implemented.** See the "Order of work" table at the end
+for what each step covers, and the four "Where step N departed from this plan"
+sections for the decisions each changed — those, not the body above them, are the
+design of record wherever the two disagree.
 
 Follows `docs/ADR-001-identity-and-tenancy.md`, which decides that the account is
 the tenant and that a platform admin manages accounts and quotas and cannot read
@@ -44,8 +45,8 @@ single-operator install has no registration and must not grow one.
 | Route | Public? | Calls Supabase | Returns |
 | --- | --- | --- | --- |
 | `POST /api/auth/signup` | yes — add to `_PUBLIC_API_PATHS` | `POST /auth/v1/signup` | 202 + "check your email", **never a session** — *landed with step 3, plus a `GET` on the same path so the sign-in screen knows whether to offer it; see departures 4 and 7* |
-| `POST /api/auth/password-reset` | yes — add to `_PUBLIC_API_PATHS` | `POST /auth/v1/recover` | 202, **always**, regardless of whether the email exists |
-| `POST /api/auth/password-reset/confirm` | yes — add to `_PUBLIC_API_PATHS` | `PUT /auth/v1/user` with the recovery token | 200 + "sign in with your new password" |
+| `POST /api/auth/password-reset` | yes — add to `_PUBLIC_API_PATHS` | `POST /auth/v1/recover` | 202, **always**, regardless of whether the email exists — *landed with step 4, plus a `GET` on the same path, and "always" was extended to cover the provider's own 429 and its delivery failures; see departures 1 and 2 there* |
+| `POST /api/auth/password-reset/confirm` | yes — add to `_PUBLIC_API_PATHS` | `PUT /auth/v1/user` with the recovery token | 200 + "sign in with your new password" — *landed with step 4* |
 
 Three details that are decisions, not implementation:
 
@@ -690,7 +691,145 @@ password is not refused because a metadata upsert lost a race with a second tab.
 **Not built, and not owed by this step:** an admin screen in the SPA (still), and
 anything belonging to step 4. `POST /api/auth/password-reset` and its confirm
 route do not exist, and the hash-fragment flow the plan recommends for them is
-untouched.
+untouched. *(Both landed with step 4, which also closed a token this step was
+leaving in the address bar: a confirmed signup redirects here as
+`#access_token=…&type=signup` and the SPA ignored it — see departure 8 there.)*
+
+## Where step 4 departed from this plan
+
+Nine decisions, taken when the code was read against the plan and reported before
+implementation. All are now the design of record.
+
+**1. THE PUBLIC SURFACE GREW BY TWO, AND HERE IS THE DECISION.** `CLAUDE.md` and
+`tests/test_auth.py` record the public paths as a closed set precisely so a
+fourth is decided rather than added. The two added are
+`POST|GET /api/auth/password-reset` and `POST /api/auth/password-reset/confirm`,
+both public because the person who needs them cannot sign in by definition. What
+each tells a stranger: the request half, nothing about any address (one 202 for
+every outcome) plus its own caller's limiter state; the confirm half, whether the
+token *it was given* is still valid, which the caller brought with them; the GET,
+which provider this deployment runs, which the signup POST's 501-vs-403 split
+already told anybody who asked.
+
+**The `GET` is not foldable into `GET /api/auth/signup`**, which the plan might
+have suggested since both answer "should the sign-in screen draw this link".
+Registration is gated on `allow_self_signup`, reset on the provider, and that flag
+is **off by default** — one answer for both would hide password reset on every
+deployment that never opened registration, which is most of them. Confirm is not
+foldable into the request path either: a route that means two things depending on
+which fields arrived is the defect this plan names for "sometimes returns a
+session".
+
+**No path for the landing page.** `main._needs_login` already returns False for
+everything outside `/api/`, so the reset screen is a client-side branch of a
+shell that was always public.
+
+**2. THE PROVIDER'S 429 IS AN ORACLE HERE, AND IS NOT FORWARDED.** The plan says
+reset "always answers 202" and then leaves the provider's own statuses
+unenumerated. GoTrue applies a per-**address** cooldown to the mail it sends, so
+a prober who asks twice seconds apart reads *"an email actually went out for this
+address"* off the second answer. It collapses into the same 202. Our limiter is
+keyed on the **caller** (`auth.client_key`) and is the only thing that ever tells
+anybody to wait.
+
+**A delivery failure is not surfaced either, which is the sharper version of the
+same trap.** Supabase only *attempts* a send for an address that exists, so a
+500 `error_sending_recovery_email` reported to the caller would be the cleanest
+existence oracle in the app. Everything except a transport failure or a refusal of
+**our own credentials** — both identical for every address — answers 202 and goes
+to the log at `ERROR`. The cost, stated rather than hidden: with SMTP broken the
+route reports success and no mail arrives. That is the same trade the deployment
+checklist already names for the confirmation email.
+
+**3. A FINDING ABOUT STEP 3, REPORTED AND DELIBERATELY NOT FIXED HERE.**
+`POST /api/auth/signup` forwards the provider's 429 with its `Retry-After`
+(`main.signup`, asserted by `test_a_provider_rate_limit_is_passed_on_as_one`),
+which is the same address-keyed signal. Two requests seconds apart: a new or
+unconfirmed address answers 429 (the confirmation mail just went out and the
+cooldown applies), an already-registered-and-confirmed one answers 202 both times
+(obfuscated, no mail, so no cooldown). It is cheaper than it looks, because a
+refused signup is deliberately not counted, so the second probe is free against
+our own limiter. Left in place on a decision taken when it was reported: changing
+merged, asserted behaviour inside a commit scoped to password reset is how a
+security control gets altered by a commit nobody reviewed for it. The fix is
+collapsing that branch into the same 202.
+
+**4. A THIRD LIMITER, AND THE PLAN DISCUSSES NONE.** The plan spends sixty lines
+on the signup limiter and says nothing about reset, which is a public endpoint
+that spends an outbound email per call. `password_reset_attempt` is its own table
+for the reason `signup_attempt` is: three resets must not exhaust a caller's
+registration budget, three registrations must not stop somebody recovering an
+account (the direction that locks a real customer out of the only route back in),
+and `reset_signup_limiter` must not empty a window nobody asked it about. 5/hour
+and 20/day — wider than signup's because a registration creates an account that
+can spend money at Mistral and OpenAI and a reset request sends one email.
+
+**It counts every request that reached the provider, whatever came back** — not
+signup's rule, and the difference is the point. Counting only the ones that
+produced an email would make *how many tries you have left* vary by whether the
+address exists, which is the oracle re-entering through the budget after the
+status code closed the front door. Only an outage goes uncounted, which is
+address-independent.
+
+**The residual it cannot cover, named rather than papered over:** a per-caller key
+does nothing about a distributed attacker mailbombing one victim. What bounds that
+is the provider's per-address send cooldown, which is why Auth → Rate limits
+(email) is now a row in the deployment table rather than a footnote.
+
+**5. THE CONFIRM ROUTE IS NOT RATE-LIMITED, ON PURPOSE.** There is no secret to
+guess: the token is provider-signed, so a wrong one is refused by cryptography and
+a right one is already the caller's. Counting attempts would lock a user out of
+finishing a reset because they mistyped a new password. What is left is the
+outbound call an invalid token costs, which a JWT-shape check makes free for
+anything not token-shaped and the provider's own limits bound beyond that. Stated
+as an accepted residual rather than left to be discovered
+(`test_the_confirm_is_deliberately_not_counted`).
+
+**6. `redirect_to` IS CONFIGURATION THE PLAN NEVER MENTIONS.** Without one,
+GoTrue uses the project's Site URL — a single value for the whole project — so a
+second deployment sharing it mails its users a link to the first one's origin.
+`password_reset_redirect_url` is unset by default (send nothing, Site URL
+decides), so this step changes nothing in a dashboard. It is **never** read from a
+request — a caller-supplied redirect is an open redirect that mails a recovery
+token wherever the caller asked — and a value Supabase would silently ignore is
+refused at boot, because the failure mode is not an error but every user getting a
+link to another origin.
+
+**7. THE FRAGMENT IS READ AT MODULE SCOPE, BEFORE THE SESSION CHECK.** The plan's
+landing flow assumes the visitor is signed out. `Shell` asks `/api/auth/session`
+first and renders the workspace when it succeeds, so a signed-in user clicking a
+reset link would have got the workspace with a live token still in the address bar.
+`EMAIL_LINK` is evaluated once at script parse — before the first render, before
+the session fetch, and before `writeJobUrl` could `replaceState` the fragment away
+without having read it — and the reset screen takes precedence over both the
+workspace and the sign-in form. A successful reset also drops whatever session the
+browser held, because a password change is the moment to prove the new one.
+
+**8. THE PLAN NEVER SAYS WHAT AN ERROR FRAGMENT DOES, AND IT IS THE COMMON CASE.**
+A link older than the hour, or one already clicked, is not a token at all: GoTrue
+redirects with `#error=access_denied&error_code=otp_expired&…`. Unhandled, the
+user lands on a bare sign-in screen with no explanation. It now shows the
+provider's own sentence.
+
+**And the same handler closes a live token this app was already leaving in the
+address bar.** Step 3's confirmation links land here as `#access_token=…&type=signup`;
+the SPA ignored them, so a Supabase access token sat in the URL after every email
+confirmation, ready to be copied into a bug report. The fragment is stripped
+unconditionally for every kind, and `type=signup` now says "your email address is
+confirmed, sign in".
+
+**9. THE DENY-LIST IS NOT CONSULTED ON EITHER ROUTE.** Refusing a barred address
+differently is the oracle again. It is consulted where it decides something — at
+sign-in — so a disabled account can reset its password and still cannot get in,
+asserted directly. Nor does a reset write an `account_seen` row: that record is
+deliberately proof-of-**sign-in** (departure 8 of step 3), and controlling a
+mailbox is not one. The sign-in that follows writes it.
+
+**Not built, and not owed by this step:** an admin screen in the SPA (still). No
+`Settings` field was added other than `password_reset_redirect_url`, whose reader
+is `auth_supabase.request_password_reset`, so `tests/test_config_is_consumed.py`
+needed no exemption. `services.job_visible_to` is untouched, and neither new table
+is read by it.
 
 ## Order of work
 
@@ -703,7 +842,7 @@ without it.
 | 1 | `account_quota` + resolution order; lower the deployment default; boot refusal | The spend limit has to exist before accounts can create themselves | **done** — see "Where step 1 departed from this plan" |
 | 2 | `account_role` + `require_admin` + admin routes | Somebody must be able to *raise* a cap before there are users hitting one | **done** — see "Where step 2 departed from this plan" |
 | 3 | Signup + confirmation + the success-counting limiter | Only now is a self-registered account both capped and supportable | **done** — see "Where step 3 departed from this plan" |
-| 4 | Password reset | The smallest piece, and the only one that needs an SPA route; nothing else depends on it | planned |
+| 4 | Password reset | The smallest piece, and the only one that needs an SPA route; nothing else depends on it | **done** — see "Where step 4 departed from this plan" |
 
 Doing 3 before 1 and 2 produces a user who registers, hits the cap, and finds
 that nobody in the system has the power to help them.
