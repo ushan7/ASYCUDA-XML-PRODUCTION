@@ -47,11 +47,58 @@ produces synthetic paperwork; that is what the smoke test uses.
   waiting on Mistral and OpenAI, not computing — extraction is I/O bound. Disk
   matters less than you would think once documents live in S3; 20 GB covers the
   OS, the venv and the logs.
-* **A dedicated service user.** Both units run as `User=easycustoms`. Create it
-  with no login shell and no password.
+* **A dedicated service user, with a home directory of its own.** Both units run
+  as `User=easycustoms`. Create it with no login shell and no password.
 
 ```bash
-sudo useradd --system --home-dir /opt/easycustoms --shell /usr/sbin/nologin easycustoms
+sudo useradd --system --create-home --home-dir /home/easycustoms --shell /usr/sbin/nologin easycustoms
+```
+
+**`--create-home` is not optional, and the home must not be `/opt/easycustoms`.**
+This line used to say `--home-dir /opt/easycustoms` with no `--create-home`, and
+the two halves of this section then contradicted each other. A `--system` user
+gets no home unless one is asked for, so there was no `~/.ssh` for a deploy key
+to live in; and had there been, it would have sat inside the clone target, which
+`git clone` refuses to write into once it is not empty.
+
+**Keep the home outside `/opt/easycustoms` even now that is fixed.** This is the
+reasoning rather than the command, because the command looks like an arbitrary
+choice somebody could tidy back: both units set `ProtectHome=true`, so with the
+home at `/home/easycustoms` the running service **cannot read the deploy key at
+all**. Move the home back inside the repo and that key becomes readable by the
+process whose day job is parsing uploaded PDFs and calling two vendor APIs. It is
+the argument that keeps the service-role key out of this deployment (§10),
+applied to the credential that can read your source.
+
+* **A read-only deploy key, if the repo is private.** Generate it *as the service
+  user*, so it lands in that user's `~/.ssh` and stays there when someone later
+  runs `git pull`.
+
+```bash
+sudo -u easycustoms -H ssh-keygen -t ed25519 -C "<staging-host>" -f /home/easycustoms/.ssh/github_deploy -N ""
+```
+
+Add the public half at **repo → Settings → Deploy keys**, with **"Allow write
+access" unticked** — this box only ever reads. Then point git at it, and pin the
+forge's host key so a substituted host fails closed rather than prompting a user
+who has no tty to answer:
+
+```bash
+sudo -u easycustoms -H sh -c 'ssh-keyscan -t ed25519 github.com > /home/easycustoms/.ssh/known_hosts'
+```
+
+Verify that pin against the fingerprints the forge publishes before trusting it
+(`ssh-keygen -lf /home/easycustoms/.ssh/known_hosts`), then write
+`/home/easycustoms/.ssh/config`, owned by `easycustoms` and mode 600:
+
+```
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile /home/easycustoms/.ssh/github_deploy
+    IdentitiesOnly yes
+    StrictHostKeyChecking yes
+    UserKnownHostsFile /home/easycustoms/.ssh/known_hosts
 ```
 
 * **The repo at `/opt/easycustoms`, as a git clone — never a folder copy.** The
@@ -59,15 +106,32 @@ sudo useradd --system --home-dir /opt/easycustoms --shell /usr/sbin/nologin easy
   nothing to check out.
 
 ```bash
-sudo git clone <your-repo-url> /opt/easycustoms && sudo chown -R easycustoms:easycustoms /opt/easycustoms
+sudo install -d -o easycustoms -g easycustoms -m 755 /opt/easycustoms
 ```
 
 ```bash
-sudo -u easycustoms python3 -m venv /opt/easycustoms/backend/.venv
+sudo -u easycustoms -H git clone <your-repo-url> /opt/easycustoms
+```
+
+**Clone as the service user — not with `sudo git clone`.** `sudo` runs git as
+*root*, which reads `/root/.ssh/` and never sees the key generated above: on a
+private repo it simply fails to authenticate. `-H` is what sets `HOME`, and
+without it `~/.ssh/config` is not found even under the right user.
+
+**That form is needed for every later git command too**, including all of §14's
+rollback path. Run as `ubuntu` inside a tree owned by `easycustoms`, git refuses
+with `detected dubious ownership` instead of answering:
+
+```bash
+sudo -u easycustoms -H git -C /opt/easycustoms log --oneline -1
 ```
 
 ```bash
-sudo -u easycustoms /opt/easycustoms/backend/.venv/bin/pip install -r /opt/easycustoms/backend/requirements.txt
+sudo -u easycustoms -H python3 -m venv /opt/easycustoms/backend/.venv
+```
+
+```bash
+sudo -u easycustoms -H /opt/easycustoms/backend/.venv/bin/pip install -r /opt/easycustoms/backend/requirements.txt
 ```
 
 * **An instance role, not access keys.** Attach an IAM role to the instance; §3
@@ -90,6 +154,13 @@ sudo -u easycustoms /opt/easycustoms/backend/.venv/bin/pip install -r /opt/easyc
 The API listening on loopback is what makes Caddy the entire public surface. If
 you can reach `http://<box>:8000` from your laptop, stop and fix that before
 going further — that address serves an importer's documents with no TLS.
+
+**You cannot confirm the 443 rule from outside until something is listening on
+443**, and until Caddy is configured nothing is. A refused connection and a
+dropped one look identical to `curl` and to `Test-NetConnection`, so a probe run
+now proves nothing either way. §9 gives the throwaway-listener check that does
+prove it, and it belongs *before* the first certificate request rather than after
+a failure.
 
 ---
 
@@ -373,6 +444,14 @@ EASYCUSTOMS_TRUSTED_PROXY_HOPS=1
 EASYCUSTOMS_ALLOW_SELF_SIGNUP=true
 
 # ---- Persistence ------------------------------------------------------------
+# On SQLITE INSTEAD — a bring-up box, or an interim shape before the Postgres
+# credentials exist — this line is still REQUIRED, and it is not the default:
+#   EASYCUSTOMS_DATABASE_URL=sqlite:////opt/easycustoms/backend/storage/easy_customs.db
+# The default is backend/easy_customs.db, which sits OUTSIDE the single path
+# ReadWritePaths grants (§8). Under ProtectSystem=strict the service can create
+# neither that file nor its -wal/-shm siblings, which need the DIRECTORY
+# writable — so the unit starts and then dies on the first query. Leaving the
+# line out is not "take the default", it is a unit that fails.
 EASYCUSTOMS_DATABASE_URL=postgresql+psycopg://<user>:<password>@<host>:<port>/<database>
 EASYCUSTOMS_DB_POOL_SIZE=5
 EASYCUSTOMS_DB_MAX_OVERFLOW=10
@@ -678,6 +757,23 @@ sudo cp /opt/easycustoms/backend/deploy/easycustoms-worker.service /etc/systemd/
 sudo systemctl daemon-reload && sudo systemctl enable --now easycustoms-api easycustoms-worker
 ```
 
+**Both units, because this runbook sets `EASYCUSTOMS_QUEUE_PROVIDER=sqs` (§0).
+On a deployment that left the queue `off`, enable the API only** — §6 says the
+worker "should then not be enabled at all", and the two statements above
+contradicted each other until this was written down.
+
+It is not a refusal at config validation, which is why enabling it looks
+survivable until you read the journal: `worker.py::main` checks the provider
+itself, logs an error naming `EASYCUSTOMS_QUEUE_PROVIDER`, and **exits 2**. The
+unit sets `Restart=always` with `RestartSec=5`, so systemd starts it again five
+seconds later, for ever. What you get is not a stopped unit — it is a unit
+flapping once a heartbeat and a journal that reads like a broken deployment
+sitting next to a working API.
+
+```bash
+sudo systemctl daemon-reload && sudo systemctl enable --now easycustoms-api
+```
+
 ```bash
 journalctl -u easycustoms-api -f
 ```
@@ -729,6 +825,71 @@ failures.
 dig +short <staging-host>
 ```
 
+### Install Caddy
+
+This section used to open at the `cp` below, which presumes both the binary and
+`/etc/caddy/` already exist. On a bare box neither does.
+
+**Take it from Caddy's own repository, not the distribution's.** Ubuntu 26.04
+packages **2.6.2**, which is roughly four years old, for the process that
+terminates your TLS and talks to Let's Encrypt on your behalf. The version used
+to write this section was **2.11.4**.
+
+```bash
+sudo apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl
+```
+
+```bash
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+```
+
+```bash
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+```
+
+```bash
+sudo apt-get update && sudo apt-get install -y caddy
+```
+
+The package starts Caddy on a stock `:80` welcome page. That is convenient here:
+it listens on 80 and **requests no certificate**, so the next check is free.
+
+### Prove 80 and 443 are reachable — before the first certificate request
+
+§1 asks for both ports and cannot verify either. Do it now, because the failure
+this catches is rate-limited and the check is not.
+
+Port 80 is answering already, from the stock config. Confirm from your laptop
+that DNS and the security group agree with each other:
+
+```bash
+curl -sSI http://<staging-host>/ | head -1
+```
+
+**Port 443 needs a listener before it can be tested at all**, and this is worth
+doing rather than assuming, because the two failure modes are indistinguishable
+from outside: a security group that drops the packet and a box where nothing is
+bound to 443 both present as a connection that does not complete. The author of
+this section read exactly that as "the security group blocks 443", and was
+wrong — the rule was correct all along and Caddy's stock config simply binds
+`:80` only. Bind it briefly and ask again:
+
+```bash
+sudo setsid nohup timeout 30 python3 -m http.server 443 --bind 0.0.0.0 >/dev/null 2>&1 < /dev/null &
+```
+
+```bash
+curl -sS -o /dev/null --max-time 10 -w 'connected=%{http_code}\n' http://<staging-host>:443/
+```
+
+Anything other than a timeout means the security group allows 443. The listener
+expires by itself after 30 seconds; confirm 443 is free again with
+`sudo ss -ltnp | grep :443` before continuing, or Caddy cannot bind it.
+
+Do not clear it with `pkill -f "http.server 443"` over SSH: `-f` matches full
+command lines, your own shell's command line contains that string, and the
+pattern kills the session running it.
+
 ### Caddy
 
 ```bash
@@ -739,12 +900,43 @@ sudo cp /opt/easycustoms/backend/deploy/Caddyfile.example /etc/caddy/Caddyfile
 sudo $EDITOR /etc/caddy/Caddyfile     # set the domain and the email
 ```
 
+Set the `email` in the global block. Renewal-failure notices go there, and a
+silently expired certificate takes the whole app offline.
+
+Validating before reloading is the right instinct, and it lays a trap:
+
+```bash
+sudo caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+```
+
+**Running any `caddy` command as root creates the configured log file as root,
+and the service then cannot open it.** `validate` instantiates the logging
+module, which creates `/var/log/caddy/easycustoms.log` owned by `root` at mode
+600. The service runs as `caddy`, so the next reload fails — and it fails in a
+way that reads like a certificate problem when it is not:
+
+```
+loading new config: setting up custom log 'log0':
+open /var/log/caddy/easycustoms.log: permission denied
+```
+
+The config is rejected *before* any ACME attempt, so this costs no rate limit,
+but it will cost you the time you spend reading the wrong logs. Fix it whenever
+a `caddy` command has been run under `sudo`:
+
+```bash
+sudo chown caddy:caddy /var/log/caddy/easycustoms.log && sudo chmod 640 /var/log/caddy/easycustoms.log
+```
+
+Now reload. **This is the certificate request:**
+
 ```bash
 sudo systemctl reload caddy && journalctl -u caddy -f
 ```
 
-Set the `email` in the global block. Renewal-failure notices go there, and a
-silently expired certificate takes the whole app offline.
+Expect `certificate obtained successfully` within about twenty seconds. On a box
+whose DNS and both ports are already proven, TLS-ALPN-01 satisfies the challenge
+on the first attempt and no HTTP-01 fallback is needed.
 
 Two things about that file worth knowing rather than discovering:
 
