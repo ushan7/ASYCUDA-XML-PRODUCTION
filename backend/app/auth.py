@@ -466,6 +466,15 @@ def reset_throttle(db=None) -> None:
 # hour because they typed a short password twice is a limiter doing damage
 # rather than work.  What bounds that direction is the identity provider's own
 # signup rate limit, which the deployment checklist says to set.
+#
+# READ THAT AS "EVERY 202 COSTS ONE ROW", which is the load-bearing half and the
+# same rule `record_password_reset` states from the other direction.  The route
+# answers 202 for outcomes the PROVIDER distinguished — its address-keyed rate
+# limit, a confirmation email that failed to send — and every one of them is
+# counted, because a 202 that cost no budget would put "how many tries do I have
+# left" back in the caller's hands as the account-existence oracle the status
+# code was just made constant to close.  The refusals that go uncounted are the
+# ones about what the CALLER typed, which distinguish no address from any other.
 # --------------------------------------------------------------------------- #
 _SIGNUP_MAX_PER_HOUR = 3
 _SIGNUP_MAX_PER_DAY = 10
