@@ -813,6 +813,13 @@ def signup(body: SignupRequest, request: Request, db: Session = Depends(db_dep))
     refused caller costs one indexed read and no outbound call), then Supabase,
     and only an ACCEPTED registration is counted — see `auth.record_signup` for
     why a refusal is not.
+
+    ONE 202, WITH ONE BODY, FOR EVERY ACCEPTED OUTCOME — created, already
+    registered, created on a project whose email confirmation is off, and (since
+    the provider's own answers are address-keyed too) its rate limit and its
+    delivery failures.  `auth_supabase.sign_up` collapses those last two; the
+    only thing on this route that ever tells a caller to wait is OUR limiter,
+    which is keyed on the caller and never on the address.
     """
     from . import auth_supabase
 
@@ -867,12 +874,6 @@ def signup(body: SignupRequest, request: Request, db: Session = Depends(db_dep))
         if outcome.code == "WEAK_PASSWORD":
             return JSONResponse(status_code=400, content={
                 "status": "REJECTED", "code": "WEAK_PASSWORD", "detail": outcome.message})
-        if outcome.code == "TOO_MANY_ATTEMPTS":
-            headers = {"Retry-After": str(outcome.retry_after)} if outcome.retry_after else {}
-            return JSONResponse(status_code=429, headers=headers, content={
-                "status": "THROTTLED", "code": "TOO_MANY_ATTEMPTS",
-                "detail": "Too many registration attempts have reached the sign-in "
-                          "service. Try again shortly."})
         if outcome.code == "SIGNUP_UNAVAILABLE":
             # This deployment says registration is open and the identity provider
             # says it is not.  A misconfiguration the caller cannot fix, and 503
@@ -885,6 +886,18 @@ def signup(body: SignupRequest, request: Request, db: Session = Depends(db_dep))
 
     # Counted only now: an accepted registration, which is as close to "an account
     # was created" as this process can honestly get.
+    #
+    # THE INVARIANT THIS ENFORCES, and the reason it is one line rather than a
+    # branch: EVERY outcome the caller sees as 202 costs exactly one row here.
+    # `sign_up` collapses the provider's address-keyed 429 and its delivery
+    # failures into `accepted`, so they are counted like any other acceptance —
+    # and they must be.  Counting only the ones that produced an email would make
+    # "how many tries do I have left" vary by whether the address already existed,
+    # which is the oracle walking back in through the budget after the status code
+    # has just been made constant.  (A REFUSAL — 400 for a password the policy
+    # rejects or an address that will not validate — is still not counted, and is
+    # not an oracle either: both are about what the caller typed, and neither can
+    # tell a registered address from an unregistered one.)
     auth.record_signup(db, client)
     log.info("accepted a signup from %s (confirmation %s)", client,
              "required" if outcome.confirmation_required else "NOT required")

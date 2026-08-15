@@ -13,8 +13,12 @@ one the plan spends most of its argument on:
     password guesses to reset their guessing budget indefinitely.  Both
     directions of non-interference are asserted directly.
   * **The route is nobody's account-existence oracle.**  Created, already
-    registered, and created-on-a-misconfigured-project are one 202 with one
-    body.  The only refusal whose text is forwarded is the caller's own password.
+    registered, created-on-a-misconfigured-project, the provider's own
+    per-address rate limit and its delivery failures are one 202 with one body,
+    each costing one row of the same limiter budget.  The only refusal whose text
+    is forwarded is the caller's own password.  The last two collapsed late —
+    signup forwarded the provider's 429 until it was closed here, and the
+    delivery-failure half was found while closing it.
   * **A brand-new account gets the deployment default cap and no row.**  Absence
     is the normal state (`models.AccountQuota`); a row written at signup would
     freeze today's default onto every account that ever registers.
@@ -35,7 +39,7 @@ from fastapi.testclient import TestClient
 from app import accounts, auth, metering
 from app.config import DEFAULT_MULTI_ACCOUNT_DOCUMENT_CAP, Settings, get_settings
 from app.database import SessionLocal, init_db
-from app.main import app
+from app.main import _SIGNUP_ACCEPTED, app
 from app.models import (AccountDisabled, AccountQuota, AccountRole, AccountSeen,
                         LoginAttempt, SignupAttempt)
 
@@ -349,12 +353,91 @@ def test_sign_ups_disabled_at_the_provider_is_our_misconfiguration_not_a_bad_add
     assert "configuration problem" in r.json()["detail"]
 
 
-def test_a_provider_rate_limit_is_passed_on_as_one(anon, supabase):
+def test_the_providers_rate_limit_is_NOT_forwarded(anon, supabase):
+    """THE ORACLE THIS ROUTE USED TO BE, closed.  GoTrue applies a per-ADDRESS
+    cooldown to the mail it sends and only sends for an address that is NEW, so
+    its 429 means "a confirmation email just went out for this address" — which
+    is "this address was not already registered".  Two requests seconds apart
+    read it straight off: 429 for a new address, 202 both times for a registered
+    one (obfuscated, no mail, so no cooldown).
+
+    It collapses into the same 202, byte for byte, as `POST /api/auth/password-
+    reset` has always done with the identical signal.  Our own limiter is keyed
+    on the CALLER and is the only thing on this route that ever says "wait"."""
     supabase.signup = lambda body: _FakeResponse(
         429, {"msg": "For security purposes, you can only request this after 47 seconds."})
-    r = _signup(anon, email="fast@broker.np")
-    assert r.status_code == 429 and r.json()["code"] == "TOO_MANY_ATTEMPTS"
-    assert r.headers["Retry-After"] == "47"
+    limited = _signup(anon, email="fast@broker.np")
+    supabase.signup = None
+    normal = _signup(anon, email="unhurried@broker.np")
+
+    assert limited.status_code == normal.status_code == 202
+    assert limited.json() == normal.json() == _SIGNUP_ACCEPTED
+    assert limited.text == normal.text
+    # ...and nothing about the provider's cooldown survives in the envelope.
+    assert "Retry-After" not in limited.headers
+    assert "47" not in limited.text and "security purposes" not in limited.text
+
+
+def test_a_delivery_failure_is_not_reported_to_the_caller(anon, supabase, caplog):
+    """The SHARPER half of the same trap, and it needs only ONE request.  GoTrue
+    attempts a confirmation send only for an address that is new, so with SMTP
+    broken a new address is a 5xx and a registered one is still a clean 202 —
+    the cleanest existence oracle available on this route.
+
+    It is answered exactly as an accepted registration is, and logged at ERROR,
+    which is where an operator sees it and a stranger does not.  The mirror of
+    `test_a_delivery_failure_is_not_reported_to_the_caller` in the reset suite."""
+    supabase.signup = lambda body: _FakeResponse(
+        500, {"error_code": "unexpected_failure", "msg": "Error sending confirmation email"})
+    with caplog.at_level("ERROR"):
+        broken = _signup(anon, email="undeliverable@broker.np")
+    supabase.signup = None
+    normal = _signup(anon, email="deliverable@broker.np")
+
+    assert broken.status_code == normal.status_code == 202
+    assert broken.json() == normal.json() == _SIGNUP_ACCEPTED
+    assert broken.text == normal.text
+    assert "SMTP" not in broken.text and "500" not in broken.text
+    assert any("did not complete a signup" in rec.getMessage()
+               for rec in caplog.records), caplog.text
+
+
+def test_every_outcome_the_caller_sees_as_202_costs_the_same_budget(
+        anon, supabase, monkeypatch):
+    """THE BUDGET ORACLE, closed with the status code and not after it.  Making
+    the answers identical is only half: if a collapsed 429 or a failed send cost
+    no limiter row, how many tries the caller has left would still vary by
+    whether the address already existed — the oracle re-entering through the
+    budget after the front door was shut.
+
+    One caller per outcome, because three accepted registrations an hour is the
+    limit and the point here is the cost of the fourth, not the ceiling."""
+    monkeypatch.setattr(get_settings(), "trusted_proxy_hops", 1)
+    cooldown = lambda body: _FakeResponse(                                    # noqa: E731
+        429, {"msg": "For security purposes, you can only request this after 9 seconds."})
+    undeliverable = lambda body: _FakeResponse(                               # noqa: E731
+        500, {"error_code": "unexpected_failure", "msg": "Error sending confirmation email"})
+
+    for ip, provider, email in (("198.51.100.1", None, "created@broker.np"),
+                                ("198.51.100.2", None, NEWCOMER_EMAIL),
+                                ("198.51.100.3", cooldown, "cooldown@broker.np"),
+                                ("198.51.100.4", undeliverable, "undeliverable2@broker.np")):
+        supabase.signup = provider
+        r = _signup(anon, email=email, headers={"x-forwarded-for": ip})
+        assert r.status_code == 202, f"{ip}: {r.text[:200]}"
+        assert _signup_rows(ip) == 1, (
+            f"an outcome answered 202 cost {_signup_rows(ip)} rows, not one — the "
+            f"remaining-tries count is an account-existence oracle again")
+
+
+def test_a_rejected_anon_key_is_an_outage_and_NOT_a_202(anon, supabase):
+    """The limit of the collapse, asserted so it is not widened by accident.
+    401/403 is OUR key or OUR project — identical for every address, so it says
+    nothing about any of them — and it is a misconfiguration an operator must see
+    rather than one to swallow behind a cheerful 202."""
+    supabase.signup = lambda body: _FakeResponse(401, {"message": "Invalid API key"})
+    assert _signup(anon, email="badkey@broker.np").status_code == 502
+    assert _signup_rows() == 0
 
 
 def test_a_200_we_cannot_read_is_not_a_registration_we_assert(anon, supabase):

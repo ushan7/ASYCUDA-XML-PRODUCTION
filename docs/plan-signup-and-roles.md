@@ -630,8 +630,9 @@ address was new. What ships:
 | 422 already registered | 202, **same** body | the oracle case, asserted byte for byte |
 | 422 weak password | 400 + the provider's own sentence | the one refusal that is about what the caller typed |
 | 422 signups disabled | 503 | our flag says open, their project says closed: a misconfiguration the caller cannot fix |
-| 429 | 429 + `Retry-After` | theirs, passed on as ours |
-| anything else / unreadable / unreachable | 502, **not counted** | not a definite answer about the account |
+| 429 | ~~429 + `Retry-After`~~ → 202, **same** body, counted | *shipped as "theirs, passed on as ours"; reported as an oracle in step 4 and **closed in step 5** — GoTrue's cooldown is per **address**, so it means "a confirmation mail just went out for this one"* |
+| 5xx, incl. a failed confirmation send | ~~502~~ → 202, **same** body, counted, `ERROR` logged | *also step 5. GoTrue attempts a send only for a **new** address, so this distinguished one in a single request* |
+| unreadable / unreachable / our anon key refused | 502, **not counted** | not a definite answer about the account — and identical for every address, so it distinguishes none |
 
 **5. Confirmation is a dashboard toggle this repository cannot assert, so the
 code detects it and says so.** The plan lists "Confirm email = ON" as the primary
@@ -753,6 +754,29 @@ our own limiter. Left in place on a decision taken when it was reported: changin
 merged, asserted behaviour inside a commit scoped to password reset is how a
 security control gets altered by a commit nobody reviewed for it. The fix is
 collapsing that branch into the same 202.
+
+> **CLOSED IN STEP 5**, in its own commit and reviewed as one, exactly as this
+> paragraph asked for. `auth_supabase.sign_up` collapses the 429 the way
+> `request_password_reset` always has, and the test that asserted the leak was
+> rewritten to assert the guarantee
+> (`test_the_providers_rate_limit_is_NOT_forwarded`) rather than deleted.
+>
+> **Closing it surfaced a second channel this paragraph did not name, and a
+> sharper one.** Signup leaked delivery failures too. GoTrue's send condition on
+> `/signup` is the *inverse* of the one on `/recover` — a **new** address is the
+> one that gets a mail — so with SMTP broken a new address was a 5xx and
+> therefore a 502 here, while an already-registered one stayed a clean 202. That
+> needs **one** request, where the 429 needs two. It now answers 202 and logs at
+> `ERROR`, and the collapse stops where the reset route's does: a transport
+> failure or a refusal of our own anon key is still a 502, both being identical
+> for every address.
+>
+> **And the third channel, which is why this could not be a one-line change.**
+> `record_signup` runs on `outcome.accepted`, so collapsing those two answers
+> into `accepted` counts them — deliberately. A 202 that cost no limiter budget
+> would have moved the oracle from the status code into *how many tries do I have
+> left*, which is precisely what section 4 below says about reset's counter.
+> `test_every_outcome_the_caller_sees_as_202_costs_the_same_budget` pins it.
 
 **4. A THIRD LIMITER, AND THE PLAN DISCUSSES NONE.** The plan spends sixty lines
 on the signup limiter and says nothing about reset, which is a public endpoint

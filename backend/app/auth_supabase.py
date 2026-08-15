@@ -125,15 +125,39 @@ def sign_in(email: str, password: str) -> SupabaseIdentity | None:
 # cannot tell.  With confirmation off it says so outright (422
 # user_already_exists) — and this function flattens that difference rather than
 # letting a dashboard toggle decide whether the app leaks the customer list.
+#
+# TWO MORE ANSWERS COLLAPSE INTO THAT SAME "ACCEPTED", and they are the mirror
+# image of the two `request_password_reset` collapses below.  On /recover, GoTrue
+# only attempts a send for an address that EXISTS; on /signup it is the other way
+# round — a NEW address is the one that gets a confirmation mail — so both the
+# per-address send cooldown (429) and a failed send (5xx) mean "this address was
+# new" as loudly as the recovery ones mean "this address exists":
+#
+#   * the 429 needs two requests seconds apart.  A new address answers 429 (the
+#     confirmation mail just went out), an already-registered-and-confirmed one
+#     answers 202 both times (obfuscated, no mail, so no cooldown);
+#   * a delivery failure needs only ONE.  With SMTP broken, a new address is a
+#     5xx and a registered one is still a clean 202.
+#
+# Both therefore answer exactly what a new registration answers, and what an
+# operator needs goes to the log.  What does NOT collapse is a transport failure
+# or a refusal of OUR OWN credentials: those are identical for every address, so
+# they distinguish nothing, and they are misconfigurations somebody has to see.
 # --------------------------------------------------------------------------- #
 @dataclass(frozen=True)
 class SignupOutcome:
     """What became of a registration request, in the only terms a caller needs.
 
     ``accepted`` means "answer 202" — the account was created, OR the address was
-    already registered and saying so is not this app's business.  The two are
-    deliberately the same value; nothing downstream can tell them apart, which is
-    the property, not a limitation to be worked around.
+    already registered, OR the provider answered in a way that would have said
+    which of those it was.  They are deliberately the same value; nothing
+    downstream can tell them apart, which is the property, not a limitation to be
+    worked around.
+
+    There is deliberately no ``retry_after`` here, and no field carrying the
+    provider's rate-limit or delivery status.  Only our own caller-keyed limiter
+    ever tells anybody to wait, so a field for the provider's answer would be
+    nothing but something for a future edit to leak.
     """
     accepted: bool
     # Whether a confirmation email is what completes this registration.  False on
@@ -147,7 +171,6 @@ class SignupOutcome:
     # Safe to show the caller ONLY for a password-policy refusal, which says
     # nothing about the address.  Empty for everything else.
     message: str = ""
-    retry_after: int = 0
 
 
 def _error_fields(response) -> tuple[str, str]:
@@ -267,15 +290,41 @@ def sign_up(email: str, password: str) -> SignupOutcome:
         log.info("supabase refused a signup (%s): %.200s", status, message or code)
         return SignupOutcome(accepted=False, code="INVALID_EMAIL")
 
+    code, message = _error_fields(response)
     if status == 429:
-        _, message = _error_fields(response)
-        log.warning("supabase rate-limited a signup (429): %.200s", message)
-        return SignupOutcome(accepted=False, code="TOO_MANY_ATTEMPTS",
-                             retry_after=_retry_after(response, message))
+        # NOT forwarded — see the module note above.  This is GoTrue's
+        # per-ADDRESS send cooldown, so passing it on would let a prober ask
+        # twice seconds apart and read "a confirmation mail actually went out for
+        # this address", which is "this address was not already registered".
+        # INFO, because on a correctly configured project this is a user
+        # double-clicking, not a fault.
+        log.info("supabase rate-limited a signup: %.200s — the caller was answered "
+                 "exactly as an accepted registration is", message or code)
+        return SignupOutcome(accepted=True)
 
-    # 401/403 means OUR anon key is wrong or the project moved; 5xx is theirs.
-    # Neither is the caller's fault and neither is a definite answer about the
-    # account, so it is an outage, not a refusal.
+    if status >= 500:
+        # Includes a failed confirmation send, which is the sharper half of the
+        # same oracle: GoTrue attempts one only for an address that is NEW, so a
+        # 500 surfaced to the caller distinguishes a new address from a
+        # registered one in a SINGLE request.  Collapsed whole rather than
+        # matched on the error text — a message-pattern that failed to match
+        # would fail OPEN, back into the oracle.
+        #
+        # The cost, stated rather than hidden: a provider outage is reported to
+        # the caller as an accepted registration and no mail arrives.  That is
+        # the same trade the deployment checklist already names for the
+        # confirmation email, and it is the trade `request_password_reset` makes
+        # for the identical reason.  ERROR, because this is how an operator finds
+        # out the mail did not go.
+        log.error("supabase did not complete a signup (%s): %.200s — the caller was "
+                  "told a confirmation email is on its way, as they are for every "
+                  "other outcome. Check Auth -> Emails / SMTP if this repeats.",
+                  status, message or code)
+        return SignupOutcome(accepted=True)
+
+    # What is left is 401/403: OUR anon key is wrong or the project moved.  The
+    # same failure for every address, so raising it distinguishes nothing — and it
+    # is a misconfiguration an operator has to see rather than one to swallow.
     raise SupabaseAuthUnavailable(f"unexpected status {status}")
 
 
