@@ -4,6 +4,13 @@ FROM python:3.12-slim
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 
+# Install required system packages for psycopg / lxml compilation
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    libxml2-dev \
+    libxslt-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -24,4 +31,6 @@ VOLUME ["/app/storage"]
 USER easycustoms
 
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Uses Cloud Run's dynamic $PORT when deployed, or falls back to 8000 for local docker-compose
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
